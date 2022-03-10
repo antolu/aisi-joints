@@ -1,4 +1,6 @@
 .idea
+*.csv
+*.pbtxt
 
 
 # Byte-compiled / optimized / DLL files
