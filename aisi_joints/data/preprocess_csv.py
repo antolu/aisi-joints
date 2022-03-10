@@ -37,7 +37,7 @@ def write_pbtxt(classes: Dict[str, int], output_name: str):
             out = ''
             out += 'item {\n'
             out += f'  id: {id_ + 1}\n'
-            out += f'  name: {name}\n'
+            out += f'  name: \'{name}\'\n'
             out += '}\n\n'
 
             f.write(out)
@@ -89,10 +89,10 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
     log.info(f'Found {len(df)} samples with matching labels and boxes.')
 
     # add class column based on deviationID and ratingStatus values
-    df['class'] = np.nan
-    df.loc[df['deviationId'].notna(), 'class'] = CLASS_DEFECT
-    df.loc[df['ratingStatus'] == 'IND_TRUE_POSITIVE', 'class'] = CLASS_DEFECT
-    df.loc[df['ratingStatus'] == 'IND_FALSE_POSITIVE', 'class'] = CLASS_OK
+    df['cls'] = np.nan
+    df.loc[df['deviationId'].notna(), 'cls'] = CLASS_DEFECT
+    df.loc[df['ratingStatus'] == 'IND_TRUE_POSITIVE', 'cls'] = CLASS_DEFECT
+    df.loc[df['ratingStatus'] == 'IND_FALSE_POSITIVE', 'cls'] = CLASS_OK
 
     label_map = {
         CLASS_OK: 0,
@@ -123,9 +123,9 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
 
     log.info(f'Total number of labeled samples: {len(df)}.')
     log.info(f'Total number of non-defects: '
-             f'{len(df[df["class"] == CLASS_OK])}.')
+             f'{len(df[df["cls"] == CLASS_OK])}.')
     log.info(f'Total number of defects: '
-             f'{len(df[df["class"] == CLASS_DEFECT])}.')
+             f'{len(df[df["cls"] == CLASS_DEFECT])}.')
 
     if output is not None:
         log.info(f'Writing output .csv to {path.abspath(output)}.')
