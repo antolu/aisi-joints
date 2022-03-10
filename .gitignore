@@ -1,6 +1,8 @@
 .idea
+models
 *.csv
 *.pbtxt
+*.tfrecord
 
 
 # Byte-compiled / optimized / DLL files
