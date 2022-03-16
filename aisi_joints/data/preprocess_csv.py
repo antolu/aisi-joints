@@ -140,13 +140,13 @@ if __name__ == '__main__':
     from ..utils.logging import setup_logger
 
     parser = ArgumentParser()
-    parser.add_argument('--images', nargs='+', help='Path to images.')
-    parser.add_argument('--boxes', nargs='+',
+    parser.add_argument('-i', '--images', nargs='+', help='Path to images.')
+    parser.add_argument('-b', '--boxes', nargs='+',
                         help='Path to.csv files with bounding boxes.')
-    parser.add_argument('--labels', nargs='+',
+    parser.add_argument('-l', '--labels', nargs='+',
                         help='Path to .csv files with data labels and other '
                              'metadata.')
-    parser.add_argument('--output', default='output.csv',
+    parser.add_argument('-o', '--output', default='output.csv',
                         help='Output csv name')
 
     args = parser.parse_args()
