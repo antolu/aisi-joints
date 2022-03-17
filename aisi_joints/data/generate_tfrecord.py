@@ -56,10 +56,10 @@ def create_tf_example(sample: Sample, label_map: dict) -> tf.train.Example:
         'image/source_id': dataset_util.bytes_feature(filename),
         'image/encoded': dataset_util.bytes_feature(encoded_jpg),
         'image/format': dataset_util.bytes_feature(image_format),
-        'image/object/bbox/xmin': dataset_util.float_list_feature([sample.x0]),
-        'image/object/bbox/xmax': dataset_util.float_list_feature([sample.x1]),
-        'image/object/bbox/ymin': dataset_util.float_list_feature([sample.y0]),
-        'image/object/bbox/ymax': dataset_util.float_list_feature([sample.y1]),
+        'image/object/bbox/xmin': dataset_util.float_list_feature([sample.x0 / width]),
+        'image/object/bbox/xmax': dataset_util.float_list_feature([sample.x1 / width]),
+        'image/object/bbox/ymin': dataset_util.float_list_feature([sample.y0 / height]),
+        'image/object/bbox/ymax': dataset_util.float_list_feature([sample.y1 / height]),
         'image/object/class/text': dataset_util.bytes_list_feature(
             [sample.cls.encode('utf8')]),
         'image/object/class/label': dataset_util.int64_list_feature(
