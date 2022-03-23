@@ -129,7 +129,7 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
 
     if output is not None:
         log.info(f'Writing output .csv to {path.abspath(output)}.')
-        df.to_csv(output)
+        df.to_csv(output, index=False)
 
         basename = path.splitext(output)[0]
         write_pbtxt(label_map, basename + '_labelmap.pbtxt')

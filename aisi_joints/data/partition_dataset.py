@@ -78,7 +78,7 @@ def partition_dataset(input_csv: str, ratio: str, output: str):
         msg += '.'
     log.info(msg)
 
-    df.to_csv(output)
+    df.to_csv(output, index=False)
     log.info(f'Wrote partitioned dataset to {path.abspath(output)}')
 
 
