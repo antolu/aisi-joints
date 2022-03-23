@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>icons/cancel.svg</file>
+    <file>icons/search.svg</file>
+  </qresource>
+</RCC>

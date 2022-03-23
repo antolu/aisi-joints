@@ -12,7 +12,9 @@ try:
         ioPaths=[
             [path.join(HERE, 'resources/ui/*.ui'),
              path.join(HERE,
-                       'aisi_joints/ui/generated/%%FILENAME%%_ui.py')]
+                       'aisi_joints/ui/generated/%%FILENAME%%_ui.py')],
+            [path.join(HERE, 'resources/*.qrc'),
+             path.join(HERE, 'aisi_joints/ui/generated/%%FILENAME%%_rc.py')]
         ]
     )
 except (PermissionError, OSError):

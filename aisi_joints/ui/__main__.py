@@ -31,7 +31,9 @@ if flags.DEBUG:
              uicOptions='--from-imports', force=False, initPackage=True,
             ioPaths=[
                 [path.join(HERE, '../resources/ui/*.ui'),
-                 path.join(HERE, 'generated/%%FILENAME%%_ui.py')]
+                 path.join(HERE, 'generated/%%FILENAME%%_ui.py')],
+                [path.join(HERE, 'resources/*.qrc'),
+                 path.join(HERE, 'aisi_joints/ui/generated/%%FILENAME%%_rc.py')]
             ]
         )
     except PermissionError:

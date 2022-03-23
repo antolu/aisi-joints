@@ -3,7 +3,7 @@ from typing import Optional, Any
 from PyQt5.QtCore import QAbstractTableModel, QObject, QModelIndex, Qt
 import pandas as pd
 import numpy as np
-
+from PyQt5.QtGui import QColor
 
 HEADER = ['eventId', 'platformId', 'Label', 'Split', 'File path']
 HEADER_TO_COLUMN = {
@@ -21,9 +21,25 @@ class TableModel(QAbstractTableModel):
 
         self._data = data
 
+        if 'ignore' not in self._data.columns:
+            self._data['ignore'] = False
+
+        if 'validate' not in self._data.columns:
+            self._data['validate'] = False
+
     def data(self, index: QModelIndex, role: int = ...) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
             return self._data[HEADER_TO_COLUMN[HEADER[index.column()]]].iloc[index.row()]
+        elif role == Qt.ItemDataRole.BackgroundRole:
+            if self._data['ignore'].iloc[index.row()]:
+                return QColor('gray')
+            elif self._data['validate'].iloc[index.row()]:
+                return QColor('red')
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            if self._data['ignore'].iloc[index.row()]:
+                return 'This sample is marked as ignored.'
+            elif self._data['validate'].iloc[index.row()]:
+                return 'This sample is marked as needing revalidation.'
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self._data)
@@ -41,3 +57,23 @@ class TableModel(QAbstractTableModel):
 
     def get_sample(self, row: int) -> pd.DataFrame:
         return self._data.iloc[row]
+
+    def toggle_ignore(self, row: int):
+        self._data.loc[self._data.index[row], 'ignore'] = \
+            not self._data.loc[self._data.index[row], 'ignore']
+
+    def set_ignore(self, row: int):
+        self._data['ignore'].iloc[row] = True
+
+    def unset_ignore(self, row: int):
+        self._data['ignore'].iloc[row] = False
+
+    def toggle_validate(self, row: int):
+        self._data.loc[self._data.index[row], 'validate'] = \
+            not self._data.loc[self._data.index[row], 'validate']
+
+    def set_validate(self, row: int):
+        self._data['validate'].iloc[row] = True
+
+    def unset_validate(self, row: int):
+        self._data['validate'].iloc[row] = False
