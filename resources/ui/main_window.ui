@@ -43,6 +43,11 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="actionSave_csv"/>
+    <addaction name="actionExport_csv"/>
+    <addaction name="actionExportIgnored"/>
+    <addaction name="action_ExportRevalidation"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menu_File"/>
@@ -94,6 +99,40 @@
    </property>
    <property name="shortcut">
     <string>V</string>
+   </property>
+  </action>
+  <action name="actionExport_csv">
+   <property name="text">
+    <string>Export .&amp;csv</string>
+   </property>
+  </action>
+  <action name="actionSave_csv">
+   <property name="text">
+    <string>&amp;Save .csv</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="action_ExportRevalidation">
+   <property name="text">
+    <string>Export Revalidation Samples</string>
+   </property>
+  </action>
+  <action name="actionExportIgnored">
+   <property name="text">
+    <string>Export Ignored Samples</string>
+   </property>
+  </action>
+  <action name="actionShow_Image">
+   <property name="text">
+    <string>Show Image</string>
+   </property>
+   <property name="toolTip">
+    <string>Show image on current row</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
    </property>
   </action>
  </widget>

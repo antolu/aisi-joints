@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication
 
 from . import flags
 from .elements.main_window import MainWindow
+from .settings import app
 from .. import __version__
 
 
@@ -44,6 +45,7 @@ def main(args: Namespace):
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
 
     main_window = MainWindow(csv_path=args.csv)
+    app.init()
     main_window.show()
 
     exit_code = application.exec_()

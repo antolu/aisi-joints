@@ -20,12 +20,18 @@ class TableModel(QAbstractTableModel):
         super().__init__(parent)
 
         self._data = data
+        if 'split' not in self._data.columns:
+            HEADER.remove('Split')
 
         if 'ignore' not in self._data.columns:
             self._data['ignore'] = False
 
         if 'validate' not in self._data.columns:
             self._data['validate'] = False
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        return self._data.copy()
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
