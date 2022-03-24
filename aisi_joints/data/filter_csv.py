@@ -16,7 +16,8 @@ def filter_dataframe(df: pd.DataFrame, filters: List[pd.DataFrame]) \
     for i, filter in enumerate(filters):
         orig_len = len(df)
 
-        indicators = pd.merge(df, filter, how='outer', indicator=True)
+        indicators = pd.merge(df, filter, on='eventId',
+                              how='outer', indicator=True)
         df = df[indicators['_merge'] == 'left_only']
 
         log.info(f'Removed {orig_len - len(df)} samples on pass {i + 1}.')
