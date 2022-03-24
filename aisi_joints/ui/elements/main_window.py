@@ -34,7 +34,8 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
         self.sampleTable.doubleClicked.connect(self.on_double_click)
         self.sampleTable.activated.connect(self.on_double_click)
-        self.actionShow_Image.triggered.connect(self.on_double_click)
+        self.actionShow_Image.triggered.connect(
+            lambda: self.on_double_click(self.sampleTable.currentIndex()))
         self.actionSave_csv.triggered.connect(self.on_save)
         self.actionExit.triggered.connect(self.close)
         self.actionIgnore.triggered.connect(self.on_ignore_clicked)

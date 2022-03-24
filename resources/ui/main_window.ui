@@ -65,6 +65,7 @@
    </attribute>
    <addaction name="actionIgnore"/>
    <addaction name="actionValidate"/>
+   <addaction name="actionShow_Image"/>
   </widget>
   <action name="actionExit">
    <property name="text">

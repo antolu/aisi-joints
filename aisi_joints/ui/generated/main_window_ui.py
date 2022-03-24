@@ -71,6 +71,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu_File.menuAction())
         self.toolBar.addAction(self.actionIgnore)
         self.toolBar.addAction(self.actionValidate)
+        self.toolBar.addAction(self.actionShow_Image)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
