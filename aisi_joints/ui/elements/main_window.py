@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 
 import pandas as pd
 
+from .copy_action import CopySelectedCellsAction
 from .export_dialog import ExportDialog
 from .table_model import TableModel
 from ..generated.main_window_ui import Ui_MainWindow
@@ -31,6 +32,8 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         proxy_model.setSourceModel(table_model)
         self.sampleTable.setModel(proxy_model)
         self.table_model = table_model
+
+        self.copy_action = CopySelectedCellsAction(self.sampleTable)
 
         self.sampleTable.doubleClicked.connect(self.on_double_click)
         self.sampleTable.activated.connect(self.on_double_click)
