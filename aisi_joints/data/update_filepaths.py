@@ -61,4 +61,4 @@ if __name__ == '__main__':
     df = pd.read_csv(args.input_csv)
     df = update_paths(df, args.images)
 
-    df.to_csv(args.output)
+    df.to_csv(args.output, index=False)

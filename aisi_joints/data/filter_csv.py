@@ -16,9 +16,7 @@ def filter_dataframe(df: pd.DataFrame, filters: List[pd.DataFrame]) \
     for i, filter in enumerate(filters):
         orig_len = len(df)
 
-        indicators = pd.merge(df, filter, on='eventId',
-                              how='outer', indicator=True)
-        df = df[indicators['_merge'] == 'left_only']
+        df = df[~df[['eventId']].apply(tuple, 1).isin(filter[['eventId']].apply(tuple, 1))]
 
         log.info(f'Removed {orig_len - len(df)} samples on pass {i + 1}.')
 
@@ -37,7 +35,7 @@ def main(args: Namespace):
 
     df = filter_dataframe(df, filters)
 
-    df.to_csv(args.output)
+    df.to_csv(args.output, index=False)
 
 
 if __name__ == '__main__':
