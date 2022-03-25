@@ -36,7 +36,7 @@ def update_paths(df: pd.DataFrame, images_pth: List[str]) -> pd.DataFrame:
              f'directories.')
 
     # merge and filter based on eventId
-    df.drop(columns=['filepath'])
+    df = df.drop(columns=['filepath'])
     df = df.merge(images_df, left_on='eventId', right_on='eventId')
 
     return df
