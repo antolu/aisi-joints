@@ -7,6 +7,7 @@ import pandas as pd
 
 from .copy_action import CopySelectedCellsAction
 from .export_dialog import ExportDialog
+from .filter_dialog import FilterDialog
 from .import_dialog import ImportDialog
 from .partition_dialog import PartitionDialog
 from .table_model import TableModel
@@ -55,6 +56,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_ExportRevalidation.triggered.connect(self.on_export_revalidation)
 
         self.action_Partition_Dataset.triggered.connect(self.on_partition)
+        self.action_Filter_Dataset.triggered.connect(self.on_filter)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
@@ -170,6 +172,18 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         dialog.data_partitioned.connect(on_ok)
         dialog.exec()
 
+    def on_filter(self):
+        dialog = FilterDialog(self.table_model.dataframe, self)
+
+        def on_ok(df: pd.DataFrame):
+            self.table_model.dataframe = df
+
+            QMessageBox.information(
+                self, 'Filter success', 'Successfully filtered dataset.')
+
+        dialog.data_filtered.connect(on_ok)
+        dialog.exec()
+
     def on_ignore_clicked(self):
         index = self.sampleTable.currentIndex()
         if index.row() == -1:
@@ -193,11 +207,12 @@ class MainWindow(Ui_MainWindow, QMainWindow):
     def enable_data_actions(self):
         self.actionSave_csv.setEnabled(True)
         self.action_Partition_Dataset.setEnabled(True)
-        # self.action_Filter_Dataset.setEnabled(True)
+        self.action_Filter_Dataset.setEnabled(True)
         # self.action_Update_Filepaths.setEnabled(True)
         # self.action_Generate_tfrecord.setEnabled(True)
         self.actionShow_Image.setEnabled(True)
         self.actionIgnore.setEnabled(True)
+        self.actionValidate.setEnabled(True)
         self.actionExport_csv.setEnabled(True)
         self.actionExportIgnored.setEnabled(True)
         self.action_ExportRevalidation.setEnabled(True)
@@ -210,6 +225,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_Generate_tfrecord.setDisabled(True)
         self.actionShow_Image.setDisabled(True)
         self.actionIgnore.setDisabled(True)
+        self.actionValidate.setDisabled(True)
         self.actionExport_csv.setDisabled(True)
         self.actionExportIgnored.setDisabled(True)
         self.action_ExportRevalidation.setDisabled(True)
