@@ -4,6 +4,7 @@ QSettings class.
 """
 import typing as t
 import logging
+from os import path
 
 from PyQt5.QtCore import QSettings
 
@@ -68,6 +69,9 @@ class AppSettings:
 
         if not isinstance(pth, str):
             raise ValueError(f'Path {pth} should be of type string.')
+
+        if path.isfile(pth) and not path.isdir(pth):
+            pth = path.split(pth)[0]
 
         self.settings.setValue('current_directory', pth)
 

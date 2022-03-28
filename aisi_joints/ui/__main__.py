@@ -17,7 +17,7 @@ parser.add_argument('-d', '--debug', '--develop', dest='debug',
                     action='store_true',
                     help='Enable debug mode. Debug level log messages will '
                          'be shown in logging output.')
-parser.add_argument('csv', type=str, help='Name of split .csv file.')
+parser.add_argument('-c', '--csv', type=str, default=None, help='Name of split .csv file.')
 
 args = parser.parse_args()
 flags.DEBUG = args.debug

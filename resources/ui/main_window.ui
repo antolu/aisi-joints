@@ -43,14 +43,27 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="actionImport"/>
+    <addaction name="actionLoad_csv"/>
     <addaction name="actionSave_csv"/>
+    <addaction name="separator"/>
     <addaction name="actionExport_csv"/>
     <addaction name="actionExportIgnored"/>
     <addaction name="action_ExportRevalidation"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="action_Partition_Dataset"/>
+    <addaction name="action_Filter_Dataset"/>
+    <addaction name="action_Generate_tfrecord"/>
+    <addaction name="action_Update_Filepaths"/>
+   </widget>
    <addaction name="menu_File"/>
+   <addaction name="menu_Tools"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -134,6 +147,36 @@
    </property>
    <property name="shortcut">
     <string>Space</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import RCM API .csv</string>
+   </property>
+  </action>
+  <action name="actionLoad_csv">
+   <property name="text">
+    <string>Load .csv</string>
+   </property>
+  </action>
+  <action name="action_Partition_Dataset">
+   <property name="text">
+    <string>&amp;Partition Dataset</string>
+   </property>
+  </action>
+  <action name="action_Filter_Dataset">
+   <property name="text">
+    <string>&amp;Filter Dataset</string>
+   </property>
+  </action>
+  <action name="action_Generate_tfrecord">
+   <property name="text">
+    <string>&amp;Generate .tfrecord</string>
+   </property>
+  </action>
+  <action name="action_Update_Filepaths">
+   <property name="text">
+    <string>&amp;Update Filepaths</string>
    </property>
   </action>
  </widget>

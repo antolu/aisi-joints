@@ -19,9 +19,18 @@ class TableModel(QAbstractTableModel):
     def __init__(self, data: pd.DataFrame, parent: Optional[QObject] = None):
         super().__init__(parent)
 
-        self._data = data
+        self.dataframe = data
+        self._header = HEADER.copy()
         if 'split' not in self._data.columns:
-            HEADER.remove('Split')
+            self._header.remove('Split')
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        return self._data.copy()
+
+    @dataframe.setter
+    def dataframe(self, new: pd.DataFrame):
+        self._data = new.copy()
 
         if 'ignore' not in self._data.columns:
             self._data['ignore'] = False
@@ -29,13 +38,11 @@ class TableModel(QAbstractTableModel):
         if 'validate' not in self._data.columns:
             self._data['validate'] = False
 
-    @property
-    def dataframe(self) -> pd.DataFrame:
-        return self._data.copy()
+        self.modelReset.emit()
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
-            return self._data[HEADER_TO_COLUMN[HEADER[index.column()]]].iloc[index.row()]
+            return self._data[HEADER_TO_COLUMN[self._header[index.column()]]].iloc[index.row()]
         elif role == Qt.ItemDataRole.BackgroundRole:
             if self._data['ignore'].iloc[index.row()]:
                 return QColor('gray')
@@ -51,13 +58,13 @@ class TableModel(QAbstractTableModel):
         return len(self._data)
 
     def columnCount(self, parent: QModelIndex = ...) -> int:
-        return len(HEADER) if len(self._data) > 0 else 0
+        return len(self._header) if len(self._data) > 0 else 0
 
     def headerData(self, section: int,
                    orientation: Qt.Orientation, role: int = ...) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Horizontal:
-                return HEADER[section]
+                return self._header[section]
             elif orientation == Qt.Vertical:
                 return f'{section}'
 
