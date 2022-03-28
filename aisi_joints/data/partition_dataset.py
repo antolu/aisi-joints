@@ -1,6 +1,6 @@
 import logging
 import re
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 import pandas as pd
 import numpy as np
 import os.path as path
@@ -8,10 +8,7 @@ import os.path as path
 log = logging.getLogger(__name__)
 
 
-def partition_dataset(input_csv: str, ratio: str, output: str):
-    with open(input_csv) as f:
-        df = pd.read_csv(f)
-
+def partition_dataset(df: pd.DataFrame, ratio: str):
     m = re.match(r'(?P<train>\d+)\/(?P<validation>\d+)(\/(?P<test>\d+))?',
                  ratio)
 
@@ -78,8 +75,17 @@ def partition_dataset(input_csv: str, ratio: str, output: str):
         msg += '.'
     log.info(msg)
 
-    df.to_csv(output, index=False)
-    log.info(f'Wrote partitioned dataset to {path.abspath(output)}')
+    return df
+
+
+def main(args: Namespace):
+    with open(args.input_csv) as f:
+        df = pd.read_csv(f)
+
+    df = partition_dataset(df, args.ratio)
+
+    df.to_csv(args.output, index=False)
+    log.info(f'Wrote partitioned dataset to {path.abspath(args.output)}')
 
 
 if __name__ == '__main__':
@@ -98,4 +104,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     setup_logger()
-    partition_dataset(args.input_csv, args.ratio, args.output)
+    main(args)

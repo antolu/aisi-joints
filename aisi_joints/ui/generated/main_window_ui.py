@@ -22,6 +22,7 @@ class Ui_MainWindow(object):
         self.sampleTable = QtWidgets.QTableView(self.centralwidget)
         self.sampleTable.setSortingEnabled(True)
         self.sampleTable.setObjectName("sampleTable")
+        self.sampleTable.horizontalHeader().setCascadingSectionResizes(True)
         self.sampleTable.horizontalHeader().setStretchLastSection(True)
         self.horizontalLayout.addWidget(self.sampleTable)
         self.widget = ImageWidget(self.centralwidget)

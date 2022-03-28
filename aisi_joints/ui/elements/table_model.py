@@ -20,9 +20,6 @@ class TableModel(QAbstractTableModel):
         super().__init__(parent)
 
         self.dataframe = data
-        self._header = HEADER.copy()
-        if 'split' not in self._data.columns:
-            self._header.remove('Split')
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -37,6 +34,10 @@ class TableModel(QAbstractTableModel):
 
         if 'validate' not in self._data.columns:
             self._data['validate'] = False
+
+        self._header = HEADER.copy()
+        if 'split' not in self._data.columns:
+            self._header.remove('Split')
 
         self.modelReset.emit()
 

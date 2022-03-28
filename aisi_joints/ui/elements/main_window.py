@@ -8,6 +8,7 @@ import pandas as pd
 from .copy_action import CopySelectedCellsAction
 from .export_dialog import ExportDialog
 from .import_dialog import ImportDialog
+from .partition_dialog import PartitionDialog
 from .table_model import TableModel
 from ..generated.main_window_ui import Ui_MainWindow
 from ..settings import app
@@ -26,8 +27,10 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.csv_path = csv_path
         if csv_path is None:
             df = pd.DataFrame()
+            self.disable_data_actions()
         else:
             df = pd.read_csv(csv_path)
+            self.enable_data_actions()
 
         table_model = TableModel(data=df, parent=self)
         proxy_model = QSortFilterProxyModel(self)
@@ -51,6 +54,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionExportIgnored.triggered.connect(self.on_export_ignored)
         self.action_ExportRevalidation.triggered.connect(self.on_export_revalidation)
 
+        self.action_Partition_Dataset.triggered.connect(self.on_partition)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
@@ -88,6 +92,8 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
         self.table_model.dataframe = df
 
+        self.enable_data_actions()
+
     def on_import(self):
         dialog = ImportDialog(self)
 
@@ -96,8 +102,14 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
             self.csv_path = None
 
+            QMessageBox.information(
+                self, 'Import Success',
+                f'Successfully imported {len(df)} samples')
+
         dialog.files_imported.connect(on_ok)
         dialog.exec()
+
+        self.enable_data_actions()
 
     def on_export_csv(self):
         dialog = ExportDialog(self.table_model.dataframe, parent=self)
@@ -145,6 +157,19 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         except OSError as e:
             QMessageBox.critical(self, 'Error', str(e))
 
+    def on_partition(self):
+        dialog = PartitionDialog(self.table_model.dataframe, self)
+
+        def on_ok(df: pd.DataFrame):
+            self.table_model.dataframe = df
+
+            QMessageBox.information(
+                self, 'Partition success', 'Successfully partitioned dataset.')
+            # TODO: add more partition information
+
+        dialog.data_partitioned.connect(on_ok)
+        dialog.exec()
+
     def on_ignore_clicked(self):
         index = self.sampleTable.currentIndex()
         if index.row() == -1:
@@ -164,3 +189,27 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.sampleTable.dataChanged(
             self.table_model.index(index.row(), 0),
             self.table_model.index(0, self.table_model.columnCount()))
+
+    def enable_data_actions(self):
+        self.actionSave_csv.setEnabled(True)
+        self.action_Partition_Dataset.setEnabled(True)
+        # self.action_Filter_Dataset.setEnabled(True)
+        # self.action_Update_Filepaths.setEnabled(True)
+        # self.action_Generate_tfrecord.setEnabled(True)
+        self.actionShow_Image.setEnabled(True)
+        self.actionIgnore.setEnabled(True)
+        self.actionExport_csv.setEnabled(True)
+        self.actionExportIgnored.setEnabled(True)
+        self.action_ExportRevalidation.setEnabled(True)
+
+    def disable_data_actions(self):
+        self.actionSave_csv.setDisabled(True)
+        self.action_Partition_Dataset.setDisabled(True)
+        self.action_Filter_Dataset.setDisabled(True)
+        self.action_Update_Filepaths.setDisabled(True)
+        self.action_Generate_tfrecord.setDisabled(True)
+        self.actionShow_Image.setDisabled(True)
+        self.actionIgnore.setDisabled(True)
+        self.actionExport_csv.setDisabled(True)
+        self.actionExportIgnored.setDisabled(True)
+        self.action_ExportRevalidation.setDisabled(True)
