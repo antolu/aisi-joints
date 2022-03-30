@@ -23,6 +23,9 @@ class UpdateFilepathsDialog(QDialog, Ui_UpdateFilepathsDialog):
 
         self._data = data
 
+        self.buttonBrowse.clicked.connect(self.on_browse)
+        self.buttonBox.accepted.connect(self.on_ok)
+
     def on_browse(self):
         directories = choose_directories(self)
 

@@ -58,6 +58,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
         self.action_Partition_Dataset.triggered.connect(self.on_partition)
         self.action_Filter_Dataset.triggered.connect(self.on_filter)
+        self.action_Update_Filepaths.triggered.connect(self.on_update_paths)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
