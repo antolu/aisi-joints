@@ -5,10 +5,11 @@ import pandas as pd
 import numpy as np
 from PyQt5.QtGui import QColor
 
-HEADER = ['eventId', 'platformId', 'Label', 'Split', 'File path']
+HEADER = ['eventId', 'sessionId', 'platformId', 'Label', 'Split', 'File path']
 HEADER_TO_COLUMN = {
     'eventId': 'eventId',
     'platformId': 'platformId',
+    'sessionId': 'sessionId',
     'Label': 'cls',
     'Split': 'split',
     'File path': 'filepath'

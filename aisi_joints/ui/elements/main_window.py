@@ -110,10 +110,10 @@ class MainWindow(Ui_MainWindow, QMainWindow):
                 self, 'Import Success',
                 f'Successfully imported {len(df)} samples')
 
+            self.enable_data_actions()
+
         dialog.files_imported.connect(on_ok)
         dialog.exec()
-
-        self.enable_data_actions()
 
     def on_export_csv(self):
         dialog = ExportDialog(self.table_model.dataframe, parent=self)
