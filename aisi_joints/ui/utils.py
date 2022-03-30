@@ -15,7 +15,8 @@ from functools import wraps
 from threading import Event, get_ident, Thread
 
 from PyQt5.QtCore import pyqtSignal, QObject, QThread
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QFileDialog, QListView, QTreeView, QFileSystemModel, QAbstractItemView, \
+    QDialog
 
 
 def thread(function: t.Callable, *args, **kwargs):
@@ -126,3 +127,21 @@ class Task:
         if self._exception:
             raise self._exception
         return self._result
+
+
+def choose_directories(parent: QObject) -> t.List[str]:
+    dialog = QFileDialog(parent)
+    dialog.setWindowTitle('Select directories with images')
+    dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+    dialog.setFileMode(QFileDialog.DirectoryOnly)
+    for view in dialog.findChildren(
+            (QListView, QTreeView)):
+        if isinstance(view.model(), QFileSystemModel):
+            view.setSelectionMode(
+                QAbstractItemView.ExtendedSelection)
+    dialog.deleteLater()
+
+    if dialog.exec() == QDialog.Accepted:
+        return dialog.selectedFiles()
+    else:
+        return []
