@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 from PyQt5.QtGui import QPen, QColorConstants as QColor
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QMessageBox
 from pyqtgraph import ImageItem, GraphicsView, ViewBox, PlotDataItem
 
 from ..utils import run_in_main_thread
@@ -30,7 +30,13 @@ class ImageWidget(GraphicsView):
 
     @run_in_main_thread
     def show_image(self, sample: pd.DataFrame):
-        image = cv.imread(sample.filepath)
+        try:
+            image = cv.imread(sample.filepath)
+        except OSError as e:
+            QMessageBox.critical(
+                self, 'Error',
+                f'Error in loading image from {sample.filepath}\n{e}')
+            return
 
         x0 = sample.x0
         x1 = sample.x1
