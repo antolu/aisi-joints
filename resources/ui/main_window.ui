@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Joint Inspector</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTableView" name="sampleTable">
+      <property name="sortingEnabled">
+       <bool>true</bool>
+      </property>
+      <attribute name="horizontalHeaderCascadingSectionResizes">
+       <bool>true</bool>
+      </attribute>
+      <attribute name="horizontalHeaderStretchLastSection">
+       <bool>true</bool>
+      </attribute>
+     </widget>
+    </item>
+    <item>
+     <widget class="ImageWidget" name="widget" native="true"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionImport"/>
+    <addaction name="actionLoad_csv"/>
+    <addaction name="actionSave_csv"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_csv"/>
+    <addaction name="actionExportIgnored"/>
+    <addaction name="action_ExportRevalidation"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="action_Partition_Dataset"/>
+    <addaction name="action_Filter_Dataset"/>
+    <addaction name="action_Generate_tfrecord"/>
+    <addaction name="action_Update_Filepaths"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Tools"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionIgnore"/>
+   <addaction name="actionValidate"/>
+   <addaction name="actionShow_Image"/>
+  </widget>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionIgnore">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/icons/cancel.svg</normaloff>:/icons/icons/cancel.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Ignore</string>
+   </property>
+   <property name="toolTip">
+    <string>Ignore this in the dataset</string>
+   </property>
+   <property name="shortcut">
+    <string>X</string>
+   </property>
+  </action>
+  <action name="actionValidate">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/icons/search.svg</normaloff>:/icons/icons/search.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Validate</string>
+   </property>
+   <property name="toolTip">
+    <string>Mark this sample as needing re-validation</string>
+   </property>
+   <property name="shortcut">
+    <string>V</string>
+   </property>
+  </action>
+  <action name="actionExport_csv">
+   <property name="text">
+    <string>Export .&amp;csv</string>
+   </property>
+  </action>
+  <action name="actionSave_csv">
+   <property name="text">
+    <string>&amp;Save .csv</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="action_ExportRevalidation">
+   <property name="text">
+    <string>Export Revalidation Samples</string>
+   </property>
+  </action>
+  <action name="actionExportIgnored">
+   <property name="text">
+    <string>Export Ignored Samples</string>
+   </property>
+  </action>
+  <action name="actionShow_Image">
+   <property name="text">
+    <string>Show Image</string>
+   </property>
+   <property name="toolTip">
+    <string>Show image on current row</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import RCM API .csv</string>
+   </property>
+  </action>
+  <action name="actionLoad_csv">
+   <property name="text">
+    <string>Load .csv</string>
+   </property>
+  </action>
+  <action name="action_Partition_Dataset">
+   <property name="text">
+    <string>&amp;Partition Dataset</string>
+   </property>
+  </action>
+  <action name="action_Filter_Dataset">
+   <property name="text">
+    <string>&amp;Filter Dataset</string>
+   </property>
+  </action>
+  <action name="action_Generate_tfrecord">
+   <property name="text">
+    <string>&amp;Generate .tfrecord</string>
+   </property>
+  </action>
+  <action name="action_Update_Filepaths">
+   <property name="text">
+    <string>&amp;Update Filepaths</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ImageWidget</class>
+   <extends>QWidget</extends>
+   <header>aisi_joints.ui.elements.imagewidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

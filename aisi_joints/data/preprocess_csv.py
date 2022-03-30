@@ -12,20 +12,17 @@ Run this script as
 python -m aisi_joints.data.preprocess_csv --labels /path/to/.csv
     --boxes /path/to/other/csv --images /path/to/image/dir
 """
-from typing import List, Optional, Dict
-
-import pandas as pd
-import re
-import json
-import numpy as np
-import os.path as path
-import os
-
-
 import logging
+import os
+import os.path as path
+import re
+from argparse import ArgumentParser, Namespace
+from typing import List, Dict, Tuple
+
+import numpy as np
+import pandas as pd
 
 log = logging.getLogger(__name__)
-
 
 CLASS_DEFECT = 'DEFECT'
 CLASS_OK = 'OK'
@@ -44,8 +41,9 @@ def write_pbtxt(classes: Dict[str, int], output_name: str):
 
 
 def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
-                   images_pth: List[str], output: Optional[str] = None):
-
+                   images_pth: List[str],
+                   deviations_only: bool = False) \
+        -> Tuple[pd.DataFrame, dict]:
     # process label files first
     labels_df = pd.DataFrame()
     for label_pth in labels_pth:
@@ -91,7 +89,12 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
     # add class column based on deviationID and ratingStatus values
     df['cls'] = np.nan
     df.loc[df['deviationId'].notna(), 'cls'] = CLASS_DEFECT
-    df.loc[df['ratingStatus'] == 'IND_TRUE_POSITIVE', 'cls'] = CLASS_DEFECT
+
+    if deviations_only:
+        df = df.drop(df.loc[(df['ratingStatus'] == 'IND_TRUE_POSITIVE') & ~df['deviationId'].notna()].index)
+    else:
+        df.loc[df['ratingStatus'] == 'IND_TRUE_POSITIVE', 'cls'] = CLASS_DEFECT
+
     df.loc[df['ratingStatus'] == 'IND_FALSE_POSITIVE', 'cls'] = CLASS_OK
 
     label_map = {
@@ -127,16 +130,21 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
     log.info(f'Total number of defects: '
              f'{len(df[df["cls"] == CLASS_DEFECT])}.')
 
-    if output is not None:
-        log.info(f'Writing output .csv to {path.abspath(output)}.')
-        df.to_csv(output)
+    return df, label_map
 
-        basename = path.splitext(output)[0]
+
+def main(args: Namespace):
+    df, label_map = preprocess_csv(args.labels, args.boxes, args.images,
+                                   args.output)
+    if args.output is not None:
+        log.info(f'Writing output .csv to {path.abspath(args.output)}.')
+        df.to_csv(args.output, index=False)
+
+        basename = path.splitext(args.output)[0]
         write_pbtxt(label_map, basename + '_labelmap.pbtxt')
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
     from ..utils.logging import setup_logger
 
     parser = ArgumentParser()
@@ -152,4 +160,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     setup_logger()
-    preprocess_csv(args.labels, args.boxes, args.images, args.output)
+    main(args)

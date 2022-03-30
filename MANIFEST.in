@@ -1,0 +1,4 @@
+recursive-include resources/ui *.ui
+recursive-include resources/icons *.svg
+recursive-include resources/icons *.png
+include resources/resources.qrc
