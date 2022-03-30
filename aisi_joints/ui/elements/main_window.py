@@ -11,6 +11,7 @@ from .filter_dialog import FilterDialog
 from .import_dialog import ImportDialog
 from .partition_dialog import PartitionDialog
 from .table_model import TableModel
+from .update_filepaths_dialog import UpdateFilepathsDialog
 from ..generated.main_window_ui import Ui_MainWindow
 from ..settings import app
 
@@ -57,6 +58,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
         self.action_Partition_Dataset.triggered.connect(self.on_partition)
         self.action_Filter_Dataset.triggered.connect(self.on_filter)
+        self.action_Update_Filepaths.triggered.connect(self.on_update_paths)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
@@ -184,6 +186,19 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         dialog.data_filtered.connect(on_ok)
         dialog.exec()
 
+    def on_update_paths(self):
+        dialog = UpdateFilepathsDialog(self.table_model.dataframe, self)
+
+        def on_ok(df: pd.DataFrame):
+            self.table_model.dataframe = df
+
+            QMessageBox.information(
+                self, 'Update file paths success.',
+                f'Successfully updated file paths for {len(df)} samples.')
+
+        dialog.paths_updated.connect(on_ok)
+        dialog.exec()
+
     def on_ignore_clicked(self):
         index = self.sampleTable.currentIndex()
         if index.row() == -1:
@@ -208,7 +223,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionSave_csv.setEnabled(True)
         self.action_Partition_Dataset.setEnabled(True)
         self.action_Filter_Dataset.setEnabled(True)
-        # self.action_Update_Filepaths.setEnabled(True)
+        self.action_Update_Filepaths.setEnabled(True)
         # self.action_Generate_tfrecord.setEnabled(True)
         self.actionShow_Image.setEnabled(True)
         self.actionIgnore.setEnabled(True)

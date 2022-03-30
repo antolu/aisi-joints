@@ -5,7 +5,7 @@ is generated on one computer and needs to be ported to another.
 import logging
 import os
 import re
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import List
 
 import pandas as pd
@@ -30,7 +30,6 @@ def update_paths(df: pd.DataFrame, images_pth: List[str]) -> pd.DataFrame:
                     {'eventId': m.group('uuid'),
                      'filepath': path.abspath(path.join(image_pth, f))})
 
-
     images_df = pd.DataFrame(images_idx)
     log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '
              f'directories.')
@@ -38,8 +37,16 @@ def update_paths(df: pd.DataFrame, images_pth: List[str]) -> pd.DataFrame:
     # merge and filter based on eventId
     df = df.drop(columns=['filepath'])
     df = df.merge(images_df, left_on='eventId', right_on='eventId')
+    log.info(f'Updated file paths for {len(df)} samples.')
 
     return df
+
+
+def main(args: Namespace):
+    df = pd.read_csv(args.input_csv)
+    df = update_paths(df, args.images)
+
+    df.to_csv(args.output, index=False)
 
 
 if __name__ == '__main__':
@@ -57,8 +64,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     setup_logger()
-
-    df = pd.read_csv(args.input_csv)
-    df = update_paths(df, args.images)
-
-    df.to_csv(args.output, index=False)
+    main(args)
