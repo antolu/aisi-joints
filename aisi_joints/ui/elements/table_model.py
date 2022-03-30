@@ -39,6 +39,8 @@ class TableModel(QAbstractTableModel):
         self._header = HEADER.copy()
         if 'split' not in self._data.columns:
             self._header.remove('Split')
+        if 'sessionId' not in self._data.columns:
+            self._header.remove('sessionId')
 
         self.modelReset.emit()
 

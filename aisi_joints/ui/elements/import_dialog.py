@@ -10,6 +10,7 @@ from ..settings import app
 import logging
 import pandas as pd
 
+from ...data.import_pascal_voc import import_pascal_voc
 from ...data.import_rcm_api import import_rcm_api
 
 log = logging.getLogger(__name__)
@@ -28,11 +29,24 @@ class ImportDialog(QDialog, Ui_ImportDialog):
 
         self.buttonBox.accepted.connect(self.on_ok)
 
+        self.radioRcm.toggled.connect(self.import_type_changed)
+        self.radioPascal.toggled.connect(self.import_type_changed)
+
+    def import_type_changed(self, _: bool):
+        if self.radioRcm.isChecked():
+            self.labelLabel.setText('CSV with labels')
+            self.labelBox.setText('CSV with boxes')
+            self.checkDeviation.setHidden(False)
+        elif self.radioPascal.isChecked():
+            self.labelLabel.setText('CSV with RCM metadata')
+            self.labelBox.setText('Diretories containing label XML files.')
+            self.checkDeviation.setHidden(True)
+
     def browse_label(self):
         files, ok = QFileDialog.getOpenFileNames(
             self, 'Select .csv files with labels', app.current_dir, '*.csv')
 
-        if len(files) == 0:
+        if not ok or len(files) == 0:
             log.debug('No files selected.')
             return
 
@@ -40,15 +54,25 @@ class ImportDialog(QDialog, Ui_ImportDialog):
         self.textLabel.setText('\n'.join(files))
 
     def browse_box(self):
-        files, ok = QFileDialog.getOpenFileNames(
-            self, 'Select .csv files with boxes', app.current_dir, '*.csv')
+        if self.radioRcm.isChecked():
+            files, ok = QFileDialog.getOpenFileNames(
+                self, 'Select .csv files with boxes', app.current_dir, '*.csv')
 
-        if len(files) == 0:
-            log.debug('No files selected.')
-            return
+            if not ok or len(files) == 0:
+                log.debug('No files selected.')
+                return
 
-        app.current_dir = files[-1]
-        self.textBox.setText('\n'.join(files))
+            app.current_dir = files[-1]
+            self.textBox.setText('\n'.join(files))
+        elif self.radioPascal.isChecked():
+            directories = self._choose_directories()
+
+            if len(directories) == 0:
+                log.debug('No directories selected.')
+                return
+
+            app.current_dir = path.split(directories[-1])[0]
+            self.textBox.setText('\n'.join(directories))
 
     def browse_img(self):
         directories = self._choose_directories()
@@ -66,12 +90,23 @@ class ImportDialog(QDialog, Ui_ImportDialog):
         images = self.textImg.toPlainText().split('\n')
         deviations_only = self.checkDeviation.isChecked()
 
-        try:
-            df, label_map = import_rcm_api(labels, boxes, images, deviations_only)
-        except (KeyError, OSError) as e:
-            log.exception('An error occurred while importing RCM API .csv files.')
-            QMessageBox.critical(self, 'Error', 'An error occurred while importing '
-                                 'RCM API .csv files: \n' + str(e))
+        if self.radioRcm.isChecked():
+            try:
+                df, label_map = import_rcm_api(labels, boxes, images, deviations_only)
+            except (KeyError, OSError) as e:
+                log.exception('An error occurred while importing RCM API .csv files.')
+                QMessageBox.critical(self, 'Error', 'An error occurred while importing '
+                                     'RCM API .csv files: \n' + str(e))
+                return
+        elif self.radioPascal.isChecked():
+            try:
+                df, label_map = import_pascal_voc(labels, boxes, images)
+            except (KeyError, OSError) as e:
+                log.exception('An error occurred while importing PASCAL VOC format datasets.')
+                QMessageBox.critical(self, 'Error', 'An error occurred while importing '
+                                                    'PASCAL VOC format datasets: \n' + str(e))
+                return
+        else:
             return
 
         self.files_imported.emit(df, label_map)

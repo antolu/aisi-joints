@@ -154,7 +154,10 @@
   </action>
   <action name="actionImport">
    <property name="text">
-    <string>Import RCM API .csv</string>
+    <string>Import Raw Dataset</string>
+   </property>
+   <property name="toolTip">
+    <string>Import Raw Dataset in RCM API or PASCAL VOC form.</string>
    </property>
   </action>
   <action name="actionLoad_csv">

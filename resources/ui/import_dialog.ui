@@ -7,13 +7,43 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>292</height>
+    <height>372</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Import from RCM API</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QFrame" name="frame">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Import format</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioRcm">
+        <property name="text">
+         <string>RCM API export</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioPascal">
+        <property name="text">
+         <string>PASCAL VOC + RCM metadata</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item>
     <widget class="QFrame" name="frame">
      <property name="frameShape">
@@ -23,58 +53,58 @@
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="labelLabel">
         <property name="text">
          <string>CSV with labels</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QTextEdit" name="textLabel"/>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <widget class="QPushButton" name="buttonBrowseLabel">
         <property name="text">
          <string>Browse...</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="labelBox">
         <property name="text">
          <string>CSV with boxes</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QTextEdit" name="textBox"/>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QPushButton" name="buttonBrowseBox">
         <property name="text">
          <string>Browse...</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="5" column="0">
        <widget class="QLabel" name="labelImg">
         <property name="text">
          <string>Directories containing images</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
+      <item row="6" column="0">
        <widget class="QTextEdit" name="textImg"/>
       </item>
-      <item row="5" column="1">
+      <item row="6" column="1">
        <widget class="QPushButton" name="buttonBrowseImg">
         <property name="text">
          <string>Browse...</string>
         </property>
        </widget>
       </item>
-      <item row="6" column="0">
+      <item row="7" column="0">
        <widget class="QCheckBox" name="checkDeviation">
         <property name="text">
          <string>Only use defect samples with deviationId</string>
