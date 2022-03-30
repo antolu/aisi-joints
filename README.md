@@ -16,7 +16,7 @@ Numpy >= 1.20
 To process raw data from RCM API, use the `aisi_joints.data` module. First the .csv files provided by RCM API needs to be cleaned, and unlabeled data filtered out. The script matches label to box and image using the eventId UUID. This is done using
 
 ```shell
-python -m aisi_joints.data.preprocess_csv -l /path/to/csv/with/labels.csv -b /path/to/csv/with/boxes.csv -i /path/to/directory/with/images
+python -m aisi_joints.data.import_rcm_api -l /path/to/csv/with/labels.csv -b /path/to/csv/with/boxes.csv -i /path/to/directory/with/images
 ```
 which generates the file `output.csv` containing only the labeled data, as well as a labelmap named `output_labelmap.pbtxt`
 

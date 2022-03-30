@@ -9,52 +9,27 @@ The output csv can then be used to produce tfrecord files for TFOD.
 
 Run this script as
 ```
-python -m aisi_joints.data.preprocess_csv --labels /path/to/.csv
+python -m aisi_joints.data.import_rcm_api --labels /path/to/.csv
     --boxes /path/to/other/csv --images /path/to/image/dir
 """
 import logging
-import os
 import os.path as path
-import re
 from argparse import ArgumentParser, Namespace
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 
+from .common import CLASS_DEFECT, CLASS_OK, find_images, find_labels, write_pbtxt
+
 log = logging.getLogger(__name__)
 
-CLASS_DEFECT = 'DEFECT'
-CLASS_OK = 'OK'
 
-
-def write_pbtxt(classes: Dict[str, int], output_name: str):
-    with open(output_name, 'w') as f:
-        for name, id_ in classes.items():
-            out = ''
-            out += 'item {\n'
-            out += f'  id: {id_ + 1}\n'
-            out += f'  name: \'{name}\'\n'
-            out += '}\n\n'
-
-            f.write(out)
-
-
-def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
+def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
                    images_pth: List[str],
                    deviations_only: bool = False) \
         -> Tuple[pd.DataFrame, dict]:
-    # process label files first
-    labels_df = pd.DataFrame()
-    for label_pth in labels_pth:
-        if not path.isfile(label_pth):
-            raise FileNotFoundError(f'Could not find label file at '
-                                    f'{label_pth}.')
-
-        with open(label_pth) as f:
-            label_df = pd.read_csv(f)
-        label_df = label_df.drop('rating', axis=1)  # remove json column
-        labels_df = pd.concat([labels_df, label_df])
+    labels_df = find_labels(labels_pth)
 
     orig_len = len(labels_df)
 
@@ -102,24 +77,7 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
         CLASS_DEFECT: 1
     }
 
-    # iterate over all image files to construct index
-    images_idx = list()
-    regex = re.compile(r'.*_(?P<uuid>.+)\.(png|jpg)')
-    for image_pth in images_pth:
-        if not path.isdir(image_pth):
-            raise NotADirectoryError(f'{image_pth} is not a directory.')
-
-        for f in os.listdir(image_pth):
-            m = regex.match(f)
-
-            if m:
-                images_idx.append(
-                    {'eventId': m.group('uuid'),
-                     'filepath': path.abspath(path.join(image_pth, f))})
-
-    images_df = pd.DataFrame(images_idx)
-    log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '
-             f'directories.')
+    images_df = find_images(images_pth)
 
     # merge and filter based on eventId
     df = df.merge(images_df, left_on='eventId', right_on='eventId')
@@ -134,8 +92,7 @@ def preprocess_csv(labels_pth: List[str], boxes_pth: List[str],
 
 
 def main(args: Namespace):
-    df, label_map = preprocess_csv(args.labels, args.boxes, args.images,
-                                   args.output)
+    df, label_map = import_rcm_api(args.labels, args.boxes, args.images)
     if args.output is not None:
         log.info(f'Writing output .csv to {path.abspath(args.output)}.')
         df.to_csv(args.output, index=False)

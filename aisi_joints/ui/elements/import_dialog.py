@@ -10,7 +10,7 @@ from ..settings import app
 import logging
 import pandas as pd
 
-from ...data.preprocess_csv import preprocess_csv
+from ...data.import_rcm_api import import_rcm_api
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class ImportDialog(QDialog, Ui_ImportDialog):
         deviations_only = self.checkDeviation.isChecked()
 
         try:
-            df, label_map = preprocess_csv(labels, boxes, images, deviations_only)
+            df, label_map = import_rcm_api(labels, boxes, images, deviations_only)
         except (KeyError, OSError) as e:
             log.exception('An error occurred while importing RCM API .csv files.')
             QMessageBox.critical(self, 'Error', 'An error occurred while importing '
