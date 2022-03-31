@@ -74,13 +74,22 @@ def main(args: Namespace):
     with open(args.input) as f:
         df = pd.read_csv(f)
 
-    splits = df['split'].unique()
+    if 'split' in df:
+        splits = df['split'].unique()
+        use_splits = True
+    else:
+        splits = ['samples']
+        use_splits = False
+
     pbar = tqdm.tqdm(total=len(df))
     for split in splits:
         filename = path.join(args.output, split + '.tfrecord')
 
-        # process each data split train/validation/test individually
-        split_df = df[df['split'] == split]
+        if use_splits:
+            # process each data split train/validation/test individually
+            split_df = df[df['split'] == split]
+        else:
+            split_df = df
 
         with tf.io.TFRecordWriter(filename) as writer:
             for item in split_df.itertuples():
