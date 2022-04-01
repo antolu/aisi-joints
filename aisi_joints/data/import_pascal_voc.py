@@ -33,7 +33,7 @@ CLASS_DEFECT = 'DEFECT'
 CLASS_OK = 'OK'
 
 
-def xml_to_df(xml_dir: str) -> pd.DataFrame:
+def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
     regex = re.compile(r'.*_(?P<uuid>.+)\.(xml)')
 
     xml_list = []
@@ -49,14 +49,25 @@ def xml_to_df(xml_dir: str) -> pd.DataFrame:
         tree = ET.parse(xml_file)
         root = tree.getroot()
 
+        width = int(root.find('size').find('width').text)
+        height = int(root.find('size').find('height').text)
+
         for member in root.findall('object'):
             bndbox = member.find('bndbox')
+
+            x0 = int(bndbox.find('xmin').text)
+            x1 = int(bndbox.find('xmax').text)
+            y0 = int(bndbox.find('ymin').text)
+            y1 = int(bndbox.find('ymax').text)
+
+            x0 = max(x0 - pad_bndbox, 0)
+            x1 = min(x1 + pad_bndbox, width)
+            y0 = max(y0 - pad_bndbox, 0)
+            y1 = min(y1 + pad_bndbox, width)
+
             value = (eventId,
                      member.find('name').text,
-                     float(bndbox.find('xmin').text),
-                     float(bndbox.find('xmax').text),
-                     float(bndbox.find('ymin').text),
-                     float(bndbox.find('ymax').text),
+                     x0, x1, y0, y1
                      )
             xml_list.append(value)
 
@@ -70,7 +81,7 @@ def xml_to_df(xml_dir: str) -> pd.DataFrame:
 
 
 def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
-                      images_pth: List[str]) \
+                      images_pth: List[str], pad_bndbox: int = 10) \
         -> Tuple[pd.DataFrame, dict]:
     metadata_df = find_labels(labels_pth)
 
@@ -80,7 +91,7 @@ def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
         if not path.isdir(xml_pth):
             raise FileNotFoundError(f'Could not find dir at {xml_pth}.')
 
-        xml_df = xml_to_df(xml_pth)
+        xml_df = xml_to_df(xml_pth, pad_bndbox)
 
         xmls_df = pd.concat([xmls_df, xml_df])
 
