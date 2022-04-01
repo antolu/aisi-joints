@@ -63,7 +63,7 @@ def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
             x0 = max(x0 - pad_bndbox, 0)
             x1 = min(x1 + pad_bndbox, width)
             y0 = max(y0 - pad_bndbox, 0)
-            y1 = min(y1 + pad_bndbox, width)
+            y1 = min(y1 + pad_bndbox, height)
 
             value = (eventId,
                      member.find('name').text,
