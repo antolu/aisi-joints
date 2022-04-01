@@ -39,12 +39,19 @@ def partition_dataset(df: pd.DataFrame, ratio: str):
 
     df['split'] = np.nan
 
+    if 'platformId' in df.columns:
+        platform_id = 'platformId'
+    elif 'platformID' in df.columns:
+        platform_id = 'platformID'
+    else:
+        raise ValueError()
+
     # split equally between platformIDs
-    platforms = list(pd.unique(df['platformID']))
+    platforms = list(pd.unique(df[platform_id]))
     platform_dfs = []
 
     for platform in platforms:
-        platform_df = df[df['platformID'] == platform]
+        platform_df = df[df[platform_id] == platform]
 
         if test_ratio == 0:
             split = [round(train_ratio / 100 * len(platform_df))]
