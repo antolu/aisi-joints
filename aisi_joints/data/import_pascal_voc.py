@@ -55,10 +55,10 @@ def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
         for member in root.findall('object'):
             bndbox = member.find('bndbox')
 
-            x0 = int(bndbox.find('xmin').text)
-            x1 = int(bndbox.find('xmax').text)
-            y0 = int(bndbox.find('ymin').text)
-            y1 = int(bndbox.find('ymax').text)
+            x0 = int(float(bndbox.find('xmin').text))
+            x1 = int(float(bndbox.find('xmax').text))
+            y0 = int(float(bndbox.find('ymin').text))
+            y1 = int(float(bndbox.find('ymax').text))
 
             x0 = max(x0 - pad_bndbox, 0)
             x1 = min(x1 + pad_bndbox, width)
