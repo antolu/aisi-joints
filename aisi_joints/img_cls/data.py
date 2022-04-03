@@ -4,6 +4,8 @@ from typing import Tuple
 import pandas as pd
 import tensorflow as tf
 
+from aisi_joints.data.generate_tfrecord import read_tfrecord
+
 log = logging.getLogger(__name__)
 
 
@@ -39,22 +41,23 @@ def get_data(csv_path: str) -> Tuple[tf.data.Dataset,
     return train_dataset, val_dataset, test_dataset
 
 
-@tf.function
+# @tf.function
 def read_image(image_path: str) -> tf.Tensor:
     image = tf.io.read_file(image_path)
     # tensorflow provides quite a lot of apis for io
-    image = tf.image.decode_image(image, channels=3, dtype=tf.float32)
+    image = tf.image.decode_png(image, channels=3)
+    image = tf.cast(image, tf.float32)
     return image
 
 
-@tf.function
+# @tf.function
 def normalize(image: tf.Tensor) -> tf.Tensor:
     image = (image - tf.reduce_min(image)) / (tf.reduce_max(image) - tf.reduce_min(image))
     image = (2 * image) - 1
     return image
 
 
-@tf.function
+# @tf.function
 def augment(image: tf.Tensor) -> tf.Tensor:
     # image = tf.image.random_crop(image, (178, 178, 3))
     image = tf.image.resize(image, (299, 299))
@@ -65,9 +68,17 @@ def augment(image: tf.Tensor) -> tf.Tensor:
     return image
 
 
-@tf.function
+# @tf.function
 def preprocess(image_path: str, label: int) -> Tuple[tf.Tensor, int]:
     image = read_image(image_path)
     image = augment(image)
     image = normalize(image)
-    return image, label
+    return image, tf.one_hot(label, 2)
+
+
+@tf.function
+def process_example(data: tf.train.Example):
+    sample = read_tfrecord(data)
+
+    return preprocess(image_path=sample['image/filename'],
+                      label=sample['image/object/class/label'])

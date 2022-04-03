@@ -38,6 +38,28 @@ class Sample(NamedTuple):
 log = logging.getLogger(__name__)
 
 
+def read_tfrecord(example: tf.train.Example) -> dict:
+    tfrecord_format = (
+        {
+            'image/height': tf.io.FixedLenFeature([], tf.int64),
+            'image/width': tf.io.FixedLenFeature([], tf.int64),
+            'image/filename': tf.io.FixedLenFeature([], tf.string),
+            'image/source_id': tf.io.FixedLenFeature([], tf.string),
+            'image/encoded': tf.io.FixedLenFeature([], tf.string),
+            'image/format': tf.io.FixedLenFeature([], tf.string),
+            'image/object/bbox/xmin': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'image/object/bbox/xmax': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'image/object/bbox/ymin': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'image/object/bbox/ymax': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
+            'image/object/class/text': tf.io.FixedLenFeature([], tf.string),
+            'image/object/class/label': tf.io.FixedLenFeature([], tf.int64),
+        }
+    )
+    example = tf.io.parse_single_example(example, tfrecord_format)
+
+    return example
+
+
 def create_tf_example(sample: Sample, label_map: Dict[str, int],
                       class_weight: Dict[str, float]) -> tf.train.Example:
     # required to find immage dimensions
