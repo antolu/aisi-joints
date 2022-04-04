@@ -11,7 +11,8 @@ from tensorflow.keras.optimizers import SGD
 import pandas as pd
 
 from aisi_joints.data.generate_tfrecord import read_tfrecord
-from aisi_joints.img_cls.data import get_data, process_example
+from aisi_joints.img_cls.data import process_example, load_tfrecord
+from aisi_joints.utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
 
@@ -45,11 +46,8 @@ def freeze_layers(model: Model):
 
 
 def main(config: dict):
-    train_data = tf.data.TFRecordDataset([config['train_data']])
-    val_data = tf.data.TFRecordDataset([config['validation_data']])
-
-    train_data = train_data.map(partial(process_example), tf.data.AUTOTUNE).shuffle(2048, reshuffle_each_iteration=True).batch(config['batch_size'])
-    val_data = val_data.map(partial(process_example), tf.data.AUTOTUNE).shuffle(2048, reshuffle_each_iteration=True).batch(config['batch_size'])
+    train_data = load_tfrecord(config['train_data'], config['batch_size'])
+    val_data = load_tfrecord(config['validation_data'], config['batch_size'])
 
     base_model, model = get_model()
 
@@ -76,8 +74,12 @@ def main(config: dict):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.yml')
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='Debug logs')
 
     args = parser.parse_args()
+
+    setup_logger(args.debug)
 
     with open(args.config) as f:
         config = yaml.full_load(f)
