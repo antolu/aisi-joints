@@ -9,18 +9,20 @@ Run as `python -m aisi_joins.data.generate_tfrecord -h` for instructions.
 import io
 import logging
 import os
-from typing import NamedTuple
-
-import pandas as pd
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
-import tensorflow as tf
-from PIL import Image
 import os.path as path
 from argparse import ArgumentParser, Namespace
+from typing import NamedTuple, Dict
+
+import pandas as pd
+import tensorflow as tf
+import tqdm
+from PIL import Image
 from object_detection.utils import dataset_util
 from object_detection.utils import label_map_util
-import tqdm
+
+from .utils import generate_class_weights
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
 
 
 class Sample(NamedTuple):
@@ -36,7 +38,8 @@ class Sample(NamedTuple):
 log = logging.getLogger(__name__)
 
 
-def create_tf_example(sample: Sample, label_map: dict) -> tf.train.Example:
+def create_tf_example(sample: Sample, label_map: Dict[str, int],
+                      class_weight: Dict[str, float]) -> tf.train.Example:
     # required to find immage dimensions
     with tf.io.gfile.GFile(sample.filepath, 'rb') as fid:
         encoded_jpg = fid.read()
@@ -48,8 +51,7 @@ def create_tf_example(sample: Sample, label_map: dict) -> tf.train.Example:
     filename = sample.filepath.encode('utf8')
     image_format = os.path.splitext(sample.filepath)[-1].encode('utf8')
 
-    # convert everything to byte format for tfrecord
-    tf_example = tf.train.Example(features=tf.train.Features(feature={
+    feature = {
         'image/height': dataset_util.int64_feature(height),
         'image/width': dataset_util.int64_feature(width),
         'image/filename': dataset_util.bytes_feature(filename),
@@ -64,7 +66,11 @@ def create_tf_example(sample: Sample, label_map: dict) -> tf.train.Example:
             [sample.cls.encode('utf8')]),
         'image/object/class/label': dataset_util.int64_list_feature(
             [label_map[sample.cls]]),
-    }))
+        'image/object/weight': dataset_util.float_list_feature([class_weight[sample.cls]])
+    }
+
+    # convert everything to byte format for tfrecord
+    tf_example = tf.train.Example(features=tf.train.Features(feature=feature))
     return tf_example
 
 
@@ -81,6 +87,9 @@ def main(args: Namespace):
         splits = ['samples']
         use_splits = False
 
+    class_weights = generate_class_weights(df['cls'].to_list())
+    log.info(f'Using class weights {class_weights}.')
+
     pbar = tqdm.tqdm(total=len(df))
     for split in splits:
         filename = path.join(args.output, split + '.tfrecord')
@@ -93,7 +102,7 @@ def main(args: Namespace):
 
         with tf.io.TFRecordWriter(filename) as writer:
             for item in split_df.itertuples():
-                tf_sample = create_tf_example(item, label_map)
+                tf_sample = create_tf_example(item, label_map, class_weights)
                 writer.write(tf_sample.SerializeToString())
 
                 pbar.update(1)
@@ -104,6 +113,7 @@ def main(args: Namespace):
 
 if __name__ == '__main__':
     from ..utils.logging import setup_logger
+
     parser = ArgumentParser()
     parser.add_argument('-l', '--labelmap', type=str,
                         help='Labelmap in pbtxt format.')
@@ -112,6 +122,8 @@ if __name__ == '__main__':
                              'script.')
     parser.add_argument('-o', '--output', type=str, default='.',
                         help='Directory to output TFRecord (.record) files.')
+    parser.add_argument('-b', '--balance', action='store_true',
+                        help='Balance the dataset by setting class weights')
 
     args = parser.parse_args()
 
