@@ -15,10 +15,8 @@ def load_tfrecord(pth: str, batch_size: int,
                   random_crop: bool = True) -> tf.data.TFRecordDataset:
     data = tf.data.TFRecordDataset(pth)
 
-    process_example(list(data.take(1))[0])
-
-    data = data.map(partial(lambda smpl: process_example(smpl, random_crop)))
     data = data.shuffle(2048, reshuffle_each_iteration=True)
+    data = data.map(lambda smpl: process_example(smpl, random_crop))
     data = data.batch(batch_size)
 
     return data
