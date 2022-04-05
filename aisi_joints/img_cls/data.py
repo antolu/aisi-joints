@@ -12,10 +12,12 @@ log = logging.getLogger(__name__)
 
 
 def load_tfrecord(pth: str, batch_size: int,
-                  random_crop: bool = True) -> tf.data.TFRecordDataset:
+                  random_crop: bool = True,
+                  shuffle: bool = True) -> tf.data.TFRecordDataset:
     data = tf.data.TFRecordDataset(pth)
 
-    data = data.shuffle(2048, reshuffle_each_iteration=True)
+    if shuffle:
+        data = data.shuffle(2048, reshuffle_each_iteration=True)
     data = data.map(lambda smpl: process_example(smpl, random_crop))
     data = data.batch(batch_size)
 
@@ -261,7 +263,8 @@ def preprocess(image_path: str, label: int, fmt: str, bbox: List[int],
                random_crop: bool = True) -> Tuple[tf.Tensor, int]:
     image = read_image(image_path, fmt)
     image = augment(image, bbox, random_crop=random_crop)
-    image = normalize(image)
+    # image = normalize(image)
+    image = tf.keras.applications.inception_resnet_v2.preprocess_input(image)
     return image, tf.one_hot(label, 2)
 
 
