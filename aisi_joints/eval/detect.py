@@ -58,6 +58,8 @@ if __name__ == '__main__':
                              'this confidence score are discarded.')
     parser.add_argument('-o', '--output', default='output',
                         help='Output directory for images.')
+    parser.add_argument('--save-plot', dest='save_plot', action='store_true',
+                        help='Save images with bounding boxes.')
     args = parser.parse_args()
 
     detect(args)

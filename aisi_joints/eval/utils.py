@@ -100,6 +100,7 @@ def format_detections(detections: dict) -> pd.DataFrame:
 
     return boxes_info_df
 
+
 def plot_and_save(image: np.ndarray, label_map: dict, detections: dict,
                   score_threshold: float, output_path: str):
     image_copy = np.array(image)
