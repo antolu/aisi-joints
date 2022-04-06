@@ -101,10 +101,9 @@ def create_tf_example(sample: Sample, label_map: Dict[str, int],
     return tf_example
 
 
-def generate_tfrecord(df: pd.DataFrame, label_map_path: str, output_dir: str,
+def generate_tfrecord(df: pd.DataFrame, label_map: dict, output_dir: str,
                       use_class_weights: bool = False,
                       progress_cb: Optional[Callable] = None):
-    label_map = label_map_util.get_label_map_dict(label_map_path)
 
     if 'split' in df:
         splits = df['split'].unique()
@@ -116,7 +115,7 @@ def generate_tfrecord(df: pd.DataFrame, label_map_path: str, output_dir: str,
     class_weights = generate_class_weights(df['cls'].to_list())
     log.info(f'Using class weights {class_weights}.')
 
-    msg = f'Using class weights {class_weights}.'
+    msg = [f'Using class weights {class_weights}.']
 
     progress = 0
     if progress_cb is None:
@@ -147,10 +146,12 @@ def generate_tfrecord(df: pd.DataFrame, label_map_path: str, output_dir: str,
 
                 update_progress()
 
-        msg += f'Successfully created the {split} split TFRecord file: ' \
+        info = f'Successfully created the {split} split TFRecord file: ' \
                f'at {path.abspath(filename)}'
+        log.info(info)
+        msg.append(info)
 
-    return msg
+    return '\n'.join(msg)
 
 
 def main(args: Namespace):

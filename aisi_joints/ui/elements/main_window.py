@@ -1,7 +1,7 @@
 from os import path
 
-from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel, Qt
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QProgressDialog
 
 import pandas as pd
 
@@ -17,6 +17,10 @@ from ..settings import app
 
 
 import logging
+
+from ..utils import run_in_main_thread
+from ...constants import LABEL_MAP
+from ...data.generate_tfrecord import generate_tfrecord
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +63,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_Partition_Dataset.triggered.connect(self.on_partition)
         self.action_Filter_Dataset.triggered.connect(self.on_filter)
         self.action_Update_Filepaths.triggered.connect(self.on_update_paths)
+        self.action_Generate_tfrecord.triggered.connect(self.on_generate_tfrecord)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
@@ -199,6 +204,38 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         dialog.paths_updated.connect(on_ok)
         dialog.exec()
 
+    def on_generate_tfrecord(self):
+        directory = QFileDialog.getExistingDirectory(
+            self, 'Select .tfrecord output directory.', app.current_dir)
+
+        if directory is None or directory == '':
+            return
+
+        app.current_dir = directory
+
+        df = self.table_model.dataframe
+        progress_window = QProgressDialog(
+            'Generating .tfrecords...', 'Cancel', 0, len(df), self)
+        progress_window.setWindowModality(Qt.WindowModal)
+        progress_window.show()
+
+        @run_in_main_thread
+        def progress_callback(value: int, _):
+            progress_window.setValue(value)
+
+        try:
+            msg = generate_tfrecord(
+                self.table_model.dataframe, LABEL_MAP, directory,
+                use_class_weights=True, progress_cb=progress_callback)
+        except OSError as e:
+            QMessageBox.critical(
+                self, 'Error',
+                f'Unknown error while generating tfrecords: \n{str}')
+        finally:
+            progress_window.close()
+
+        QMessageBox.information(self, 'Success!', msg)
+
     def on_ignore_clicked(self):
         index = self.sampleTable.currentIndex()
         if index.row() == -1:
@@ -224,7 +261,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_Partition_Dataset.setEnabled(True)
         self.action_Filter_Dataset.setEnabled(True)
         self.action_Update_Filepaths.setEnabled(True)
-        # self.action_Generate_tfrecord.setEnabled(True)
+        self.action_Generate_tfrecord.setEnabled(True)
         self.actionShow_Image.setEnabled(True)
         self.actionIgnore.setEnabled(True)
         self.actionValidate.setEnabled(True)
