@@ -60,9 +60,10 @@
     <property name="title">
      <string>&amp;Tools</string>
     </property>
-    <addaction name="action_Partition_Dataset"/>
+    <addaction name="actionExport_Labelmap"/>
     <addaction name="action_Filter_Dataset"/>
     <addaction name="action_Generate_tfrecord"/>
+    <addaction name="action_Partition_Dataset"/>
     <addaction name="action_Update_Filepaths"/>
    </widget>
    <addaction name="menu_File"/>
@@ -183,6 +184,11 @@
   <action name="action_Update_Filepaths">
    <property name="text">
     <string>&amp;Update Filepaths</string>
+   </property>
+  </action>
+  <action name="actionExport_Labelmap">
+   <property name="text">
+    <string>Export Labelmap</string>
    </property>
   </action>
  </widget>

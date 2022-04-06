@@ -69,7 +69,7 @@ def write_pbtxt(classes: Dict[str, int], output_name: str):
         for name, id_ in classes.items():
             out = ''
             out += 'item {\n'
-            out += f'  id: {id_ + 1}\n'
+            out += f'  id: {id_}\n'
             out += f'  name: \'{name}\'\n'
             out += '}\n\n'
 

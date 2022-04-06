@@ -1,9 +1,9 @@
+import logging
 from os import path
 
+import pandas as pd
 from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel, Qt
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QProgressDialog
-
-import pandas as pd
 
 from .copy_action import CopySelectedCellsAction
 from .export_dialog import ExportDialog
@@ -14,12 +14,9 @@ from .table_model import TableModel
 from .update_filepaths_dialog import UpdateFilepathsDialog
 from ..generated.main_window_ui import Ui_MainWindow
 from ..settings import app
-
-
-import logging
-
 from ..utils import run_in_main_thread
 from ...constants import LABEL_MAP
+from ...data.common import write_pbtxt
 from ...data.generate_tfrecord import generate_tfrecord
 
 log = logging.getLogger(__name__)
@@ -64,6 +61,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_Filter_Dataset.triggered.connect(self.on_filter)
         self.action_Update_Filepaths.triggered.connect(self.on_update_paths)
         self.action_Generate_tfrecord.triggered.connect(self.on_generate_tfrecord)
+        self.actionExport_Labelmap.triggered.connect(self.on_export_labelmap)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
@@ -91,8 +89,9 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         file, ok = QFileDialog.getOpenFileName(
             self, 'Open .csv', app.current_dir, '*.csv')
 
-        if not ok or file is None:
+        if not ok or file is None or file == '':
             log.debug('No file selected.')
+            return
 
         app.current_dir = file
 
@@ -227,14 +226,30 @@ class MainWindow(Ui_MainWindow, QMainWindow):
             msg = generate_tfrecord(
                 self.table_model.dataframe, LABEL_MAP, directory,
                 use_class_weights=True, progress_cb=progress_callback)
+            error_occurred = False
         except OSError as e:
+            error_occurred = True
             QMessageBox.critical(
                 self, 'Error',
                 f'Unknown error while generating tfrecords: \n{str}')
         finally:
             progress_window.close()
 
+        if error_occurred:
+            return
+
         QMessageBox.information(self, 'Success!', msg)
+
+    def on_export_labelmap(self):
+        file, ok = QFileDialog.getSaveFileName(
+            self, 'Export labelmap', app.current_dir, '*.pbtxt')
+
+        if not ok or file is None or file == '':
+            return
+
+        app.current_dir = file
+
+        write_pbtxt(LABEL_MAP, file)
 
     def on_ignore_clicked(self):
         index = self.sampleTable.currentIndex()
@@ -262,6 +277,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_Filter_Dataset.setEnabled(True)
         self.action_Update_Filepaths.setEnabled(True)
         self.action_Generate_tfrecord.setEnabled(True)
+        # self.actionExport_Labelmap.setEnabled(True)
         self.actionShow_Image.setEnabled(True)
         self.actionIgnore.setEnabled(True)
         self.actionValidate.setEnabled(True)
@@ -275,6 +291,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.action_Filter_Dataset.setDisabled(True)
         self.action_Update_Filepaths.setDisabled(True)
         self.action_Generate_tfrecord.setDisabled(True)
+        # self.actionExport_Labelmap.setDisabled(True)
         self.actionShow_Image.setDisabled(True)
         self.actionIgnore.setDisabled(True)
         self.actionValidate.setDisabled(True)
