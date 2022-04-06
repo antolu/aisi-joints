@@ -1,0 +1,8 @@
+
+CLASS_DEFECT = 'DEFECT'
+CLASS_OK = 'OK'
+
+LABEL_MAP = {
+    CLASS_OK: 0,
+    CLASS_DEFECT: 1
+}

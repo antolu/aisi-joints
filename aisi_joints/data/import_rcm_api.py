@@ -20,7 +20,8 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 
-from .common import CLASS_DEFECT, CLASS_OK, find_images, find_labels, write_pbtxt
+from ..constants import CLASS_DEFECT, CLASS_OK, LABEL_MAP
+from .common import find_images, find_labels, write_pbtxt
 
 log = logging.getLogger(__name__)
 
@@ -72,11 +73,6 @@ def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
 
     df.loc[df['ratingStatus'] == 'IND_FALSE_POSITIVE', 'cls'] = CLASS_OK
 
-    label_map = {
-        CLASS_OK: 0,
-        CLASS_DEFECT: 1
-    }
-
     images_df = find_images(images_pth)
 
     # merge and filter based on eventId
@@ -88,7 +84,7 @@ def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
     log.info(f'Total number of defects: '
              f'{len(df[df["cls"] == CLASS_DEFECT])}.')
 
-    return df, label_map
+    return df, LABEL_MAP
 
 
 def main(args: Namespace):

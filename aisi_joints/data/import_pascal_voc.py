@@ -25,12 +25,11 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 
+from ..constants import CLASS_OK, CLASS_DEFECT, LABEL_MAP
 from .common import find_images, find_labels, write_pbtxt
 
 log = logging.getLogger(__name__)
 
-CLASS_DEFECT = 'DEFECT'
-CLASS_OK = 'OK'
 
 
 def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
@@ -124,12 +123,7 @@ def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
     log.info(f'Total number of defects: '
              f'{len(df[df["cls"] == CLASS_DEFECT])}.')
 
-    label_map = {
-        CLASS_OK: 0,
-        CLASS_DEFECT: 1
-    }
-
-    return df, label_map
+    return df, LABEL_MAP
 
 
 def main(args: Namespace):

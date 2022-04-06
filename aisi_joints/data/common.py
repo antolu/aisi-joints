@@ -9,9 +9,6 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 
-CLASS_DEFECT = 'DEFECT'
-CLASS_OK = 'OK'
-
 
 def find_labels(labels_pth: List[str]) -> pd.DataFrame:
     # process label files first
