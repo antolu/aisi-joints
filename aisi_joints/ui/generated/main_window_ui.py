@@ -77,6 +77,8 @@ class Ui_MainWindow(object):
         self.action_Generate_tfrecord.setObjectName("action_Generate_tfrecord")
         self.action_Update_Filepaths = QtWidgets.QAction(MainWindow)
         self.action_Update_Filepaths.setObjectName("action_Update_Filepaths")
+        self.actionExport_Labelmap = QtWidgets.QAction(MainWindow)
+        self.actionExport_Labelmap.setObjectName("actionExport_Labelmap")
         self.menu_File.addAction(self.actionImport)
         self.menu_File.addAction(self.actionLoad_csv)
         self.menu_File.addAction(self.actionSave_csv)
@@ -86,9 +88,10 @@ class Ui_MainWindow(object):
         self.menu_File.addAction(self.action_ExportRevalidation)
         self.menu_File.addSeparator()
         self.menu_File.addAction(self.actionExit)
-        self.menu_Tools.addAction(self.action_Partition_Dataset)
+        self.menu_Tools.addAction(self.actionExport_Labelmap)
         self.menu_Tools.addAction(self.action_Filter_Dataset)
         self.menu_Tools.addAction(self.action_Generate_tfrecord)
+        self.menu_Tools.addAction(self.action_Partition_Dataset)
         self.menu_Tools.addAction(self.action_Update_Filepaths)
         self.menubar.addAction(self.menu_File.menuAction())
         self.menubar.addAction(self.menu_Tools.menuAction())
@@ -127,5 +130,6 @@ class Ui_MainWindow(object):
         self.action_Filter_Dataset.setText(_translate("MainWindow", "&Filter Dataset"))
         self.action_Generate_tfrecord.setText(_translate("MainWindow", "&Generate .tfrecord"))
         self.action_Update_Filepaths.setText(_translate("MainWindow", "&Update Filepaths"))
+        self.actionExport_Labelmap.setText(_translate("MainWindow", "Export Labelmap"))
 from aisi_joints.ui.elements.imagewidget import ImageWidget
 from . import resources_rc
