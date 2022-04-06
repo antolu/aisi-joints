@@ -1,17 +1,16 @@
+import logging
 from os import path
 from typing import Optional, List
 
+import pandas as pd
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog, QWidget, QFileDialog, QListView, QTreeView, QFileSystemModel, QAbstractItemView, \
     QMessageBox
 
-from ..generated.import_dialog_ui import Ui_ImportDialog
-from ..settings import app
-import logging
-import pandas as pd
-
-from ...data.import_pascal_voc import import_pascal_voc
-from ...data.import_rcm_api import import_rcm_api
+from ...generated.import_dialog_ui import Ui_ImportDialog
+from ...settings import app
+from ....data.import_pascal_voc import import_pascal_voc
+from ....data.import_rcm_api import import_rcm_api
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +95,7 @@ class ImportDialog(QDialog, Ui_ImportDialog):
             except (KeyError, OSError) as e:
                 log.exception('An error occurred while importing RCM API .csv files.')
                 QMessageBox.critical(self, 'Error', 'An error occurred while importing '
-                                     'RCM API .csv files: \n' + str(e))
+                                                    'RCM API .csv files: \n' + str(e))
                 return
         elif self.radioPascal.isChecked():
             try:
@@ -117,7 +116,7 @@ class ImportDialog(QDialog, Ui_ImportDialog):
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setFileMode(QFileDialog.DirectoryOnly)
         for view in dialog.findChildren(
-            (QListView, QTreeView)):
+                (QListView, QTreeView)):
             if isinstance(view.model(), QFileSystemModel):
                 view.setSelectionMode(
                     QAbstractItemView.ExtendedSelection)

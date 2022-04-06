@@ -196,7 +196,7 @@
   <customwidget>
    <class>ImageWidget</class>
    <extends>QWidget</extends>
-   <header>aisi_joints.ui.elements.imagewidget.h</header>
+   <header>aisi_joints.ui.ui.widgets.imagewidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

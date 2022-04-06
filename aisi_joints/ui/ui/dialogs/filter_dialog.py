@@ -5,9 +5,9 @@ import pandas as pd
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog, QWidget, QFileDialog
 
-from ..generated.filter_dialog_ui import Ui_FilterDialog
-from ..settings import app
-from ...data.filter_csv import filter_dataframe
+from ...generated.filter_dialog_ui import Ui_FilterDialog
+from ...settings import app
+from ....data.filter_csv import filter_dataframe
 
 log = logging.getLogger(__name__)
 

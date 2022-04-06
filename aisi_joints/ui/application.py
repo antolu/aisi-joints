@@ -5,13 +5,12 @@ arguments.
 
 import logging
 import sys
-import os
 from argparse import Namespace
 
 from PyQt5.QtWidgets import QApplication
 
 from . import flags
-from .elements.main_window import MainWindow
+from .ui.main_window import MainWindow
 from .settings import app
 from .. import __version__
 

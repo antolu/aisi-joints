@@ -131,5 +131,5 @@ class Ui_MainWindow(object):
         self.action_Generate_tfrecord.setText(_translate("MainWindow", "&Generate .tfrecord"))
         self.action_Update_Filepaths.setText(_translate("MainWindow", "&Update Filepaths"))
         self.actionExport_Labelmap.setText(_translate("MainWindow", "Export Labelmap"))
-from aisi_joints.ui.elements.imagewidget import ImageWidget
+from aisi_joints.ui.ui.widgets.imagewidget import ImageWidget
 from . import resources_rc

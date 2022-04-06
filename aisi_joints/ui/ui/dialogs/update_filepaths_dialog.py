@@ -2,14 +2,14 @@ import logging
 from os import path
 from typing import Optional
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QDialog, QWidget, QFileDialog
 import pandas as pd
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QDialog, QWidget
 
-from ..generated.update_filepaths_dialog_ui import Ui_UpdateFilepathsDialog
-from ..settings import app
-from ..utils import choose_directories
-from ...data.update_filepaths import update_paths
+from ...generated.update_filepaths_dialog_ui import Ui_UpdateFilepathsDialog
+from ...settings import app
+from ...utils import choose_directories
+from ....data.update_filepaths import update_paths
 
 log = logging.getLogger(__name__)
 

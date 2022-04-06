@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPen, QColorConstants as QColor
 from PyQt5.QtWidgets import QWidget, QMessageBox
 from pyqtgraph import ImageItem, GraphicsView, ViewBox, PlotDataItem
 
-from ..utils import run_in_main_thread
+from ...utils import run_in_main_thread
 
 
 class ImageWidget(GraphicsView):

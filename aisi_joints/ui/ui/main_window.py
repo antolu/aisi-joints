@@ -5,13 +5,13 @@ import pandas as pd
 from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel, Qt
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QProgressDialog
 
-from .copy_action import CopySelectedCellsAction
-from .export_dialog import ExportDialog
-from .filter_dialog import FilterDialog
-from .import_dialog import ImportDialog
-from .partition_dialog import PartitionDialog
-from .table_model import TableModel
-from .update_filepaths_dialog import UpdateFilepathsDialog
+from .dialogs.export_dialog import ExportDialog
+from .dialogs.filter_dialog import FilterDialog
+from .dialogs.import_dialog import ImportDialog
+from .dialogs.partition_dialog import PartitionDialog
+from .dialogs.update_filepaths_dialog import UpdateFilepathsDialog
+from ..elements.copy_action import CopySelectedCellsAction
+from ..elements.table_model import TableModel
 from ..generated.main_window_ui import Ui_MainWindow
 from ..settings import app
 from ..utils import run_in_main_thread

@@ -1,13 +1,12 @@
+import logging
 from typing import Optional
 
 import pandas as pd
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog, QWidget
 
-from ..generated.partition_dialog_ui import Ui_PartitionDialog
-import logging
-
-from ...data.partition_dataset import partition_dataset
+from ...generated.partition_dialog_ui import Ui_PartitionDialog
+from ....data.partition_dataset import partition_dataset
 
 log = logging.getLogger(__name__)
 

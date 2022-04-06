@@ -1,13 +1,12 @@
+import logging
+from os import path
 from typing import Optional
 
+import pandas as pd
 from PyQt5.QtWidgets import QDialog, QWidget, QFileDialog, QMessageBox
 
-from ..generated.export_dialog_ui import Ui_ExportDialog
-import pandas as pd
-from os import path
-import logging
-
-from ..settings import app
+from ...generated.export_dialog_ui import Ui_ExportDialog
+from ...settings import app
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class ExportDialog(Ui_ExportDialog, QDialog):
             current_dir = path.split(current_dir)[0]
 
         file, ok = QFileDialog.getSaveFileName(self, 'Export to csv',
-                                           current_dir, '*.csv')
+                                               current_dir, '*.csv')
 
         if not ok or file is None or file == '':
             log.warning(f'Invalid path selected: {file}.')
