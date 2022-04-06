@@ -11,7 +11,7 @@ import logging
 import os
 import os.path as path
 from argparse import ArgumentParser, Namespace
-from typing import NamedTuple, Dict
+from typing import NamedTuple, Dict, Callable, Optional
 
 import pandas as pd
 import tensorflow as tf
@@ -20,6 +20,7 @@ from PIL import Image
 from object_detection.utils import dataset_util
 from object_detection.utils import label_map_util
 
+from aisi_joints.constants import LABEL_MAP
 from .utils import generate_class_weights
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
@@ -61,7 +62,8 @@ def read_tfrecord(example: tf.train.Example) -> dict:
 
 
 def create_tf_example(sample: Sample, label_map: Dict[str, int],
-                      class_weight: Dict[str, float]) -> tf.train.Example:
+                      class_weight: Dict[str, float],
+                      use_class_weights: bool = False) -> tf.train.Example:
     # required to find immage dimensions
     with tf.io.gfile.GFile(sample.filepath, 'rb') as fid:
         encoded_jpg = fid.read()
@@ -88,19 +90,21 @@ def create_tf_example(sample: Sample, label_map: Dict[str, int],
             [sample.cls.encode('utf8')]),
         'image/object/class/label': dataset_util.int64_list_feature(
             [label_map[sample.cls]]),
-        'image/object/weight': dataset_util.float_list_feature([class_weight[sample.cls]])
     }
+
+    if use_class_weights:
+        feature['image/object/weight'] = dataset_util.float_list_feature(
+            [class_weight[sample.cls]])
 
     # convert everything to byte format for tfrecord
     tf_example = tf.train.Example(features=tf.train.Features(feature=feature))
     return tf_example
 
 
-def main(args: Namespace):
-    label_map = label_map_util.get_label_map_dict(args.labelmap)
-
-    with open(args.input) as f:
-        df = pd.read_csv(f)
+def generate_tfrecord(df: pd.DataFrame, label_map_path: str, output_dir: str,
+                      use_class_weights: bool = False,
+                      progress_cb: Optional[Callable] = None):
+    label_map = label_map_util.get_label_map_dict(label_map_path)
 
     if 'split' in df:
         splits = df['split'].unique()
@@ -112,9 +116,22 @@ def main(args: Namespace):
     class_weights = generate_class_weights(df['cls'].to_list())
     log.info(f'Using class weights {class_weights}.')
 
-    pbar = tqdm.tqdm(total=len(df))
+    msg = f'Using class weights {class_weights}.'
+
+    progress = 0
+    if progress_cb is None:
+        pbar = tqdm.tqdm(total=len(df))
+
+    def update_progress():
+        if progress_cb is not None:
+            nonlocal progress
+            progress += 1
+            progress_cb(progress, len(df))
+        else:
+            pbar.update(1)
+
     for split in splits:
-        filename = path.join(args.output, split + '.tfrecord')
+        filename = path.join(output_dir, split + '.tfrecord')
 
         if use_splits:
             # process each data split train/validation/test individually
@@ -124,13 +141,30 @@ def main(args: Namespace):
 
         with tf.io.TFRecordWriter(filename) as writer:
             for item in split_df.itertuples():
-                tf_sample = create_tf_example(item, label_map, class_weights)
+                tf_sample = create_tf_example(item, label_map, class_weights,
+                                              use_class_weights)
                 writer.write(tf_sample.SerializeToString())
 
-                pbar.update(1)
+                update_progress()
 
-        log.info(f'Successfully created the {split} split TFRecord file: '
-                 f'at {path.abspath(filename)}')
+        msg += f'Successfully created the {split} split TFRecord file: ' \
+               f'at {path.abspath(filename)}'
+
+    return msg
+
+
+def main(args: Namespace):
+    with open(args.input) as f:
+        df = pd.read_csv(f)
+
+    if args.labelmap:
+        label_map = label_map_util.get_label_map_dict(args.labelmap)
+    else:
+        label_map = LABEL_MAP
+
+    msg = generate_tfrecord(df, label_map, args.output,
+                            args.balance)
+    log.info(msg)
 
 
 if __name__ == '__main__':
