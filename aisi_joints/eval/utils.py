@@ -89,14 +89,14 @@ def format_detections(detections: dict) -> pd.DataFrame:
     boxes_info_dict = {'detection_classes': detections['detection_classes'],
                        'detection_scores': detections['detection_scores'],
                        'left': np.rint(detection_boxes_int[:, 1]),
-                       'top': np.rint(detection_boxes_int[:, 0]),
+                       'bottom': np.rint(detection_boxes_int[:, 0]),
                        'right': np.rint(detection_boxes_int[:, 3]),
-                       'bottom': np.rint(detection_boxes_int[:, 2])
+                       'top': np.rint(detection_boxes_int[:, 2]),
                        }
 
     boxes_info_df = pd.DataFrame.from_records(boxes_info_dict,
-                                              columns=['detection_classes', 'detection_scores', 'left', 'top',
-                                                       'right', 'bottom'])
+                                              columns=['detection_classes', 'detection_scores', 'left', 'bottom',
+                                                       'right', 'top'])
 
     return boxes_info_df
 
