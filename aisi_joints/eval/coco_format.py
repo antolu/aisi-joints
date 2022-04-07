@@ -46,6 +46,9 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int]):
             'segmentation': []  # This script is not for segmentation
         }
 
+        if hasattr(sample, 'detection_score'):
+            ann['score'] = sample.detection_score
+
         ann.update({'image_id': sample.eventId, 'id': bnd_id})
         bnd_id = bnd_id + 1
 

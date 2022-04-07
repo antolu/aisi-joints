@@ -81,11 +81,11 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
         item = boxes_filtered.iloc[0]
         res = {
             'eventId': sample.eventId,
-            'detected_class': label_map[item.detection_classes]['name'],
-            'detected_x0': item.left,
-            'detected_x1': item.right,
-            'detected_y0': item.bottom,
-            'detected_y1': item.top,
+            'cls': label_map[item.detection_classes]['name'],
+            'x0': item.left,
+            'x1': item.right,
+            'y0': item.bottom,
+            'y1': item.top,
             'detection_score': item.detection_scores
         }
 
@@ -93,6 +93,8 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
 
     res_df = pd.DataFrame(results)
 
+    df = df.copy()
+    df = df.drop(columns=['cls', 'x0', 'x1', 'y0', 'y1'])
     df = pd.merge(df, res_df, on='eventId')
 
     return df
