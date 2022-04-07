@@ -10,6 +10,7 @@ from .dialogs.filter_dialog import FilterDialog
 from .dialogs.import_dialog import ImportDialog
 from .dialogs.partition_dialog import PartitionDialog
 from .dialogs.update_filepaths_dialog import UpdateFilepathsDialog
+from .tools_menu import ToolsMenu
 from ..elements.copy_action import CopySelectedCellsAction
 from ..elements.table_model import TableModel
 from ..generated.main_window_ui import Ui_MainWindow
@@ -41,6 +42,8 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.sampleTable.setModel(proxy_model)
         self.table_model = table_model
 
+        self.tools_menu = ToolsMenu(self.table_model, self)
+
         self.copy_action = CopySelectedCellsAction(self.sampleTable)
 
         self.sampleTable.doubleClicked.connect(self.on_double_click)
@@ -57,11 +60,11 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionExportIgnored.triggered.connect(self.on_export_ignored)
         self.action_ExportRevalidation.triggered.connect(self.on_export_revalidation)
 
-        self.action_Partition_Dataset.triggered.connect(self.on_partition)
-        self.action_Filter_Dataset.triggered.connect(self.on_filter)
-        self.action_Update_Filepaths.triggered.connect(self.on_update_paths)
-        self.action_Generate_tfrecord.triggered.connect(self.on_generate_tfrecord)
-        self.actionExport_Labelmap.triggered.connect(self.on_export_labelmap)
+        self.action_Partition_Dataset.triggered.connect(self.tools_menu.on_partition)
+        self.action_Filter_Dataset.triggered.connect(self.tools_menu.on_filter)
+        self.action_Update_Filepaths.triggered.connect(self.tools_menu.on_update_paths)
+        self.action_Generate_tfrecord.triggered.connect(self.tools_menu.on_generate_tfrecord)
+        self.actionExport_Labelmap.triggered.connect(self.tools_menu.on_export_labelmap)
 
     def on_double_click(self, index: QModelIndex):
         sample = self.table_model.get_sample(index.row())
@@ -164,92 +167,6 @@ class MainWindow(Ui_MainWindow, QMainWindow):
             df.to_csv(file, index=False)
         except OSError as e:
             QMessageBox.critical(self, 'Error', str(e))
-
-    def on_partition(self):
-        dialog = PartitionDialog(self.table_model.dataframe, self)
-
-        def on_ok(df: pd.DataFrame):
-            self.table_model.dataframe = df
-
-            QMessageBox.information(
-                self, 'Partition success', 'Successfully partitioned dataset.')
-            # TODO: add more partition information
-
-        dialog.data_partitioned.connect(on_ok)
-        dialog.exec()
-
-    def on_filter(self):
-        dialog = FilterDialog(self.table_model.dataframe, self)
-
-        def on_ok(df: pd.DataFrame):
-            self.table_model.dataframe = df
-
-            QMessageBox.information(
-                self, 'Filter success', 'Successfully filtered dataset.')
-
-        dialog.data_filtered.connect(on_ok)
-        dialog.exec()
-
-    def on_update_paths(self):
-        dialog = UpdateFilepathsDialog(self.table_model.dataframe, self)
-
-        def on_ok(df: pd.DataFrame):
-            self.table_model.dataframe = df
-
-            QMessageBox.information(
-                self, 'Update file paths success.',
-                f'Successfully updated file paths for {len(df)} samples.')
-
-        dialog.paths_updated.connect(on_ok)
-        dialog.exec()
-
-    def on_generate_tfrecord(self):
-        directory = QFileDialog.getExistingDirectory(
-            self, 'Select .tfrecord output directory.', app.current_dir)
-
-        if directory is None or directory == '':
-            return
-
-        app.current_dir = directory
-
-        df = self.table_model.dataframe
-        progress_window = QProgressDialog(
-            'Generating .tfrecords...', 'Cancel', 0, len(df), self)
-        progress_window.setWindowModality(Qt.WindowModal)
-        progress_window.show()
-
-        @run_in_main_thread
-        def progress_callback(value: int, _):
-            progress_window.setValue(value)
-
-        try:
-            msg = generate_tfrecord(
-                self.table_model.dataframe, LABEL_MAP, directory,
-                use_class_weights=True, progress_cb=progress_callback)
-            error_occurred = False
-        except OSError as e:
-            error_occurred = True
-            QMessageBox.critical(
-                self, 'Error',
-                f'Unknown error while generating tfrecords: \n{str}')
-        finally:
-            progress_window.close()
-
-        if error_occurred:
-            return
-
-        QMessageBox.information(self, 'Success!', msg)
-
-    def on_export_labelmap(self):
-        file, ok = QFileDialog.getSaveFileName(
-            self, 'Export labelmap', app.current_dir, '*.pbtxt')
-
-        if not ok or file is None or file == '':
-            return
-
-        app.current_dir = file
-
-        write_pbtxt(LABEL_MAP, file)
 
     def on_ignore_clicked(self):
         index = self.sampleTable.currentIndex()
