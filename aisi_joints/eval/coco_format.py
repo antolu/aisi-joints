@@ -6,7 +6,7 @@ from PIL import Image
 
 import pandas as pd
 
-from aisi_joints.constants import LABEL_MAP
+from ..constants import LABEL_MAP
 
 log = logging.getLogger(__name__)
 
