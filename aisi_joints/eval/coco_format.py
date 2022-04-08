@@ -3,6 +3,7 @@ import logging
 from argparse import ArgumentParser
 from typing import Dict
 from PIL import Image
+from fiftyone.utils.voc import VOCBoundingBox
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ from ..constants import LABEL_MAP
 log = logging.getLogger(__name__)
 
 
-def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int]):
+def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int], predictions: bool = False):
     output_json_dict = {
         "images": [],
         "type": "instances",
@@ -22,8 +23,11 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int]):
 
     for sample in df.itertuples():
         # Read annotation xml
-        image = Image.open(sample.filepath)
-        width, height = image.size
+
+        if not hasattr(sample, 'height'):
+            width, height = Image.open(sample.filepath).size
+        else:
+            width, height = sample.width, sample.height
 
         image_info = {
             'file_name': sample.filepath,
@@ -34,25 +38,44 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int]):
 
         output_json_dict['images'].append(image_info)
 
-        o_width = sample.x1 - sample.x0
-        o_height = sample.y1 - sample.y0
+        if not predictions:
+            bbox = VOCBoundingBox(sample.x0, sample.y0, sample.x1, sample.y1)
 
-        ann = {
-            'area': o_width * o_height,
-            'iscrowd': 0,
-            'bbox': [sample.x0, sample.y0, o_width, o_height],
-            'category_id': labelmap[sample.cls],
-            'ignore': 0,
-            'segmentation': []  # This script is not for segmentation
-        }
+            ann = {
+                'area': (bbox.xmax - bbox.xmin) * (bbox.ymax - bbox.ymin),
+                'iscrowd': 0,
+                'bbox': bbox.to_detection_format((width, height)),
+                'category_id': labelmap[sample.cls],
+                'ignore': 0,
+                'segmentation': []  # This script is not for segmentation
+            }
 
-        if hasattr(sample, 'detection_score'):
-            ann['score'] = sample.detection_score
+            if hasattr(sample, 'detection_score'):
+                ann['score'] = sample.detection_score
 
-        ann.update({'image_id': sample.eventId, 'id': bnd_id})
-        bnd_id = bnd_id + 1
+            ann.update({'image_id': sample.eventId, 'id': bnd_id})
+            bnd_id = bnd_id + 1
 
-        output_json_dict['annotations'].append(ann)
+            output_json_dict['annotations'].append(ann)
+        else:
+            for i in range(sample.num_detections):
+                bbox = VOCBoundingBox(sample.detected_x0[i], sample.detected_y0[i],
+                                      sample.detected_x1[i], sample.detected_y1[i])
+
+                ann = {
+                    'area': (bbox.xmax - bbox.xmin) * (bbox.ymax - bbox.ymin),
+                    'iscrowd': 0,
+                    'image_id': sample.eventId,
+                    'id': bnd_id,
+                    'bbox': bbox.to_detection_format((width, height)),
+                    'score': sample.detection_score[i],
+                    'category_id': labelmap[sample.detected_class[i]],
+                    'ignore': 0,
+                    'segmentation': [],  # This script is not for segmentation
+                }
+
+                bnd_id = bnd_id + 1
+                output_json_dict['annotations'].append(ann)
 
     for label, label_id in labelmap.items():
         category_info = {'supercategory': 'none', 'id': label_id, 'name': label}

@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from os import path
+from PIL import Image
 from typing import List, Dict
 
 import pandas as pd
@@ -43,9 +44,11 @@ def find_images(images_pth: List[str]) -> pd.DataFrame:
             m = regex.match(f)
 
             if m:
+                width, height = Image.open(image_pth).size
                 images_idx.append(
                     {'eventId': m.group('uuid'),
-                     'filepath': path.abspath(path.join(image_pth, f))})
+                     'filepath': path.abspath(path.join(image_pth, f)),
+                     'width': width, 'height': height})
 
     images_df = pd.DataFrame(images_idx)
     log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '

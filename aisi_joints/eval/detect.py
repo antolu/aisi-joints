@@ -4,6 +4,7 @@ from argparse import ArgumentParser, Namespace
 from os import path
 from typing import Dict, Union, Optional
 import tensorflow as tf
+import numpy as np
 
 import pandas as pd
 from tqdm import tqdm
@@ -75,18 +76,30 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
 
         boxes_filtered = boxes[boxes['detection_scores'] >= score_threshold]
 
-        if len(boxes_filtered) > 1:
-            raise RuntimeError('Don\'t know what to do with more than one box.')
+        detected_class = []
+        x0 = []
+        x1 = []
+        y0 = []
+        y1 = []
+        detection_score = []
 
-        item = boxes_filtered.iloc[0]
+        for box in boxes_filtered.itertuples():
+            detected_class.append(label_map[box.detection_classes]['name'])
+            detection_score.append(box.detection_scores)
+            x0.append(box.left)
+            x1.append(box.right)
+            y0.append(box.bottom)
+            y1.append(box.top)
+
         res = {
             'eventId': sample.eventId,
-            'cls': label_map[item.detection_classes]['name'],
-            'x0': item.left,
-            'x1': item.right,
-            'y0': item.bottom,
-            'y1': item.top,
-            'detection_score': item.detection_scores
+            'detected_class': detected_class,
+            'detection_score': detection_score,
+            'detected_x0': x0,
+            'detected_x1': x1,
+            'detected_y0': y0,
+            'detected_y1': y1,
+            'num_detections': len(x0),
         }
 
         results.append(res)
@@ -94,7 +107,6 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
     res_df = pd.DataFrame(results)
 
     df = df.copy()
-    df = df.drop(columns=['cls', 'x0', 'x1', 'y0', 'y1'])
     df = pd.merge(df, res_df, on='eventId')
 
     return df

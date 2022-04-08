@@ -66,6 +66,7 @@ def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
 
             value = (eventId,
                      member.find('name').text,
+                     width, height,
                      x0, x1, y0, y1
                      )
             xml_list.append(value)
@@ -73,7 +74,7 @@ def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
         if len(root.findall('object')) == 0:
             log.warning(f'No bounding boxes found for {xml_file}.')
 
-    column_name = ['eventId', 'class', 'x0', 'x1', 'y0', 'y1']
+    column_name = ['eventId', 'class', 'width', 'height', 'x0', 'x1', 'y0', 'y1']
     xml_df = pd.DataFrame(xml_list, columns=column_name)
 
     return xml_df
