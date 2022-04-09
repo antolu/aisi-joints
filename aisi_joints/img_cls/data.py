@@ -159,7 +159,7 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299, height: 
     -------
     Crop of image.
     """
-    y_max, x_max, _ = tf.shape(image)
+    y_max, x_max = tf.shape(image)[1], tf.shape(image)[0]
 
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]
@@ -170,14 +170,17 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299, height: 
     #     raise ValueError('Crop is higher than max image height')
 
     x0, x1, y0, y1 = bndbox
-    x0 -= tf.math.floor((width - crop_width) / 2)
-    x1 += tf.math.ceil((width - crop_width) / 2)
-    y0 -= tf.math.floor((height - crop_height) / 2)
-    y1 += tf.math.ceil((height - crop_height) / 2)
+    x0 -= tf.cast(tf.math.floor((width - crop_width) / 2), tf.int64)
+    x1 += tf.cast(tf.math.ceil((width - crop_width) / 2), tf.int64)
+    y0 -= tf.cast(tf.math.floor((height - crop_height) / 2), tf.int64)
+    y1 += tf.cast(tf.math.ceil((height - crop_height) / 2), tf.int64)
 
+    x0 = tf.cast(x0, tf.int32)
+    x1 = tf.cast(x1, tf.int32)
+    y0 = tf.cast(y0, tf.int32)
+    y1 = tf.cast(y1, tf.int32)
     box = shift_upper([x0, x1, y0, y1], x_max, y_max)
     box = shift_lower(box)
-    print(box)
 
     return crop_and_pad(image, box, width, height)
 
