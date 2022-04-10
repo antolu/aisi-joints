@@ -265,7 +265,7 @@ def preprocess(image_path: str, label: int, fmt: str, bbox: List[int],
     image = augment(image, bbox, random_crop=random_crop)
     # image = normalize(image)
     image = tf.keras.applications.inception_resnet_v2.preprocess_input(image)
-    return image, tf.one_hot(label, 2)
+    return image, tf.one_hot(label - 1, 2)
 
 
 @tf.function
