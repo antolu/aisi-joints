@@ -269,7 +269,8 @@ def preprocess(image_path: str, label: int, fmt: str, bbox: List[int],
 
 
 @tf.function
-def process_example(data: tf.train.Example, random_crop: bool = True):
+def process_example(data: tf.train.Example, random_crop: bool = True,
+                    get_metadata: bool = False):
     sample = read_tfrecord(data)
 
     image_path = sample['image/filename']
@@ -287,4 +288,8 @@ def process_example(data: tf.train.Example, random_crop: bool = True):
 
     fmt = sample['image/format']
 
-    return preprocess(image_path, label, fmt, bbox, random_crop)
+    if not get_metadata:
+        return preprocess(image_path, label, fmt, bbox, random_crop)
+    else:
+        return preprocess(image_path, label, fmt, bbox, random_crop),\
+               sample['image/source_id'], bbox
