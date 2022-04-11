@@ -1,4 +1,5 @@
 import logging
+import os
 from argparse import Namespace, ArgumentParser
 import datetime
 from functools import partial
@@ -42,15 +43,17 @@ def get_model() -> Tuple[Model, Model]:
 
 def main(args: Namespace, config: dict):
     train_data = load_tfrecord(config['train_data'], config['batch_size'], random_crop=False)
-    val_data = load_tfrecord(config['validation_data'], config['batch_size'], shuffle=False, random_crop=False)
+    val_data = load_tfrecord(config['validation_data'], config['batch_size'], shuffle=False, random_crop=False, augment_data=False)
 
     base_model, model = get_model()
     base_model.trainable = False
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if not path.isdir(args.checkpoint_dir):
+        os.makedirs(args.checkpoint_dir, exist_ok=True)
 
     evaluate_images = EvaluateImages(model, config['validation_data'], config['batch_size'])
-    img_writer = tf.summary.SummaryWriter(path.join(args.logdir, 'images'))
+    img_writer = tf.summary.create_file_writer(path.join(args.logdir, 'images'))
 
     # ========================================================================
     # Define callbacks
@@ -71,17 +74,18 @@ def main(args: Namespace, config: dict):
     metrics = [tf.keras.metrics.Accuracy()]
     params = config['transfer']
 
-    lr = tf.keras.optimizers.schedules.ExponentialDecay(
+    transfer_lr = tf.keras.optimizers.schedules.ExponentialDecay(
         params['learning_rate'], 25, 0.94, staircase=True
     )
-    model.compile(optimizer=tf.keras.optimizers.Adam(params['learning_rate']),
-                  loss=tf.keras.losses.CategoricalCrossEntropy(),
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=transfer_lr),
+                  loss=tf.keras.losses.CategoricalCrossentropy(),
                   metrics=metrics)
 
+    log.info(f"Logging tensorboard to {path.join(args.logdir, timestamp, 'transfer')}")
     transfer_cb = [
         tf.keras.callbacks.TensorBoard(
-            log_dir=path.join(args.logdir, str(timestamp), 'transfer')),
-        evaluate_images_cb,
+            log_dir=path.join(args.logdir, timestamp, 'transfer')),
+        # evaluate_images_cb,
         model_checkpoint_callback,
     ]
     # train the model on the new data for a few epochs
@@ -96,22 +100,22 @@ def main(args: Namespace, config: dict):
     base_model.trainable = True
 
     params = config['finetune']
-    finetune_lr = tf.keras.optimizers.schedule.CosineDecay(params['learning_rate'],
+    finetune_lr = tf.keras.optimizers.schedules.CosineDecay(params['learning_rate'],
                                                            decay_steps=params['decay_steps'],
                                                            alpha=1e-6)
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=finetune_lr),
-                  loss=tf.keras.losses.CategoricalCrossEntropy(),
+                  loss=tf.keras.losses.CategoricalCrossentropy(),
                   metrics=metrics)
 
     finetune_cb = [
         tf.keras.callbacks.TensorBoard(
-            log_dir=params.join(args.logdir, str(timestamp), 'finetune')),
-        evaluate_images_cb,
+            log_dir=path.join(args.logdir, timestamp, 'finetune')),
+        # evaluate_images_cb,
         model_checkpoint_callback,
     ]
     model.fit(train_data, batch_size=config['batch_size'], validation_data=val_data,
               use_multiprocessing=True, workers=config['workers'],
-              epochs=params['metrics'],
+              epochs=params['epochs'],
               callbacks=finetune_cb)
 
 

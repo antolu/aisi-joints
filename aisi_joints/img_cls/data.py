@@ -13,12 +13,13 @@ log = logging.getLogger(__name__)
 
 def load_tfrecord(pth: str, batch_size: int,
                   random_crop: bool = True,
-                  shuffle: bool = True) -> tf.data.TFRecordDataset:
+                  shuffle: bool = True,
+                  augment_data: bool = True) -> tf.data.TFRecordDataset:
     data = tf.data.TFRecordDataset(pth)
 
     if shuffle:
         data = data.shuffle(2048, reshuffle_each_iteration=True)
-    data = data.map(lambda smpl: process_example(smpl, random_crop))
+    data = data.map(lambda smpl: process_example(smpl, random_crop, augment_data=augment_data))
     data = data.batch(batch_size)
 
     return data
@@ -249,10 +250,10 @@ def normalize(image: tf.Tensor) -> tf.Tensor:
 # @tf.function
 def augment(image: tf.Tensor, bbox: List[int], random_crop: bool = True) -> tf.Tensor:
     # image = tf.image.random_crop(image, (178, 178, 3))
-    if random_crop:
-        image = random_crop_bbox(image, bbox, 299, 299)
-    else:
-        image = center_crop_bbox(image, bbox, 299, 299)
+    # if random_crop:
+    #     image = random_crop_bbox(image, bbox, 299, 299)
+    # else:
+    #     image = center_crop_bbox(image, bbox, 299, 299)
     # image = tf.image.resize(image, (299, 299))
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
@@ -273,7 +274,7 @@ def preprocess(image_path: str, label: int, fmt: str, bbox: List[int],
 
 @tf.function
 def process_example(data: tf.train.Example, random_crop: bool = True,
-                    get_metadata: bool = False):
+                    get_metadata: bool = False, augment_data: bool = True):
     sample = read_tfrecord(data)
 
     image_path = sample['image/filename']
@@ -291,8 +292,20 @@ def process_example(data: tf.train.Example, random_crop: bool = True,
 
     fmt = sample['image/format']
 
-    if not get_metadata:
-        return preprocess(image_path, label, fmt, bbox, random_crop)
+    image = read_image(image_path, fmt)
+
+    if random_crop:
+        image = random_crop_bbox(image, bbox, 299, 299)
     else:
-        return preprocess(image_path, label, fmt, bbox, random_crop),\
-               sample['image/source_id'], bbox
+        image = center_crop_bbox(image, bbox, 299, 299)
+
+    if augment_data:
+        image = augment(image, bbox, random_crop=random_crop)
+    image = tf.keras.applications.inception_resnet_v2.preprocess_input(image)
+
+    labels = tf.one_hot(label - 1, 2)
+
+    if not get_metadata:
+        return image, labels
+    else:
+        return image, labels, sample['image/source_id'], bbox
