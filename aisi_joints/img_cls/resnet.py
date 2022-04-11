@@ -79,13 +79,19 @@ def main(args: Namespace, config: dict):
 
     base_model.trainable = True
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.00005), loss=tf.keras.losses.CategoricalCrossentropy(),
+    finetune_lr = tf.keras.optimizers.schedules.CosineDecay(
+        0.001, 20000, alpha=0.0, name=None
+    )
+
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=finetune_lr), loss=tf.keras.losses.CategoricalCrossentropy(),
                   metrics=metrics)
 
     model.fit(train_data, batch_size=config['batch_size'], validation_data=val_data,
               use_multiprocessing=True, workers=config['workers'],
-              epochs=config['epochs'],
+              epochs=config['epochs']*10,
               callbacks=[finetune_cb])
+
+    model.save_weights('resnet_checkpoint')
 
 
 if __name__ == '__main__':
