@@ -2,6 +2,7 @@ import logging
 from argparse import Namespace, ArgumentParser
 import datetime
 from functools import partial
+from os import path
 from typing import Tuple
 
 import tensorflow as tf
@@ -13,6 +14,7 @@ import pandas as pd
 
 from aisi_joints.data.generate_tfrecord import read_tfrecord
 from aisi_joints.img_cls.data import process_example, load_tfrecord
+from aisi_joints.img_cls.evaluate import EvaluateImages
 from aisi_joints.utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ def get_model() -> Tuple[Model, Model]:
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu')(x)
-    x = Dropout(.8)(x)
+    x = Dropout(0.8)(x)
     # and a logistic layer -- let's say we have 200 classes
     predictions = Dense(2, activation='softmax')(x)
 
@@ -36,11 +38,6 @@ def get_model() -> Tuple[Model, Model]:
     model = Model(inputs=base_model.input, outputs=predictions)
 
     return base_model, model
-
-
-def freeze_layers(model: Model):
-    for layer in model.layers:
-        layer.trainable = False
 
 
 def main(args: Namespace, config: dict):
@@ -52,46 +49,70 @@ def main(args: Namespace, config: dict):
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    transfer_cb = tf.keras.callbacks.TensorBoard(log_dir=args.logdir + f'/{timestamp}/transfer')
-    finetune_cb = tf.keras.callbacks.TensorBoard(log_dir=args.logdir + f'/{timestamp}/finetune')
-    # import pdb
-    # pdb.set_trace()
+    evaluate_images = EvaluateImages(model, config['validation_data'], config['batch_size'])
+    img_writer = tf.summary.SummaryWriter(path.join(args.logdir, 'images'))
 
-    # tf_writer = tf.summary.create_file_writer(args.logdir)
+    # ========================================================================
+    # Define callbacks
+    # ========================================================================
+    evaluate_images_cb = tf.keras.callbacks.LambdaCallback(
+        on_epoch_end=lambda epoch: evaluate_images.evaluate(epoch, tb_writer=img_writer))
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=path.join(args.checkpoint_dir, 'model.{epoch:02d}-{val_loss:.2f}.h5'),
+        save_weights_only=True,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
 
-    # def images_callback():
-    #     with tf_writer.as_default():
-    #         tf.summary.image("Training data", img, step=0)
+    # ========================================================================
+    # Train top layers
+    # ========================================================================
+    base_model.trainable = False
+    metrics = [tf.keras.metrics.Accuracy()]
+    params = config['transfer']
 
     lr = tf.keras.optimizers.schedules.ExponentialDecay(
-        0.01, 25, 0.94, staircase=True
+        params['learning_rate'], 25, 0.94, staircase=True
     )
-
-    metrics = [tf.keras.metrics.Accuracy()]
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr), loss=tf.keras.losses.CategoricalCrossentropy(),
+    model.compile(optimizer=tf.keras.optimizers.Adam(params['learning_rate']),
+                  loss=tf.keras.losses.CategoricalCrossEntropy(),
                   metrics=metrics)
 
+    transfer_cb = [
+        tf.keras.callbacks.TensorBoard(
+            log_dir=path.join(args.logdir, str(timestamp), 'transfer')),
+        evaluate_images_cb,
+        model_checkpoint_callback,
+    ]
     # train the model on the new data for a few epochs
     model.fit(train_data, batch_size=config['batch_size'], validation_data=val_data,
               use_multiprocessing=True, workers=config['workers'],
-              epochs=config['epochs'],
-              callbacks=[transfer_cb])
+              epochs=params['epochs'],
+              callbacks=transfer_cb)
 
+    # ========================================================================
+    # Fine tuning of entire model
+    # ========================================================================
     base_model.trainable = True
 
-    finetune_lr = tf.keras.optimizers.schedules.CosineDecay(
-        0.001, 20000, alpha=0.0, name=None
-    )
-
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=finetune_lr), loss=tf.keras.losses.CategoricalCrossentropy(),
+    params = config['finetune']
+    finetune_lr = tf.keras.optimizers.schedule.CosineDecay(params['learning_rate'],
+                                                           decay_steps=params['decay_steps'],
+                                                           alpha=1e-6)
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=finetune_lr),
+                  loss=tf.keras.losses.CategoricalCrossEntropy(),
                   metrics=metrics)
 
+    finetune_cb = [
+        tf.keras.callbacks.TensorBoard(
+            log_dir=params.join(args.logdir, str(timestamp), 'finetune')),
+        evaluate_images_cb,
+        model_checkpoint_callback,
+    ]
     model.fit(train_data, batch_size=config['batch_size'], validation_data=val_data,
               use_multiprocessing=True, workers=config['workers'],
-              epochs=config['epochs']*10,
-              callbacks=[finetune_cb])
-
-    model.save_weights('resnet_checkpoint')
+              epochs=params['metrics'],
+              callbacks=finetune_cb)
 
 
 if __name__ == '__main__':
@@ -101,6 +122,9 @@ if __name__ == '__main__':
                         help='Tensorboard logdir.')
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Debug logs')
+    parser.add_argument('-c', '--checkpoint-dir', default='checkpoints',
+                        dest='checkpoint_dir',
+                        help='Directory to save checkpoint files.')
 
     args = parser.parse_args()
 
