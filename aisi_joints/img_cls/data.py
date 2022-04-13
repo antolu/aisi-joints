@@ -160,7 +160,7 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299, height: 
     -------
     Crop of image.
     """
-    y_max, x_max = tf.shape(image)[1], tf.shape(image)[0]
+    y_max, x_max = tf.shape(image)[0], tf.shape(image)[1]
 
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]

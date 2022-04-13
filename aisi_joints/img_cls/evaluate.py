@@ -33,14 +33,20 @@ class EvaluateImages:
 
             pred_labels = tf.expand_dims(tf.math.argmax(predictions, axis=1), 1)
 
+            # use makeshift box because the original boxes are destroyed from random cropping
+            bboxes = tf.transpose(tf.stack([0.1 * tf.ones(32), 0.1 * tf.ones(32), 0.9 * tf.ones(32), 0.9 * tf.ones(32)]))
             bboxes = tf.expand_dims(bboxes, axis=1)
             scores = tf.expand_dims(tf.reduce_max(predictions, axis=1), 1)
 
             images = undo_preprocess(images)
             images = tf.cast(images, tf.uint8)
+            orig_images = tf.identity(images)
 
-            viz_utils.draw_bounding_boxes_on_image_tensors(
+            images = viz_utils.draw_bounding_boxes_on_image_tensors(
                 images, bboxes, pred_labels + tf.constant(1, dtype=tf.int64), scores, INV_LABEL_MAP)
 
+            orig_images = viz_utils.draw_bounding_boxes_on_image_tensors(
+                orig_images, bboxes, tf.expand_dims(tf.math.argmax(labels, axis=1), 1) + 1, tf.ones_like(scores), INV_LABEL_MAP)
+
             with tb_writer.as_default(step):
-                tf.summary.image('Validation image', images, step=step, max_outputs=num_images)
+                tf.summary.image('Validation image', tf.concat([images, orig_images], axis=2), step=step, max_outputs=num_images)
