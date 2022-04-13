@@ -53,7 +53,9 @@ def main(args: Namespace, config: dict):
         os.makedirs(args.checkpoint_dir, exist_ok=True)
 
     evaluate_images = EvaluateImages(model, config['validation_data'], config['batch_size'])
-    img_writer = tf.summary.create_file_writer(path.join(args.logdir, 'images'))
+    img_writer = tf.summary.create_file_writer(path.join(args.logdir, timestamp, 'images'))
+
+    evaluate_images.evaluate(0, tb_writer=img_writer)
 
     # ========================================================================
     # Define callbacks

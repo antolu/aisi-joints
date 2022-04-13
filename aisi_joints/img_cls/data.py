@@ -308,4 +308,11 @@ def process_example(data: tf.train.Example, random_crop: bool = True,
     if not get_metadata:
         return image, labels
     else:
-        return image, labels, sample['image/source_id'], bbox
+        return image, labels, bbox, sample['image/source_id']
+
+
+def undo_preprocess(image: tf.Tensor) -> tf.Tensor:
+    image += 1
+    image *= 127.5
+
+    return image

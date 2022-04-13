@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 from object_detection.utils import visualization_utils as viz_utils
 
-from .data import process_example
+from .data import process_example, undo_preprocess
 from ..constants import INV_LABEL_MAP
 
 log = logging.getLogger(__name__)
@@ -31,13 +31,16 @@ class EvaluateImages:
         for i, (images, labels, bboxes, eventIds) in enumerate(self._data):
             predictions = self._model(images)
 
-            pred_labels = tf.math.argmax(predictions, axis=1)
+            pred_labels = tf.expand_dims(tf.math.argmax(predictions, axis=1), 1)
 
             bboxes = tf.expand_dims(bboxes, axis=1)
-            scores = predictions[pred_labels]
+            scores = tf.expand_dims(tf.reduce_max(predictions, axis=1), 1)
+
+            images = undo_preprocess(images)
+            images = tf.cast(images, tf.uint8)
 
             viz_utils.draw_bounding_boxes_on_image_tensors(
-                images, bboxes, pred_labels + tf.constant(1), scores, INV_LABEL_MAP)
+                images, bboxes, pred_labels + tf.constant(1, dtype=tf.int64), scores, INV_LABEL_MAP)
 
             with tb_writer.as_default(step):
-                tf.summary.image('Validation image', images, step=step)
+                tf.summary.image('Validation image', images, step=step, max_outputs=num_images)
