@@ -16,25 +16,30 @@ log = logging.getLogger(__name__)
 
 class EvaluateImages:
     def __init__(self, model: tf.keras.Model, dataset_pth: str,
-                 batch_size: int = 32):
+                 tb_writer: tf.summary.SummaryWriter,
+                 batch_size: int = 32, log_every: int = 10):
         self._model = model
+        self._writer = tb_writer
+        self._log_every = log_every
 
         self._data = tf.data.TFRecordDataset(dataset_pth)
         self._preprocess_data(batch_size)
 
     def _preprocess_data(self, batch_size: int):
-        self._data = self._data.map(lambda smpl: process_example(smpl, random_crop=False, get_metadata=True))
+        self._data = self._data.map(lambda smpl: process_example(smpl, random_crop=False, get_metadata=True, augment_data=False))
         self._data = self._data.batch(batch_size)
 
-    def evaluate(self, step: int, num_images: int = 20,
-                 tb_writer: Optional[tf.summary.SummaryWriter] = None):
+    def evaluate(self, step: int, num_images: int = 20):
+        if step % self._log_every != 0:
+            return
         for i, (images, labels, bboxes, eventIds) in enumerate(self._data):
+            batch_size = tf.shape(images)[0]
             predictions = self._model(images)
 
             pred_labels = tf.expand_dims(tf.math.argmax(predictions, axis=1), 1)
 
             # use makeshift box because the original boxes are destroyed from random cropping
-            bboxes = tf.transpose(tf.stack([0.1 * tf.ones(32), 0.1 * tf.ones(32), 0.9 * tf.ones(32), 0.9 * tf.ones(32)]))
+            bboxes = tf.transpose(tf.stack([0.1 * tf.ones(batch_size), 0.1 * tf.ones(batch_size), 0.9 * tf.ones(batch_size), 0.9 * tf.ones(batch_size)]))
             bboxes = tf.expand_dims(bboxes, axis=1)
             scores = tf.expand_dims(tf.reduce_max(predictions, axis=1), 1)
 
@@ -48,5 +53,5 @@ class EvaluateImages:
             orig_images = viz_utils.draw_bounding_boxes_on_image_tensors(
                 orig_images, bboxes, tf.expand_dims(tf.math.argmax(labels, axis=1), 1) + 1, tf.ones_like(scores), INV_LABEL_MAP)
 
-            with tb_writer.as_default(step):
+            with self._writer.as_default(step):
                 tf.summary.image('Validation image', tf.concat([images, orig_images], axis=2), step=step, max_outputs=num_images)

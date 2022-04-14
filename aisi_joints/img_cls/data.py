@@ -257,7 +257,8 @@ def augment(image: tf.Tensor, bbox: List[int], random_crop: bool = True) -> tf.T
     # image = tf.image.resize(image, (299, 299))
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
-    image = tf.image.random_saturation(image, 0.5, 2.0)
+    image = tf.image.random_contrast(image, 0.0, 0.8)
+    image = tf.image.random_saturation(image, 0.0, 4.0)
     image = tf.image.random_brightness(image, 0.5)
     return image
 

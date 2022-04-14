@@ -42,7 +42,7 @@ def get_model() -> Tuple[Model, Model]:
 
 
 def main(args: Namespace, config: dict):
-    train_data = load_tfrecord(config['train_data'], config['batch_size'], random_crop=False)
+    train_data = load_tfrecord(config['train_data'], config['batch_size'], random_crop=True)
     val_data = load_tfrecord(config['validation_data'], config['batch_size'], shuffle=False, random_crop=False, augment_data=False)
 
     base_model, model = get_model()
@@ -52,16 +52,20 @@ def main(args: Namespace, config: dict):
     if not path.isdir(args.checkpoint_dir):
         os.makedirs(args.checkpoint_dir, exist_ok=True)
 
-    evaluate_images = EvaluateImages(model, config['validation_data'], config['batch_size'])
-    img_writer = tf.summary.create_file_writer(path.join(args.logdir, timestamp, 'images'))
+    img_writer_transfer = tf.summary.create_file_writer(path.join(args.logdir, timestamp, 'transfer/images'))
+    img_writer_finetune = tf.summary.create_file_writer(path.join(args.logdir, timestamp, 'finetune/images'))
+    evaluate_images_transfer = EvaluateImages(model, config['validation_data'], config['batch_size'], img_writer_transfer, 10)
+    evaluate_images_finetune = EvaluateImages(model, config['validation_data'], config['batch_size'], img_writer_finetune, 10)
 
-    evaluate_images.evaluate(0, tb_writer=img_writer)
+    # evaluate_images.evaluate(0, tb_writer=img_writer)
 
     # ========================================================================
     # Define callbacks
     # ========================================================================
-    evaluate_images_cb = tf.keras.callbacks.LambdaCallback(
-        on_epoch_end=lambda epoch: evaluate_images.evaluate(epoch, tb_writer=img_writer))
+    evaluate_images_transfer_cb = tf.keras.callbacks.LambdaCallback(
+        on_epoch_end=lambda epoch, logs: evaluate_images_transfer.evaluate(epoch))
+    evaluate_images_finetune_cb = tf.keras.callbacks.LambdaCallback(
+        on_epoch_end=lambda epoch, logs: evaluate_images_finetune.evaluate(epoch))
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=path.join(args.checkpoint_dir, 'model.{epoch:02d}-{val_loss:.2f}.h5'),
         save_weights_only=True,
@@ -73,7 +77,11 @@ def main(args: Namespace, config: dict):
     # Train top layers
     # ========================================================================
     base_model.trainable = False
-    metrics = [tf.keras.metrics.Accuracy()]
+    metrics = [tf.keras.metrics.CategoricalAccuracy(name='accuracy'),
+               tf.keras.metrics.Precision(class_id=0, name='precision_OK'),
+               tf.keras.metrics.Precision(class_id=1, name='precision_DEFECT'),
+               tf.keras.metrics.Recall(class_id=0, name='recall_OK'),
+               tf.keras.metrics.Recall(class_id=1, name='recall_DEFECT')]
     params = config['transfer']
 
     transfer_lr = tf.keras.optimizers.schedules.ExponentialDecay(
@@ -87,14 +95,17 @@ def main(args: Namespace, config: dict):
     transfer_cb = [
         tf.keras.callbacks.TensorBoard(
             log_dir=path.join(args.logdir, timestamp, 'transfer')),
-        # evaluate_images_cb,
+        evaluate_images_transfer_cb,
         model_checkpoint_callback,
     ]
+
+    CLASS_WEIGHT = {0: 0.6, 1: 2.2}
+
     # train the model on the new data for a few epochs
     model.fit(train_data, batch_size=config['batch_size'], validation_data=val_data,
               use_multiprocessing=True, workers=config['workers'],
               epochs=params['epochs'],
-              callbacks=transfer_cb)
+              callbacks=transfer_cb, class_weight=CLASS_WEIGHT)
 
     # ========================================================================
     # Fine tuning of entire model
@@ -112,7 +123,7 @@ def main(args: Namespace, config: dict):
     finetune_cb = [
         tf.keras.callbacks.TensorBoard(
             log_dir=path.join(args.logdir, timestamp, 'finetune')),
-        # evaluate_images_cb,
+        evaluate_images_finetune_cb,
         model_checkpoint_callback,
     ]
     model.fit(train_data, batch_size=config['batch_size'], validation_data=val_data,
