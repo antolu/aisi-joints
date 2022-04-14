@@ -54,8 +54,8 @@ def main(args: Namespace, config: dict):
 
     img_writer_transfer = tf.summary.create_file_writer(path.join(args.logdir, timestamp, 'transfer/images'))
     img_writer_finetune = tf.summary.create_file_writer(path.join(args.logdir, timestamp, 'finetune/images'))
-    evaluate_images_transfer = EvaluateImages(model, config['validation_data'], config['batch_size'], img_writer_transfer, 10)
-    evaluate_images_finetune = EvaluateImages(model, config['validation_data'], config['batch_size'], img_writer_finetune, 10)
+    evaluate_images_transfer = EvaluateImages(model, config['validation_data'], img_writer_transfer, config['batch_size'], 10)
+    evaluate_images_finetune = EvaluateImages(model, config['validation_data'], img_writer_finetune, config['batch_size'], 10)
 
     # evaluate_images.evaluate(0, tb_writer=img_writer)
 
