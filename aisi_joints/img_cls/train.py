@@ -14,7 +14,7 @@ from tensorflow.keras.optimizers import SGD
 import pandas as pd
 
 from aisi_joints.data.generate_tfrecord import read_tfrecord
-from aisi_joints.img_cls.data import process_example, load_tfrecord
+from aisi_joints.img_cls.dataloader import process_example, load_tfrecord
 from aisi_joints.img_cls.evaluate import EvaluateImages
 from aisi_joints.utils.logging import setup_logger
 
