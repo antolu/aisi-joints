@@ -8,7 +8,7 @@ from typing import List, Dict
 import pandas as pd
 
 log = logging.getLogger(__name__)
-
+logging.getLogger('PIL').setLevel(logging.INFO)
 
 
 def find_labels(labels_pth: List[str]) -> pd.DataFrame:
@@ -44,7 +44,7 @@ def find_images(images_pth: List[str]) -> pd.DataFrame:
             m = regex.match(f)
 
             if m:
-                width, height = Image.open(image_pth).size
+                width, height = Image.open(path.join(image_pth, f)).size
                 images_idx.append(
                     {'eventId': m.group('uuid'),
                      'filepath': path.abspath(path.join(image_pth, f)),
