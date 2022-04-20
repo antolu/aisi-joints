@@ -1,12 +1,10 @@
 import logging
-import math
-from functools import partial
-from typing import Tuple, List
+from typing import List, Optional
 
 import numpy as np
 import tensorflow as tf
 
-from aisi_joints.data.generate_tfrecord import read_tfrecord
+from ..data.generate_tfrecord import read_tfrecord
 
 log = logging.getLogger(__name__)
 
@@ -112,12 +110,6 @@ def random_crop_bbox(image: tf.Tensor, bndbox: List[int],
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]
 
-    # if crop_width > width:
-    #     print(crop_width.numpy())
-    #     raise ValueError(f'Crop is wider than max image width: {crop_width} > {width}.')
-    # if crop_height > height:
-    #     raise ValueError(f'Crop is higher than max image height: {crop_height} > {height}.')
-
     offset_x = tf.random.uniform([1], 0, tf.reshape(width - crop_width, []), dtype=tf.int64)
     offset_y = tf.random.uniform([1], 0, tf.reshape(height - crop_height, []), dtype=tf.int64)
 
@@ -139,7 +131,7 @@ def random_crop_bbox(image: tf.Tensor, bndbox: List[int],
     return crop_and_pad(image, box, width, height)
 
 
-def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299, height: int = 299) -> np.ndarray:
+def center_crop_bbox(image: tf.Tensor, bndbox: list, width: int = 299, height: int = 299) -> tf.Tensor:
     """
     Center crop an area around a bounding box to a fixed size.
     If output size is greater than maximum crop size the image will
@@ -147,7 +139,7 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299, height: 
 
     Parameters
     ----------
-    image : np.ndarray
+    image : tf.Tensor
         image array of size [height, width, 3]
     bndbox : List[int]
         Bounding box in the shape [x0, x1, y0, y1].
@@ -164,11 +156,6 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299, height: 
 
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]
-
-    # if crop_width > width:
-    #     raise ValueError('Crop is wider than max image width')
-    # if crop_height > height:
-    #     raise ValueError('Crop is higher than max image height')
 
     x0, x1, y0, y1 = bndbox
     x0 -= tf.cast(tf.math.floor((width - crop_width) / 2), tf.int64)
@@ -207,28 +194,19 @@ def crop_and_pad(image: tf.Tensor, bndbox: List[int],
     -------
     Crop of image.
     """
-    y_max, x_max = tf.shape(image)[0], tf.shape(image)[1]
-    # for i in tf.range(len(bndbox)):
-    #     bndbox[i] = int(bndbox[i])
 
     bndbox = list(map(lambda x: tf.squeeze(tf.cast(x, tf.int32)), bndbox))
     x0, x1, y0, y1 = bndbox
 
     image = image[y0:y1, x0:x1, :]
-
-    x_pad = -tf.math.minimum(tf.constant(0), x_max - x1)
-    y_pad = -tf.math.minimum(tf.constant(0), y_max - y1)
-
-    # zero-pad if crop is too large
-    image = tf.pad(image, [[0, y_pad], [0, x_pad], [0, 0]])
+    image = tf.image.pad_to_bounding_box(image, 0, 0, height, width)
 
     return image
 
 
 # @tf.function
-def read_image(image_path: str, fmt: str) -> tf.Tensor:
+def read_image(image_path: str, fmt: Optional[str] = None) -> tf.Tensor:
     image = tf.io.read_file(image_path)
-    # tensorflow provides quite a lot of apis for io
 
     if fmt == 'png':
         image = tf.image.decode_png(image, channels=3)
@@ -236,41 +214,19 @@ def read_image(image_path: str, fmt: str) -> tf.Tensor:
         image = tf.image.decode_jpeg(image, channels=3)
     else:
         image = tf.image.decode_image(image, channels=3)
+
     image = tf.cast(image, tf.float32)
     return image
 
 
 # @tf.function
-def normalize(image: tf.Tensor) -> tf.Tensor:
-    image = (image - tf.reduce_min(image)) / (tf.reduce_max(image) - tf.reduce_min(image))
-    image = (2 * image) - 1
-    return image
-
-
-# @tf.function
-def augment(image: tf.Tensor, bbox: List[int], random_crop: bool = True) -> tf.Tensor:
-    # image = tf.image.random_crop(image, (178, 178, 3))
-    # if random_crop:
-    #     image = random_crop_bbox(image, bbox, 299, 299)
-    # else:
-    #     image = center_crop_bbox(image, bbox, 299, 299)
-    # image = tf.image.resize(image, (299, 299))
+def augment(image: tf.Tensor) -> tf.Tensor:
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
     image = tf.image.random_contrast(image, 0.0, 0.8)
     image = tf.image.random_saturation(image, 0.0, 4.0)
     image = tf.image.random_brightness(image, 0.5)
     return image
-
-
-# @tf.function
-def preprocess(image_path: str, label: int, fmt: str, bbox: List[int],
-               random_crop: bool = True) -> Tuple[tf.Tensor, int]:
-    image = read_image(image_path, fmt)
-    image = augment(image, bbox, random_crop=random_crop)
-    # image = normalize(image)
-    image = tf.keras.applications.inception_resnet_v2.preprocess_input(image)
-    return image, tf.one_hot(label - 1, 2)
 
 
 @tf.function
@@ -301,7 +257,7 @@ def process_example(data: tf.train.Example, random_crop: bool = True,
         image = center_crop_bbox(image, bbox, 299, 299)
 
     if augment_data:
-        image = augment(image, bbox, random_crop=random_crop)
+        image = augment(image)
     image = tf.keras.applications.inception_resnet_v2.preprocess_input(image)
 
     labels = tf.one_hot(label - 1, 2)

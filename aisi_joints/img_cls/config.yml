@@ -1,3 +1,4 @@
+base_model: inception_resnet_v2
 workers: 4
 batch_size: 32
 train_data: ../Insulated_Joints/dataset/train.tfrecord
@@ -9,3 +10,6 @@ finetune:
   epochs: 10000
   learning_rate: 0.0001
   decay_steps: 200000
+class_weights:
+  0: 0.6
+  1: 2.2
