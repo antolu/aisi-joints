@@ -1,5 +1,7 @@
 import logging
+import os
 from argparse import ArgumentParser
+from os import path
 
 import tensorflow as tf
 
@@ -13,13 +15,22 @@ log = logging.getLogger(__name__)
 def export_model(config: Config, checkpoint_dir: str, output_dir: str):
     base_model, model = get_model(config.base_model)
 
-    log.info(f'Reading checkpoint from {checkpoint_dir}.')
-    checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
+    if path.isdir(checkpoint_dir):
+        files = [path.join(checkpoint_dir, o)
+                 for o in os.listdir(checkpoint_dir) if o.endswith('.h5')]
 
-    model.load_weights(checkpoint)
+        latest = max(files, key=path.getctime)
+        log.info(f'Reading checkpoint from {latest}.')
+        model.load_weights(latest)
+    else:
+        log.info(f'Reading checkpoint from {checkpoint_dir}.')
+        model.load_weights(checkpoint_dir)
 
     log.info(f'Writing model to {output_dir}.')
+    os.makedirs(output_dir, exist_ok=True)
     model.save(output_dir)
+
+    log.info('Done!')
 
 
 if __name__ == '__main__':
