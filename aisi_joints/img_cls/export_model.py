@@ -2,8 +2,10 @@ import logging
 from argparse import ArgumentParser
 
 import tensorflow as tf
-from .models import get_model
+
 from .config import Config
+from .models import get_model
+from ..utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
 
@@ -34,5 +36,8 @@ if __name__ == '__main__':
                         help='Directory to save exported model to.')
 
     args = parser.parse_args()
+    setup_logger()
 
     conf = Config(args.config)
+
+    export_model(conf, args.checkpoint_dir, args.output_dir)
