@@ -1,12 +1,11 @@
 import argparse
+import os
+from os import path
 
-import yaml
 import tensorflow as tf
-import tensorflow_probability as tfp
-
-from .dataloader import load_tfrecord
 
 from .config import Config
+from .dataloader import load_tfrecord
 
 
 class TempScale(tf.keras.layers.Layer):
@@ -29,6 +28,10 @@ class TempScale(tf.keras.layers.Layer):
         """
         return inputs / self._temperature
 
+    @property
+    def temperature(self) -> tf.Tensor:
+        return self._temperature.value()
+
 
 def main(config: Config, save_dir: str, model_dir: str):
     dataset = load_tfrecord(config.validation_data, config.batch_size,
@@ -36,26 +39,37 @@ def main(config: Config, save_dir: str, model_dir: str):
                             augment_data=False)
 
     model: tf.keras.models.Model = tf.keras.models.load_model(model_dir)
-    model.trainable = False  # freeze all layers
 
     input_ = model.input
     classification_layer = model.layers[-1]
     classification_layer.activation = tf.keras.activations.linear
+    model.trainable = False  # freeze all layers
 
     temp_scale = TempScale()
     x = temp_scale(classification_layer.output)
     model = tf.keras.models.Model(input_, x)
 
-    optimizer = tf.keras.optimizers.SGD(learning_rate=0.01)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=1)
     nll_criterion = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
 
-    model.compile(optmizer=optimizer)
-    model.fit(dataset, batch_size=config.batch_size, epochs=10)
+    early_stop = tf.keras.callbacks.EarlyStopping(
+        monitor='loss',
+        patience=20,
+        restore_best_weights=True
+    )
+
+    model.compile(optimizer=optimizer, loss=nll_criterion)
+    model.fit(dataset, epochs=250, callbacks=[early_stop])
+
+    print(f'Trained model temperature to {temp_scale.temperature}.')
 
     predictions = tf.keras.activations.softmax(x)
-    model_to_export = tf.keras.Models.Model(input_, predictions)
+    model_to_export = tf.keras.models.Model(input_, predictions)
     model_to_export.trainable = True
-    print(f'Trained model temperature to {temp_scale._temperature}.')
+
+    if not path.exists(save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+    model_to_export.save(save_dir)
 
 
 if __name__ == '__main__':
