@@ -1,8 +1,9 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 
 from ..data.generate_tfrecord import read_tfrecord
 
@@ -21,6 +22,41 @@ def load_tfrecord(pth: str, batch_size: int,
     data = data.batch(batch_size)
 
     return data
+
+
+def load_df(df: pd.DataFrame, random_crop: bool = False,
+            augment_data: bool = True) -> tf.data.Dataset:
+    labels_df = df[['cls']].copy()
+    labels_df.loc[labels_df['cls'] == 'OK', 'cls'] = 0
+    labels_df.loc[labels_df['cls'] == 'DEFECT', 'cls'] = 1
+
+    dataset = tf.data.Dataset.from_tensor_slices(
+        (df['filepath'].to_numpy(), labels_df.to_numpy(dtype=int),
+         df['x0'].to_numpy(), df['x1'].to_numpy(),
+         df['y0'].to_numpy(), df['y1']))
+
+    def preprocess(image: tf.Tensor, label: tf.Tensor,
+                   x0: tf.Tensor, x1: tf.Tensor, y0: tf.Tensor,
+                   y1: tf.Tensor) \
+            -> Tuple[tf.Tensor, tf.Tensor]:
+        image = read_image(image)
+        bbox = [x0, x1, y0, y1]
+
+        if random_crop:
+            image = random_crop_bbox(image, bbox, 299, 299)
+        else:
+            image = center_crop_bbox(image, bbox, 299, 299)
+
+        if augment_data:
+            image = augment(image)
+        image = tf.keras.applications.inception_resnet_v2.preprocess_input(
+            image)
+
+        labels = tf.one_hot(label, 2)
+
+        return image, labels
+
+    return dataset.map(preprocess)
 
 
 def shift_lower(bndbox: List[int]) -> List[int]:
