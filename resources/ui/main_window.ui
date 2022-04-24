@@ -15,21 +15,26 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
-     <widget class="QTableView" name="sampleTable">
-      <property name="sortingEnabled">
-       <bool>true</bool>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="lineWidth">
+       <number>0</number>
       </property>
-      <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>true</bool>
-      </attribute>
-      <attribute name="horizontalHeaderStretchLastSection">
-       <bool>true</bool>
-      </attribute>
+      <widget class="SampleWidget" name="sampleWidget"/>
+      <widget class="EvalWidget" name="evalWidget"/>
      </widget>
-    </item>
-    <item>
-     <widget class="ImageWidget" name="widget" native="true"/>
     </item>
    </layout>
   </widget>
@@ -194,9 +199,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ImageWidget</class>
+   <class>SampleWidget</class>
    <extends>QWidget</extends>
-   <header>aisi_joints.ui.ui.widgets.imagewidget.h</header>
+   <header>aisi_joints.ui.ui.widgets.sample_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>EvalWidget</class>
+   <extends>QWidget</extends>
+   <header>aisi_joints.ui.ui.widgets.eval_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

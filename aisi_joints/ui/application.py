@@ -43,7 +43,7 @@ def main(args: Namespace):
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
 
-    main_window = MainWindow(csv_path=args.csv)
+    main_window = MainWindow()
     app.init()
     main_window.show()
 

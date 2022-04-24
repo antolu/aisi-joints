@@ -53,6 +53,6 @@ class ExportDialog(Ui_ExportDialog, QDialog):
         log.info(f'Exporting .csv to {self.textBrowse.text()}.')
 
         try:
-            df.to_csv(self.textBrowse.text())
+            df.to_csv(self.textBrowse.text(), index=False)
         except OSError as e:
             QMessageBox.critical(self, 'Error', str(e))

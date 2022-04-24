@@ -17,8 +17,12 @@ HEADER_TO_COLUMN = {
 
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data: pd.DataFrame, parent: Optional[QObject] = None):
+    def __init__(self, data: Optional[pd.DataFrame] = None,
+                 parent: Optional[QObject] = None):
         super().__init__(parent)
+
+        if data is None:
+            data = pd.DataFrame()
 
         self.dataframe = data
 

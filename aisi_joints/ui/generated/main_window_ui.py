@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\Documents\SBB\aisi-joints\resources\ui\main_window.ui'
+# Form implementation generated from reading ui file 'E:\Documents\SBB\aisi-joints\resources\ui\main_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
 #
@@ -18,16 +18,18 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.sampleTable = QtWidgets.QTableView(self.centralwidget)
-        self.sampleTable.setSortingEnabled(True)
-        self.sampleTable.setObjectName("sampleTable")
-        self.sampleTable.horizontalHeader().setCascadingSectionResizes(True)
-        self.sampleTable.horizontalHeader().setStretchLastSection(True)
-        self.horizontalLayout.addWidget(self.sampleTable)
-        self.widget = ImageWidget(self.centralwidget)
-        self.widget.setObjectName("widget")
-        self.horizontalLayout.addWidget(self.widget)
+        self.stackedWidget = QtWidgets.QStackedWidget(self.centralwidget)
+        self.stackedWidget.setLineWidth(0)
+        self.stackedWidget.setObjectName("stackedWidget")
+        self.sampleWidget = SampleWidget()
+        self.sampleWidget.setObjectName("sampleWidget")
+        self.stackedWidget.addWidget(self.sampleWidget)
+        self.evalWidget = EvalWidget()
+        self.evalWidget.setObjectName("evalWidget")
+        self.stackedWidget.addWidget(self.evalWidget)
+        self.horizontalLayout.addWidget(self.stackedWidget)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
@@ -131,5 +133,6 @@ class Ui_MainWindow(object):
         self.action_Generate_tfrecord.setText(_translate("MainWindow", "&Generate .tfrecord"))
         self.action_Update_Filepaths.setText(_translate("MainWindow", "&Update Filepaths"))
         self.actionExport_Labelmap.setText(_translate("MainWindow", "Export Labelmap"))
-from aisi_joints.ui.ui.widgets.imagewidget import ImageWidget
+from aisi_joints.ui.ui.widgets.eval_widget import EvalWidget
+from aisi_joints.ui.ui.widgets.sample_widget import SampleWidget
 from . import resources_rc

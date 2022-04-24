@@ -17,7 +17,7 @@ def export_revalidation_samples(csv_path: str, output_dir: str):
     if not path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
 
-    df.to_csv(path.join(output_dir, 'samples.csv'))
+    df.to_csv(path.join(output_dir, 'samples.csv'), index=False)
 
     # copy images
     for row in df.itertuples():
