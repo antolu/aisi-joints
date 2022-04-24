@@ -35,7 +35,7 @@ class DisplayWidget(QWidget):
 
     @property
     def has_data(self) -> bool:
-        return self._csv_path is not None
+        return len(self.table_model.dataframe) > 0
 
     def save(self):
         if self._csv_path is None:
