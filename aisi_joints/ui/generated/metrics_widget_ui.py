@@ -15,14 +15,16 @@ class Ui_MetricsWidget(object):
     def setupUi(self, MetricsWidget):
         MetricsWidget.setObjectName("MetricsWidget")
         MetricsWidget.resize(400, 300)
+        self.horizontalLayout = QtWidgets.QHBoxLayout(MetricsWidget)
+        self.horizontalLayout.setObjectName("horizontalLayout")
         self.textEdit = QtWidgets.QTextEdit(MetricsWidget)
-        self.textEdit.setGeometry(QtCore.QRect(10, 20, 381, 261))
         font = QtGui.QFont()
         font.setFamily("Consolas")
         self.textEdit.setFont(font)
         self.textEdit.setReadOnly(True)
         self.textEdit.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
         self.textEdit.setObjectName("textEdit")
+        self.horizontalLayout.addWidget(self.textEdit)
 
         self.retranslateUi(MetricsWidget)
         QtCore.QMetaObject.connectSlotsByName(MetricsWidget)

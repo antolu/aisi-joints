@@ -107,6 +107,9 @@ class TableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             return self._data[HEADER_TO_COLUMN[self._header[index.column()]]].iloc[index.row()]
         elif role == Qt.ItemDataRole.BackgroundRole:
+            if 'detected_class' in self._data.columns:
+                if self._data['cls'].iloc[index.row()] != self._data['detected_class'].iloc[index.row()]:
+                    return QColor('yellow')
             if self._data['ignore'].iloc[index.row()]:
                 return QColor('gray')
             elif self._data['validate'].iloc[index.row()]:
