@@ -33,6 +33,10 @@ class DisplayWidget(QWidget):
     def show_img(self, index: QModelIndex):
         raise NotImplementedError
 
+    @property
+    def has_data(self) -> bool:
+        return self._csv_path is not None
+
     def save(self):
         if self._csv_path is None:
             file, ok = QFileDialog.getSaveFileName(

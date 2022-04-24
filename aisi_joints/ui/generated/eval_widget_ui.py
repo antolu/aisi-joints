@@ -30,7 +30,7 @@ class Ui_EvalWidget(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sampleTable.sizePolicy().hasHeightForWidth())
         self.sampleTable.setSizePolicy(sizePolicy)
-        self.sampleTable.setMaximumSize(QtCore.QSize(400, 2000000))
+        self.sampleTable.setMaximumSize(QtCore.QSize(600, 2000000))
         self.sampleTable.setObjectName("sampleTable")
         self.sampleTable.horizontalHeader().setSortIndicatorShown(True)
         self.sampleTable.horizontalHeader().setStretchLastSection(True)

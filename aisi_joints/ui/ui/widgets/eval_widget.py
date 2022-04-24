@@ -5,6 +5,7 @@ from PyQt5.QtCore import QModelIndex
 from PyQt5.QtWidgets import QWidget, QMessageBox
 
 from .display_widget import DisplayWidget
+from .metrics_widget import MetricsWidget
 from ...elements.copy_action import CopySelectedCellsAction
 from ...generated.eval_widget_ui import Ui_EvalWidget
 
@@ -22,6 +23,8 @@ class EvalWidget(DisplayWidget, Ui_EvalWidget):
         self.sampleTable.doubleClicked.connect(self.show_img)
         self.sampleTable.activated.connect(self.show_img)
 
+        self.metrics_widget = MetricsWidget()
+
     def show_current_img(self):
         self.show_img(self.sampleTable.currentIndex())
 
@@ -36,3 +39,7 @@ class EvalWidget(DisplayWidget, Ui_EvalWidget):
             QMessageBox.critical(self, 'Error', 'An exception occurred: '
                                  + str(e))
             return
+
+    def show_metrics(self):
+        self.metrics_widget.show_metrics(self.table_model.dataframe)
+        self.metrics_widget.show()

@@ -57,11 +57,15 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionTrain.changed.connect(self.change_mode)
         self.actionEvaluation.changed.connect(self.change_mode)
 
+        self.actionEvaluation_Metrics.triggered.connect(
+            self.evalWidget.show_metrics)
+
         self.sampleWidget.data_loaded.connect(self.update_action_state)
         self.evalWidget.data_loaded.connect(self.update_action_state)
 
         self.disable_data_actions()
         self.disable_sample_actions()
+        self.disable_eval_actions()
 
     def dispatch_action(self, action_name: str):
         getattr(self.stackedWidget.currentWidget(), action_name)()
@@ -77,10 +81,15 @@ class MainWindow(Ui_MainWindow, QMainWindow):
     def update_action_state(self):
         if self.stackedWidget.currentWidget() is self.sampleWidget:
             self.enable_sample_actions()
+            self.disable_eval_actions()
         else:
             self.disable_sample_actions()
+            self.enable_eval_actions()
 
-        self.enable_data_actions()
+        if self.stackedWidget.currentWidget().has_data:
+            self.enable_data_actions()
+        else:
+            self.disable_data_actions()
 
     def enable_data_actions(self):
         self.actionSave_csv.setEnabled(True)
@@ -117,3 +126,9 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
         self.actionExportIgnored.setDisabled(True)
         self.action_ExportRevalidation.setDisabled(True)
+
+    def enable_eval_actions(self):
+        self.actionEvaluation_Metrics.setEnabled(True)
+
+    def disable_eval_actions(self):
+        self.actionEvaluation_Metrics.setDisabled(True)
