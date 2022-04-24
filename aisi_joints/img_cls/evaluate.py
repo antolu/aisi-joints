@@ -6,7 +6,7 @@ import pandas as pd
 import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 
-from .dataloader import load_df
+from ._dataloader import load_df
 from ..constants import CLASS_OK, CLASS_DEFECT
 from ..utils.logging import setup_logger
 from ..utils.utils import time_execution

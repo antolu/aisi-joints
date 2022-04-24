@@ -5,8 +5,8 @@ from os import path
 
 import tensorflow as tf
 
-from .config import Config
-from .models import get_model
+from ._config import Config
+from ._models import get_model
 from ..utils.logging import setup_logger
 
 log = logging.getLogger(__name__)

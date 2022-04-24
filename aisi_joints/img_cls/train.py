@@ -9,10 +9,10 @@ import tensorflow as tf
 from keras import Model
 from tensorboard import program, default
 
-from .config import Config, FitConfig
-from .dataloader import load_tfrecord
+from ._config import Config, FitConfig
+from ._dataloader import load_tfrecord
 from .evaluate import EvaluateImages
-from .models import get_model
+from ._models import get_model
 from ..utils.logging import setup_logger
 
 log = logging.getLogger(__name__)

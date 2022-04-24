@@ -4,8 +4,8 @@ from os import path
 
 import tensorflow as tf
 
-from .config import Config
-from .dataloader import load_tfrecord
+from ._config import Config
+from ._dataloader import load_tfrecord
 
 
 class TempScale(tf.keras.layers.Layer):

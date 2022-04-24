@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 from object_detection.utils import visualization_utils as viz_utils
 
-from .dataloader import process_example, undo_preprocess
+from ._dataloader import process_example, undo_preprocess
 from ..constants import INV_LABEL_MAP
 
 log = logging.getLogger(__name__)
