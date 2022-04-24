@@ -1,6 +1,6 @@
 import logging
 
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QActionGroup
 
 from .tools_menu import ToolsMenu
 from ..generated.main_window_ui import Ui_MainWindow
@@ -16,7 +16,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.tools_menu = ToolsMenu(self.sampleWidget.table_model, self)
 
         self.actionShow_Image.triggered.connect(
-            lambda: self.dispatch_action('show_img'))
+            lambda: self.dispatch_action('show_current_img'))
         self.actionImport.triggered.connect(
             lambda: self.dispatch_action('import_'))
         self.actionLoad_csv.triggered.connect(
@@ -50,6 +50,13 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
         self.actionExit.triggered.connect(self.close)
 
+        self.modeActionGroup = QActionGroup(self)
+        self.modeActionGroup.addAction(self.actionTrain)
+        self.modeActionGroup.addAction(self.actionEvaluation)
+        self.modeActionGroup.setExclusive(True)
+        self.actionTrain.changed.connect(self.change_mode)
+        self.actionEvaluation.changed.connect(self.change_mode)
+
         self.sampleWidget.data_loaded.connect(self.update_action_state)
         self.evalWidget.data_loaded.connect(self.update_action_state)
 
@@ -58,6 +65,14 @@ class MainWindow(Ui_MainWindow, QMainWindow):
 
     def dispatch_action(self, action_name: str):
         getattr(self.stackedWidget.currentWidget(), action_name)()
+
+    def change_mode(self):
+        if self.actionTrain.isChecked():
+            self.stackedWidget.setCurrentWidget(self.sampleWidget)
+        else:
+            self.stackedWidget.setCurrentWidget(self.evalWidget)
+
+        self.update_action_state()
 
     def update_action_state(self):
         if self.stackedWidget.currentWidget() is self.sampleWidget:
