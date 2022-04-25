@@ -11,7 +11,7 @@ from tensorboard import program, default
 
 from ._config import Config, FitConfig
 from ._dataloader import load_tfrecord
-from .evaluate import EvaluateImages
+from ._log_images import EvaluateImages
 from ._models import get_model
 from ..utils.logging import setup_logger
 
