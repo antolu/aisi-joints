@@ -100,13 +100,23 @@ def main(args: Namespace):
         visualizer = Visualizer(img[:, :, ::-1], metadata=custom_metadata,
                                 scale=0.5)
         out = visualizer.draw_dataset_dict(d)
-        # cv2_imshow(out.get_image()[:, :, ::-1])
+        # cv.imshow(d['file_name'], out.get_image()[:, :, ::-1])
 
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=False)
     trainer.train()
+
+    from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+    from detectron2.data import build_detection_test_loader
+
+    evaluator = COCOEvaluator("validation", None, False,
+                              output_dir=cfg.OUTPUT_DIR)
+    val_loader = build_detection_test_loader(cfg, 'validation')
+    results = inference_on_dataset(trainer.model, val_loader, evaluator)
+
+    print(results)
 
 
 if __name__ == '__main__':
