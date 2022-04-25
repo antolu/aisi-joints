@@ -125,8 +125,7 @@ class TensorBoardTool:
         # Suppress http messages
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
         # Start tensorboard server
-        tb = program.TensorBoard(default.get_plugins(),
-                                 default.get_assets_zip_provider())
+        tb = program.TensorBoard(default.get_plugins())
         tb.configure(argv=[None, '--logdir', self.log_dir])
 
         url = tb.launch()
@@ -153,8 +152,9 @@ if __name__ == '__main__':
     config.log_dir = args.logdir
     config.checkpoint_dir = args.checkpoint_dir
 
-    tensorboard = TensorBoardTool(config.log_dir)
-    tensorboard.run()
+    if args.tensorboard:
+        tensorboard = TensorBoardTool(config.log_dir)
+        tensorboard.run()
 
     try:
         main(config)
