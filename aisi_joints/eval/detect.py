@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from ..utils.logging import setup_logger
+from ..utils.utils import time_execution
 from .utils import load_model, load_labelmap, load_image, run_inference, plot_and_save, format_detections
 
 log = logging.getLogger(__name__)
@@ -68,41 +70,45 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
             -> pd.DataFrame:
 
     results = []
-    for sample in df.itertuples():
-        image = load_image(sample.filepath)
-        detections = run_inference(image, model)
+    with time_execution() as t:
+        for sample in df.itertuples():
+            image = load_image(sample.filepath)
+            detections = run_inference(image, model)
 
-        boxes = format_detections(detections)
+            boxes = format_detections(detections)
 
-        boxes_filtered = boxes[boxes['detection_scores'] >= score_threshold]
+            boxes_filtered = boxes[boxes['detection_scores'] >= score_threshold]
 
-        detected_class = []
-        x0 = []
-        x1 = []
-        y0 = []
-        y1 = []
-        detection_score = []
+            detected_class = []
+            x0 = []
+            x1 = []
+            y0 = []
+            y1 = []
+            detection_score = []
 
-        for box in boxes_filtered.itertuples():
-            detected_class.append(label_map[box.detection_classes]['name'])
-            detection_score.append(box.detection_scores)
-            x0.append(box.left)
-            x1.append(box.right)
-            y0.append(box.bottom)
-            y1.append(box.top)
+            for box in boxes_filtered.itertuples():
+                detected_class.append(label_map[box.detection_classes]['name'])
+                detection_score.append(box.detection_scores)
+                x0.append(box.left)
+                x1.append(box.right)
+                y0.append(box.bottom)
+                y1.append(box.top)
 
-        res = {
-            'eventId': sample.eventId,
-            'detected_class': detected_class,
-            'detection_score': detection_score,
-            'detected_x0': x0,
-            'detected_x1': x1,
-            'detected_y0': y0,
-            'detected_y1': y1,
-            'num_detections': len(x0),
-        }
+            res = {
+                'eventId': sample.eventId,
+                'detected_class': ';'.join(map(str, detected_class)),
+                'detection_score': ';'.join(map(str, detection_score)),
+                'detected_x0': ';'.join(map(str, map(int, x0))),
+                'detected_x1': ';'.join(map(str, map(int, x1))),
+                'detected_y0': ';'.join(map(str, map(int, y0))),
+                'detected_y1': ';'.join(map(str, map(int, y1))),
+                'num_detections': len(x0),
+            }
 
-        results.append(res)
+            results.append(res)
+
+    log.info(f'Finished detection, took {t.duration * 1000 / len(df)} ms '
+             f'per sample.')
 
     res_df = pd.DataFrame(results)
 
@@ -132,6 +138,7 @@ if __name__ == '__main__':
                         help='Save images with bounding boxes.')
     args = parser.parse_args()
 
+    setup_logger()
     csv_detect(args.input, args.model_dir, args.labelmap, args.score_threshold, args.output)
     # detect(args)
 

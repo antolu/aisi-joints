@@ -1,18 +1,21 @@
 import json
 import logging
 from argparse import ArgumentParser
+from os import path
 from typing import Dict
+
+import numpy as np
+import pandas as pd
 from PIL import Image
 from fiftyone.utils.voc import VOCBoundingBox
-
-import pandas as pd
 
 from ..constants import LABEL_MAP
 
 log = logging.getLogger(__name__)
 
 
-def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int], predictions: bool = False):
+def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
+               predictions: bool = False) -> dict:
     output_json_dict = {
         "images": [],
         "type": "instances",
@@ -24,13 +27,13 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int], predictions: bool = F
     for sample in df.itertuples():
         # Read annotation xml
 
-        if not hasattr(sample, 'height'):
+        if not hasattr(sample, 'height') or np.isnan(sample.height) or np.isnan(sample.width):
             width, height = Image.open(sample.filepath).size
         else:
             width, height = sample.width, sample.height
 
         image_info = {
-            'file_name': sample.filepath,
+            'file_name': path.split(sample.filepath)[-1],
             'height': height,
             'width': width,
             'id': sample.eventId
@@ -59,8 +62,10 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int], predictions: bool = F
             output_json_dict['annotations'].append(ann)
         else:
             for i in range(sample.num_detections):
-                bbox = VOCBoundingBox(sample.detected_x0[i], sample.detected_y0[i],
-                                      sample.detected_x1[i], sample.detected_y1[i])
+                bbox = VOCBoundingBox(sample.detected_x0[i],
+                                      sample.detected_y0[i],
+                                      sample.detected_x1[i],
+                                      sample.detected_y1[i])
 
                 ann = {
                     'area': (bbox.xmax - bbox.xmin) * (bbox.ymax - bbox.ymin),
@@ -78,7 +83,8 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int], predictions: bool = F
                 output_json_dict['annotations'].append(ann)
 
     for label, label_id in labelmap.items():
-        category_info = {'supercategory': 'none', 'id': label_id, 'name': label}
+        category_info = {'supercategory': 'none', 'id': label_id,
+                         'name': label}
 
         output_json_dict['categories'].append(category_info)
 
