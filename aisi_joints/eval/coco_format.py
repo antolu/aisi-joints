@@ -53,6 +53,11 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
                 'segmentation': []  # This script is not for segmentation
             }
 
+            ann['bbox'][0] *= width
+            ann['bbox'][1] *= height
+            ann['bbox'][2] *= width
+            ann['bbox'][3] *= height
+
             if hasattr(sample, 'detection_score'):
                 ann['score'] = sample.detection_score
 
