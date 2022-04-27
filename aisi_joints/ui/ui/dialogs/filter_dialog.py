@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class FilterDialog(QDialog, Ui_FilterDialog):
-    data_filtered = pyqtSignal(pd.DataFrame)
+    data_filtered = pyqtSignal(pd.DataFrame, str)
 
     def __init__(self, data: pd.DataFrame, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -43,6 +43,6 @@ class FilterDialog(QDialog, Ui_FilterDialog):
         for file in files:
             filters.append(pd.read_csv(file))
 
-        df = filter_dataframe(self._data.copy(), filters)
+        df, msg = filter_dataframe(self._data.copy(), filters)
 
-        self.data_filtered.emit(df)
+        self.data_filtered.emit(df, msg)

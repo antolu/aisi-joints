@@ -28,8 +28,8 @@ def create_sample(df: pd.DataFrame) -> fo.Sample:
     sample['ground_truth'] = ground_truth
 
     if hasattr(df, 'detected_class'):
-        detected_bbox = VOCBoundingBox(df.detected_x0, df.detected_y0,
-                                       df.detected_x1, df.detected_y1)
+        detected_bbox = VOCBoundingBox(int(df.detected_x0), int(df.detected_y0),
+                                       int(df.detected_x1), int(df.detected_y1))
         prediction = fo.Detections(
             detections=[
                 fo.Detection(label=df.detected_class,

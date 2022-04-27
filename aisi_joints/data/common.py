@@ -32,7 +32,8 @@ def find_labels(labels_pth: List[str]) -> pd.DataFrame:
     return labels_df
 
 
-def find_images(images_pth: List[str]) -> pd.DataFrame:
+def find_images(images_pth: List[str], find_dims: bool = True) \
+        -> pd.DataFrame:
     # iterate over all image files to construct index
     images_idx = list()
     regex = re.compile(r'.*_(?P<uuid>.+)\.(png|jpg)')
@@ -44,13 +45,15 @@ def find_images(images_pth: List[str]) -> pd.DataFrame:
             m = regex.match(f)
 
             if m:
-                width, height = Image.open(path.join(image_pth, f)).size
                 images_idx.append(
                     {'eventId': m.group('uuid'),
-                     'filepath': path.abspath(path.join(image_pth, f)),
-                     'width': width, 'height': height})
+                     'filepath': path.abspath(path.join(image_pth, f))})
 
-    images_df = pd.DataFrame(images_idx)
+                if find_dims:
+                    width, height = Image.open(path.join(image_pth, f)).size
+                    images_idx[-1].update({'width': width, 'height': height})
+
+                images_df = pd.DataFrame(images_idx)
     log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '
              f'directories.')
 

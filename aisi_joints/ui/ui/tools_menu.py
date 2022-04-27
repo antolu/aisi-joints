@@ -39,11 +39,11 @@ class ToolsMenu:
     def on_filter(self):
         dialog = FilterDialog(self._table_model.dataframe, self._parent)
 
-        def on_ok(df: pd.DataFrame):
+        def on_ok(df: pd.DataFrame, msg: str):
             self._table_model.dataframe = df
 
             QMessageBox.information(
-                self._parent, 'Filter success', 'Successfully filtered dataset.')
+                self._parent, 'Filter success', msg)
 
         dialog.data_filtered.connect(on_ok)
         dialog.exec()

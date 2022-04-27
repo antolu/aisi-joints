@@ -3,7 +3,7 @@ Script to remove rows of a dataset .csv based on eventIds, where the eventIds
 to remove are in a second .csv.
 """
 from argparse import ArgumentParser, Namespace
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 
@@ -12,17 +12,22 @@ log = logging.getLogger(__name__)
 
 
 def filter_dataframe(df: pd.DataFrame, filters: List[pd.DataFrame]) \
-        -> pd.DataFrame:
+        -> Tuple[pd.DataFrame, str]:
+    msgs = []
     for i, filter in enumerate(filters):
         orig_len = len(df)
 
         df = df[~df[['eventId']].apply(tuple, 1).isin(filter[['eventId']].apply(tuple, 1))]
 
-        log.info(f'Removed {orig_len - len(df)} samples on pass {i + 1}.')
+        msg = f'Removed {orig_len - len(df)} samples on pass {i + 1}.'
+        msgs.append(msg)
+        log.info(msg)
 
-    log.info(f'Remaining number of samples: {len(df)}.')
+    msg = f'Remaining number of samples: {len(df)}.'
+    msgs.append(msg)
+    log.info(msg)
 
-    return df
+    return df, '\n'.join(msgs)
 
 
 def main(args: Namespace):
@@ -33,7 +38,7 @@ def main(args: Namespace):
     for csv in args.filter:
         filters.append(pd.read_csv(csv))
 
-    df = filter_dataframe(df, filters)
+    df, _ = filter_dataframe(df, filters)
 
     df.to_csv(args.output, index=False)
 

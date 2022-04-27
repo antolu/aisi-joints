@@ -105,7 +105,7 @@ def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
 
     log.info(f'Registered {len(xmls_df)} .xmls from {len(xmls_pth)} directories.')
 
-    images_df = find_images(images_pth)
+    images_df = find_images(images_pth, find_dims=False)
 
     log.info('Matching labels to images...')
     labels_df = pd.merge(xmls_df, images_df, on='eventId', how='inner')

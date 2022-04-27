@@ -77,6 +77,7 @@ def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
 
     # merge and filter based on eventId
     df = df.merge(images_df, left_on='eventId', right_on='eventId')
+    df.rename(columns={'platformID': 'platformId'}, inplace=True)
 
     log.info(f'Total number of labeled samples: {len(df)}.')
     log.info(f'Total number of non-defects: '
