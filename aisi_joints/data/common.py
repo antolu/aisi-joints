@@ -99,6 +99,9 @@ class DetectionBox:
         return [[self.x0, self.y0], [self.x1, self.y0], [self.x1, self.y1],
                 [self.x0, self.y1], [self.x0, self.y0]]
 
+    def to_pascal_voc(self):
+        return [self.x0, self.x1, self.y0, self.y1]
+
 
 class Sample:
     eventId: str
