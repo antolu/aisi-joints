@@ -57,8 +57,8 @@ def partition_dataset(df: pd.DataFrame, ratio: str):
             split = [round(train_ratio / 100 * len(platform_df))]
             split_dfs = np.split(platform_df.sample(frac=1), split)
         else:
-            split = [round(train_ratio / 100 * len(platform_df)),
-                     round(val_ratio / 100 * len(platform_df))]
+            split = np.cumsum([round(train_ratio / 100 * len(platform_df)),
+                               round(val_ratio / 100 * len(platform_df))])
             split_dfs = np.split(platform_df.sample(frac=1), split)
 
         # assign the split label
