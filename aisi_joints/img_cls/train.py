@@ -126,7 +126,7 @@ class TensorBoardTool:
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
         # Start tensorboard server
         tb = program.TensorBoard(default.get_plugins())
-        tb.configure(argv=[None, '--logdir', self.log_dir])
+        tb.configure(argv=[None, '--logdir', self.log_dir, '--bind_all'])
 
         url = tb.launch()
         sys.stdout.write(f'TensorBoard at {url} \n')
