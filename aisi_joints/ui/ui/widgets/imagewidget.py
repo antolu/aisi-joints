@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPen, QColorConstants as QColor, QBrush
 from PyQt5.QtWidgets import QWidget, QMessageBox
 from pyqtgraph import ImageItem, GraphicsView, ViewBox, PlotDataItem, TextItem
 
-from ...elements.table_model import Sample
+from ....data.common import Sample
 from ...utils import run_in_main_thread
 
 log = logging.getLogger(__name__)

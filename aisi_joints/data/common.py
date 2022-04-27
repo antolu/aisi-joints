@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from dataclasses import dataclass
 from os import path
 from PIL import Image
 from typing import List, Dict
@@ -83,3 +84,57 @@ def write_pbtxt(classes: Dict[str, int], output_name: str):
             out += '}\n\n'
 
             f.write(out)
+
+
+@dataclass
+class DetectionBox:
+    x0: int
+    x1: int
+    y0: int
+    y1: int
+    cls: str
+    score: float = -1
+
+    def to_coords(self) -> List[List[int]]:
+        return [[self.x0, self.y0], [self.x1, self.y0], [self.x1, self.y1],
+                [self.x0, self.y1], [self.x0, self.y0]]
+
+
+class Sample:
+    eventId: str
+    filepath: str
+    bbox: DetectionBox
+
+    has_detection: bool
+    num_detections: int
+
+    detected_bbox = List[DetectionBox]
+
+    @staticmethod
+    def from_dataframe(df: pd.DataFrame) -> 'Sample':
+        sample = Sample()
+        sample.eventId = df['eventId']
+        sample.filepath = df['filepath']
+        sample.bbox = DetectionBox(df['x0'], df['x1'], df['y0'], df['y1'],
+                                   df['cls'])
+
+        if 'detected_class' not in df.index:
+            sample.has_detection = False
+            return sample
+
+        sample.has_detection = True
+        sample.num_detections = df['num_detections']
+
+        sample.detected_bbox = []
+        x0 = [o for o in map(int, str(df['detected_x0']).split(';'))]
+        x1 = [o for o in map(int, str(df['detected_x1']).split(';'))]
+        y0 = [o for o in map(int, str(df['detected_y0']).split(';'))]
+        y1 = [o for o in map(int, str(df['detected_y1']).split(';'))]
+        scores = [o for o in map(float, str(df['detection_score']).split(';'))]
+        cls = [o for o in df['detected_class'].split(';')]
+
+        for i in range(sample.num_detections):
+            sample.detected_bbox.append(
+                DetectionBox(x0[i], x1[i], y0[i], y1[i], cls[i], scores[i]))
+
+        return sample
