@@ -41,19 +41,22 @@ def find_images(images_pth: List[str], find_dims: bool = True) \
         if not path.isdir(image_pth):
             raise NotADirectoryError(f'{image_pth} is not a directory.')
 
-        for f in os.listdir(image_pth):
-            m = regex.match(f)
+        for root, dirs, files in os.walk(image_pth):
+            for f in files:
+                m = regex.match(f)
 
-            if m:
+                if not m:
+                    continue
+
                 images_idx.append(
                     {'eventId': m.group('uuid'),
-                     'filepath': path.abspath(path.join(image_pth, f))})
+                     'filepath': path.abspath(path.join(root, f))})
 
                 if find_dims:
-                    width, height = Image.open(path.join(image_pth, f)).size
+                    width, height = Image.open(path.join(root, f)).size
                     images_idx[-1].update({'width': width, 'height': height})
 
-                images_df = pd.DataFrame(images_idx)
+    images_df = pd.DataFrame(images_idx)
     log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '
              f'directories.')
 

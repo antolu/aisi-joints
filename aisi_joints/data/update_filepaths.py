@@ -12,27 +12,13 @@ import pandas as pd
 import numpy as np
 import os.path as path
 
+from .common import find_images
+
 log = logging.getLogger(__name__)
 
 
 def update_paths(df: pd.DataFrame, images_pth: List[str]) -> pd.DataFrame:
-    images_idx = list()
-    regex = re.compile(r'.*_(?P<uuid>.+)\.(png|jpg)')
-    for image_pth in images_pth:
-        if not path.isdir(image_pth):
-            raise NotADirectoryError(f'{image_pth} is not a directory.')
-
-        for f in os.listdir(image_pth):
-            m = regex.match(f)
-
-            if m:
-                images_idx.append(
-                    {'eventId': m.group('uuid'),
-                     'filepath': path.abspath(path.join(image_pth, f))})
-
-    images_df = pd.DataFrame(images_idx)
-    log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '
-             f'directories.')
+    images_df = find_images(images_pth)
 
     # merge and filter based on eventId
     df = df.drop(columns=['filepath'])
