@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def update_paths(df: pd.DataFrame, images_pth: List[str]) -> pd.DataFrame:
-    images_df = find_images(images_pth)
+    images_df = find_images(images_pth, find_dims=False)
 
     # merge and filter based on eventId
     df = df.drop(columns=['filepath'])
