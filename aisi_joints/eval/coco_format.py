@@ -65,17 +65,19 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
             output_json_dict['annotations'].append(ann)
         else:
             for i in range(sample.num_detections):
-                bbox = VOCBoundingBox(sample.detected_x0[i],
-                                      sample.detected_y0[i],
-                                      sample.detected_x1[i],
-                                      sample.detected_y1[i])
+                x0 = sample.detected_x0[i]
+                x1 = sample.detected_x1[i]
+                y0 = sample.detected_y0[i]
+                y1 = sample.detected_y1[i]
+
+                bbox = [x0, y0, x1 - x0, y1 - y0]  # x0, y0, w, h
 
                 ann = {
-                    'area': (bbox.xmax - bbox.xmin) * (bbox.ymax - bbox.ymin),
+                    'area': bbox[2] * bbox[3],
                     'iscrowd': 0,
                     'image_id': sample.eventId,
                     'id': bnd_id,
-                    'bbox': bbox.to_detection_format((width, height)),
+                    'bbox': bbox,
                     'score': sample.detection_score[i],
                     'category_id': labelmap[sample.detected_class[i]],
                     'ignore': 0,
