@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
               train_data: tf.data.Dataset, val_data: tf.data.Dataset,
-              config: Config, fit_config: FitConfig, name: str,
+              config: Config, epochs: int, name: str,
               metrics: Optional[List[tf.keras.metrics.Metric]] = None):
     img_writer = tf.summary.create_file_writer(
         path.join(config.log_dir, config.timestamp, f'{name}/images'))
@@ -50,7 +50,7 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
     # train the model on the new data for a few epochs
     model.fit(train_data, batch_size=config.batch_size,
               validation_data=val_data, use_multiprocessing=True,
-              workers=config.workers, epochs=fit_config.epochs,
+              workers=config.workers, epochs=epochs,
               callbacks=callbacks, class_weight=config.class_weights)
 
 
@@ -84,30 +84,20 @@ def main(config: Config):
 
     base_model.trainable = False
 
-    optimizer = tf.keras.optimizers.Adam(
-        learning_rate=tf.keras.optimizers.schedules.ExponentialDecay(
-            config.transfer_config.learning_rate,
-            config.transfer_config.decay_steps, 0.94, staircase=True
-        )
-    )
     try:
-        fit_model(model, optimizer, train_data, val_data,
-                  config, config.transfer_config, 'transfer', metrics=metrics)
+        fit_model(model, config.transfer_config.optimizer, train_data,
+                  val_data, config, config.transfer_config.epochs, 'transfer',
+                  metrics=metrics)
     except KeyboardInterrupt:
         save_model('transfer')
         raise
 
     base_model.trainable = True
 
-    optimizer = tf.keras.optimizers.Adam(
-        learning_rate=tf.keras.optimizers.schedules.CosineDecay(
-            config.finetune_config.lr,
-            decay_steps=config.finetune_config.decay_steps, alpha=1e-6
-        )
-    )
     try:
-        fit_model(model, optimizer, train_data, val_data,
-                  config, config.finetune_config, 'finetune', metrics=metrics)
+        fit_model(model, config.finetune_config.optimizer, train_data,
+                  val_data, config, config.finetune_config.epochs, 'finetune',
+                  metrics=metrics)
     except KeyboardInterrupt:
         save_model('finetune')
         raise
@@ -134,7 +124,7 @@ class TensorBoardTool:
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('config', help='Path to config.yml')
+    parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
                         help='Tensorboard logdir.')
     parser.add_argument('-d', '--debug', action='store_true',
@@ -148,7 +138,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     setup_logger(args.debug)
-    config = Config(args.config)
+    if args.config.endswith('.py'):
+        args.config = args.config[:-3]
+    config = Config(args.config.replace('/', '.'))
     config.log_dir = args.logdir
     config.checkpoint_dir = args.checkpoint_dir
 
