@@ -23,6 +23,7 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
         "categories": []
     }
     bnd_id = 1  # START_BOUNDING_BOX_ID, TODO input as args ?
+    img_id = 0
 
     for sample in df.itertuples():
         # Read annotation xml
@@ -32,36 +33,33 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
         else:
             width, height = sample.width, sample.height
 
+        img_id += 1
         image_info = {
             'file_name': path.split(sample.filepath)[-1],
             'height': height,
             'width': width,
-            'id': sample.eventId
+            'id': img_id,
+            'eventId': sample.eventId
         }
-
         output_json_dict['images'].append(image_info)
 
         if not predictions:
-            bbox = VOCBoundingBox(sample.x0, sample.y0, sample.x1, sample.y1)
+            bbox = [sample.x0, sample.y0,
+                    sample.x1 - sample.x0, sample.y1 - sample.y0]
 
             ann = {
-                'area': (bbox.xmax - bbox.xmin) * (bbox.ymax - bbox.ymin),
+                'area': bbox[2] * bbox[3],
                 'iscrowd': 0,
-                'bbox': bbox.to_detection_format((width, height)),
+                'bbox': bbox,
                 'category_id': labelmap[sample.cls],
                 'ignore': 0,
                 'segmentation': []  # This script is not for segmentation
             }
 
-            ann['bbox'][0] *= width
-            ann['bbox'][1] *= height
-            ann['bbox'][2] *= width
-            ann['bbox'][3] *= height
-
             if hasattr(sample, 'detection_score'):
                 ann['score'] = sample.detection_score
 
-            ann.update({'image_id': sample.eventId, 'id': bnd_id})
+            ann.update({'image_id': img_id, 'id': bnd_id})
             bnd_id = bnd_id + 1
 
             output_json_dict['annotations'].append(ann)
