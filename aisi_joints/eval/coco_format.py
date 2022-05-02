@@ -64,13 +64,13 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
 
             output_json_dict['annotations'].append(ann)
         else:
+            x0 = list(map(int, sample.detected_x0[i].split(';')))
+            x1 = list(map(int, sample.detected_x1[i].split(';')))
+            y0 = list(map(int, sample.detected_y0[i].split(';')))
+            y1 = list(map(int, sample.detected_y1[i].split(';')))
             for i in range(sample.num_detections):
-                x0 = sample.detected_x0[i]
-                x1 = sample.detected_x1[i]
-                y0 = sample.detected_y0[i]
-                y1 = sample.detected_y1[i]
 
-                bbox = [x0, y0, x1 - x0, y1 - y0]  # x0, y0, w, h
+                bbox = [x0[i], y0[i], x1[i] - x0[i], y1[i] - y0[i]]  # x0, y0, w, h
 
                 ann = {
                     'area': bbox[2] * bbox[3],
