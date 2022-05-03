@@ -68,6 +68,9 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
             x1 = list(map(int, sample.detected_x1.split(';')))
             y0 = list(map(int, sample.detected_y0.split(';')))
             y1 = list(map(int, sample.detected_y1.split(';')))
+            detection_score = list(
+                map(float, sample.detection_score.split(';')))
+            detected_class = sample.detected_class.split(';')
             for i in range(sample.num_detections):
 
                 bbox = [x0[i], y0[i], x1[i] - x0[i], y1[i] - y0[i]]  # x0, y0, w, h
@@ -75,11 +78,11 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
                 ann = {
                     'area': bbox[2] * bbox[3],
                     'iscrowd': 0,
-                    'image_id': sample.eventId,
+                    'image_id': img_id,
                     'id': bnd_id,
                     'bbox': bbox,
-                    'score': sample.detection_score[i],
-                    'category_id': labelmap[sample.detected_class[i]],
+                    'score': detection_score[i],
+                    'category_id': labelmap[detected_class[i]],
                     'ignore': 0,
                     'segmentation': [],  # This script is not for segmentation
                 }
