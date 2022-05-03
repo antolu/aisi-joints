@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from transformers import DetrFeatureExtractor
 
@@ -34,7 +35,13 @@ def train(img_folder: str):
                                 batch_size=1, shuffle=False, num_workers=4)
 
     model = Detr(lr=1e-4, lr_backbone=1e-5, weight_decay=1e-4, num_classes=2)
-    trainer = Trainer(gpus=1, max_steps=10000, gradient_clip_val=1.0)
+
+    checkpoint_callback = ModelCheckpoint('checkpoints',
+                                          'model-{epoch:02d}-{val_loss:.2f}',
+                                          monitor='val_loss')
+
+    trainer = Trainer(gpus=1, max_steps=10000, gradient_clip_val=1.0,
+                      callbacks=[checkpoint_callback])
     trainer.fit(model, train_dataloader, val_dataloader)
 
 
