@@ -42,7 +42,7 @@ class Detr(pl.LightningModule):
         # and the average across the epoch
         self.log("training_loss", loss)
         for k, v in loss_dict.items():
-            self.log("train_" + k, v.item())
+            self.log("train_" + k, v.item(), batch_size=batch.shape[0])
 
         return loss
 
