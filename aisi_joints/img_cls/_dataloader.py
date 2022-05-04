@@ -33,7 +33,7 @@ def load_df(df: pd.DataFrame, random_crop: bool = False,
     dataset = tf.data.Dataset.from_tensor_slices(
         (df['filepath'].to_numpy(), labels_df.to_numpy(dtype=int),
          df['x0'].to_numpy(), df['x1'].to_numpy(),
-         df['y0'].to_numpy(), df['y1']))
+         df['y0'].to_numpy(), df['y1'].to_numpy()))
 
     def preprocess(image: tf.Tensor, label: tf.Tensor,
                    x0: tf.Tensor, x1: tf.Tensor, y0: tf.Tensor,
