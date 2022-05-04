@@ -42,7 +42,7 @@ class Detr(pl.LightningModule):
         # and the average across the epoch
         self.log("training_loss", loss)
         for k, v in loss_dict.items():
-            self.log("train_" + k, v.item(), batch_size=batch.shape[0])
+            self.log("train_" + k, v.item(), batch_size=len(batch['labels']))
 
         return loss
 
@@ -50,7 +50,7 @@ class Detr(pl.LightningModule):
         loss, loss_dict = self.common_step(batch, batch_idx)
         self.log("validation_loss", loss)
         for k, v in loss_dict.items():
-            self.log("validation_" + k, v.item())
+            self.log("validation_" + k, v.item(), batch_size=len(batch['labels']))
 
         return loss
 
