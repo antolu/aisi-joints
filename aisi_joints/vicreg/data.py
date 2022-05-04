@@ -191,7 +191,7 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299,
     -------
     Crop of image.
     """
-    y_max, x_max = image.shape[1], image.shape[2]
+    y_max, x_max = image.shape[0], image.shape[1]
 
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]
