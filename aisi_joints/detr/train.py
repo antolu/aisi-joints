@@ -10,8 +10,8 @@ from ._detr import Detr
 
 
 def train(img_folder: str):
-    feature_extractor = DetrFeatureExtractor.from_pretrained(
-        "facebook/detr-resnet-50")
+    model = Detr(lr=1e-4, lr_backbone=1e-5, weight_decay=1e-4, num_classes=2)
+    feature_extractor = model.feature_extractor
 
     train_dataset = CocoDetection(img_folder, 'train',
                                   feature_extractor=feature_extractor)
@@ -33,8 +33,6 @@ def train(img_folder: str):
                                   batch_size=32, shuffle=True, num_workers=8)
     val_dataloader = DataLoader(val_dataset, collate_fn=collate_fn,
                                 batch_size=1, shuffle=False, num_workers=4)
-
-    model = Detr(lr=1e-4, lr_backbone=1e-5, weight_decay=1e-4, num_classes=2)
 
     checkpoint_callback = ModelCheckpoint('checkpoints',
                                           'model-{epoch:02d}-{val_loss:.2f}',

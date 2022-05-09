@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
-from transformers import DetrConfig, DetrForObjectDetection
+from transformers import DetrConfig, DetrForObjectDetection, \
+    DetrFeatureExtractor
 import torch
 
 
@@ -8,8 +9,10 @@ class Detr(pl.LightningModule):
                  num_classes: int):
         super().__init__()
         # replace COCO classification head with custom head
+        feature_extractor = DetrFeatureExtractor.from_pretrained(
+            "facebook/detr-resnet-101")
         self.model = DetrForObjectDetection.from_pretrained(
-            "facebook/detr-resnet-50",
+            "facebook/detr-resnet-101",
             num_labels=num_classes,
             ignore_mismatched_sizes=True)
         # see https://github.com/PyTorchLightning/pytorch-lightning/pull/1896
