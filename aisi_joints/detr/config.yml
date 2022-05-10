@@ -1,0 +1,6 @@
+batch_size: 8
+lr: 1e-4
+lr_backbone: 1e-5
+weight_decay: 1e-4
+epochs: 300
+workers: 8
