@@ -38,7 +38,7 @@ def train(config: dict, img_folder: str):
                                           monitor='validation_loss')
 
     trainer = Trainer(max_epochs=config['epochs'], gradient_clip_val=1.0,
-                      callbacks=[checkpoint_callback])
+                      callbacks=[checkpoint_callback], accelerator='auto')
     trainer.fit(model, train_dataloader, val_dataloader)
 
 
