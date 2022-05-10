@@ -42,7 +42,7 @@ def train(img_folder: str):
 
     checkpoint_callback = ModelCheckpoint('checkpoints',
                                           'model-{epoch:02d}-{val_loss:.2f}',
-                                          monitor='val_loss')
+                                          monitor='validation_loss')
 
     trainer = Trainer(gpus=1, max_steps=10000, gradient_clip_val=1.0,
                       callbacks=[checkpoint_callback])
