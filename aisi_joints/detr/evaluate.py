@@ -1,16 +1,22 @@
 from argparse import ArgumentParser, Namespace
+import logging
 
 import torch
 from datasets import get_coco_api_from_dataset
 from datasets.coco_eval import CocoEvaluator
 from transformers import DetrFeatureExtractor
 
+from ..utils.logging import setup_logger
+from ..detr._detr import Detr
 from ._data import CocoDetection
 from torch.utils.data import DataLoader
 from tqdm.notebook import tqdm
 
 
-def evaluate(model, feature_extractor, dataset):
+log = logging.getLogger(__name__)
+
+
+def evaluate(model, dataset):
     base_ds = get_coco_api_from_dataset(
         dataset)  # this is actually just calling the coco attribute
     iou_types = ['bbox']
@@ -21,8 +27,9 @@ def evaluate(model, feature_extractor, dataset):
 
     model.to(device)
     model.eval()
+    feature_extractor = model.feature_extractor
 
-    print('Running evaluation...')
+    log.info('Running evaluation...')
 
     dataloader = DataLoader(base_ds, shuffle=False)
 
@@ -52,13 +59,12 @@ def evaluate(model, feature_extractor, dataset):
 
 
 def main(args: Namespace):
-    feature_extractor = DetrFeatureExtractor.from_pretrained(
-        "facebook/detr-resnet-50")
-    dataset = CocoDetection(args.data_dir, args.split, feature_extractor)
 
-    model =
+    model = Detr.load_from_checkpoint(args.checkpoint_path)
 
-    evaluate(model, feature_extractor, dataset)
+    dataset = CocoDetection(args.data_dir, args.split, model.feature_extractor)
+
+    evaluate(model, dataset)
 
 
 if __name__ == '__main__':
@@ -68,8 +74,11 @@ if __name__ == '__main__':
                                          'dataset folder.')
     parser.add_argument('-l', '--labelmap', default=None,
                         help='Path to label map file.')
-    parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
-                        help='Path to directory containing exported model.')
+    # parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
+    #                     help='Path to directory containing exported model.')
+    parser.add_argument('-c', '--checkpoint-path', dest='checkpoint_path',
+                        required=True,
+                        help='Path to checkpoint file.')
     parser.add_argument('-s', '--split',
                         choices=['train', 'validation', 'test'],
                         default=None,
@@ -81,4 +90,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    setup_logger()
     main(args)
