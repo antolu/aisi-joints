@@ -8,6 +8,7 @@ from argparse import ArgumentParser, Namespace
 import pandas as pd
 import tensorflow as tf
 from object_detection.metrics.coco_tools import COCOWrapper, COCOEvalWrapper
+from pycocotools.coco import COCO
 
 from .coco_format import df_to_coco
 from .detect import dataframe_detect
@@ -31,6 +32,19 @@ def format_metrics(metrics: dict):
     return msg
 
 
+def evaluate_and_print(coco_gt: COCO, coco_pred: COCO):
+    coco_eval = COCOEvalWrapper(coco_gt, coco_pred)
+
+    metrics, per_cat_metrics = coco_eval.ComputeMetrics(
+        include_metrics_per_category=True,
+        all_metrics_per_category=True)
+
+    print('=' * 79)
+    print(format_metrics(metrics))
+    print('=' * 79)
+    print(format_metrics(per_cat_metrics))
+
+
 def evaluate(df: pd.DataFrame, model: tf.keras.Model, score_threshold: float = 0.5):
     """
     Calculate predictions based on raw data and run COCO eval on it. Print results
@@ -48,17 +62,7 @@ def evaluate(df: pd.DataFrame, model: tf.keras.Model, score_threshold: float = 0
 
     coco_eval = COCOEvalWrapper(coco_gt, coco_pred)
 
-    metrics, per_cat_metrics = coco_eval.ComputeMetrics(include_metrics_per_category=True,
-                                                        all_metrics_per_category=True)
-
-    print(metrics)
-    print(per_cat_metrics)
-    print()
-
-    print('=' * 79)
-    print(format_metrics(metrics))
-    print('=' * 79)
-    print(format_metrics(per_cat_metrics))
+    evaluate_and_print(coco_gt, coco_pred)
 
 
 def main(args: Namespace):

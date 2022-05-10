@@ -1,28 +1,21 @@
-from argparse import ArgumentParser, Namespace
 import logging
+from argparse import ArgumentParser, Namespace
+from functools import partial
 
 import torch
-from datasets import get_coco_api_from_dataset
-from datasets.coco_eval import CocoEvaluator
-from transformers import DetrFeatureExtractor
-
-from ..utils.logging import setup_logger
-from ..detr._detr import Detr
-from ._data import CocoDetection
+from object_detection.metrics.coco_tools import COCOWrapper
 from torch.utils.data import DataLoader
 from tqdm.notebook import tqdm
 
+from ._data import CocoDetection, collate_fn, results_to_coco
+from ..detr._detr import Detr
+from ..eval.evaluate import evaluate_and_print
+from ..utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
 
 
-def evaluate(model, dataset):
-    base_ds = get_coco_api_from_dataset(
-        dataset)  # this is actually just calling the coco attribute
-    iou_types = ['bbox']
-    coco_evaluator = CocoEvaluator(base_ds,
-                                   iou_types)  # initialize evaluator with ground truths
-
+def detect(model: Detr, dataset: CocoDetection):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model.to(device)
@@ -31,7 +24,10 @@ def evaluate(model, dataset):
 
     log.info('Running evaluation...')
 
-    dataloader = DataLoader(base_ds, shuffle=False)
+    dataloader = DataLoader(dataset, shuffle=False, batch_size=1,
+                            collate_fn=partial(collate_fn, feature_extractor))
+
+    all_results = []
 
     for idx, batch in enumerate(tqdm(dataloader)):
         # get the inputs
@@ -49,29 +45,31 @@ def evaluate(model, dataset):
             [target['orig_size'] for target in labels], dim=0)
         results = feature_extractor.post_process(outputs,
                                                  orig_target_sizes)  # convert outputs of model to COCO api
-        res = {target['image_id'].item(): output for target, output in
-               zip(labels, results)}
-        coco_evaluator.update(res)
+        res = {target['image_id'].item():
+                   {k: v.detach().to('cpu') for k, v in output.items()}
+               for target, output in zip(labels, results)}
+        all_results.append(res)
 
-    coco_evaluator.synchronize_between_processes()
-    coco_evaluator.accumulate()
-    coco_evaluator.summarize()
+    return COCOWrapper(results_to_coco(dataset.coco, all_results))
 
 
 def main(args: Namespace):
-
-    model = Detr.load_from_checkpoint(args.checkpoint_path)
+    model = Detr.load_from_checkpoint(args.checkpoint_path,
+                                      lr=0.0, lr_backbone=0.0,
+                                      weight_decay=0.0, num_classes=2)
 
     dataset = CocoDetection(args.data_dir, args.split, model.feature_extractor)
 
-    evaluate(model, dataset)
+    detected = detect(model, dataset)
+
+    evaluate_and_print(dataset.coco, detected)
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('data_dir', help='Path to root of COCO format'
-                                         'dataset folder.')
+    parser.add_argument('-d', '--data', dest='data_dir',
+                        help='Path to root of COCO format dataset folder.')
     parser.add_argument('-l', '--labelmap', default=None,
                         help='Path to label map file.')
     # parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
@@ -81,7 +79,7 @@ if __name__ == '__main__':
                         help='Path to checkpoint file.')
     parser.add_argument('-s', '--split',
                         choices=['train', 'validation', 'test'],
-                        default=None,
+                        default='test',
                         help='Specific split to evaluate on.')
     parser.add_argument('-t', '--score-threshold', dest='score_threshold',
                         default=0.5,

@@ -8,23 +8,11 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from transformers import DetrFeatureExtractor
 
-from ._data import CocoDetection
+from ._data import CocoDetection, collate_fn
 from ._detr import Detr
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
-
-
-def collate_fn(feature_extractor, batch: dict):
-    pixel_values = [item[0] for item in batch]
-    encoding = feature_extractor.pad_and_create_pixel_mask(
-        pixel_values, return_tensors="pt")
-    labels = [item[1] for item in batch]
-    batch = dict()
-    batch['pixel_values'] = encoding['pixel_values']
-    batch['pixel_mask'] = encoding['pixel_mask']
-    batch['labels'] = labels
-    return batch
 
 
 def train(config: dict, img_folder: str):
