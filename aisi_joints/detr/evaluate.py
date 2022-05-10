@@ -1,6 +1,7 @@
 import logging
 from argparse import ArgumentParser, Namespace
 from functools import partial
+from typing import Dict
 
 import torch
 from object_detection.metrics.coco_tools import COCOWrapper
@@ -15,7 +16,18 @@ from ..utils.logging import setup_logger
 log = logging.getLogger(__name__)
 
 
-def detect(model: Detr, dataset: CocoDetection):
+def filter_results(results: Dict[int, dict], score_threshold: float = 0.7) \
+        -> Dict[int, dict]:
+    for img_id, res in results.items():
+        mask = res['scores'] >= score_threshold
+        res['labels'] = res['labels'][mask]
+        res['boxes'] = res['boxes'][mask]
+        res['scores'] = res['scores'][mask]
+
+    return results
+
+
+def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model.to(device)
@@ -48,6 +60,9 @@ def detect(model: Detr, dataset: CocoDetection):
         res = {target['image_id'].item():
                    {k: v.detach().to('cpu') for k, v in output.items()}
                for target, output in zip(labels, results)}
+
+        res = filter_results(res, score_threshold)
+
         all_results.append(res)
 
     return COCOWrapper(results_to_coco(dataset.coco, all_results))
@@ -60,7 +75,7 @@ def main(args: Namespace):
 
     dataset = CocoDetection(args.data_dir, args.split, model.feature_extractor)
 
-    detected = detect(model, dataset)
+    detected = detect(model, dataset, args.score_threshold)
 
     evaluate_and_print(dataset.coco, detected)
 
