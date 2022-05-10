@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from functools import partial
 
+import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
@@ -8,6 +9,9 @@ from transformers import DetrFeatureExtractor
 
 from ._data import CocoDetection
 from ._detr import Detr
+
+
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 
 def collate_fn(feature_extractor, batch: dict):
