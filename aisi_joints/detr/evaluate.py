@@ -97,7 +97,7 @@ if __name__ == '__main__':
                         default='test',
                         help='Specific split to evaluate on.')
     parser.add_argument('-t', '--score-threshold', dest='score_threshold',
-                        default=0.5,
+                        default=0.5, type=float,
                         help='Detection score threshold. All detections under '
                              'this confidence score are discarded.')
 
