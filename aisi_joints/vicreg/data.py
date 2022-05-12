@@ -18,6 +18,8 @@ class JointDataset(torch.utils.data.dataset.Dataset):
                  transform: Callable[[Any], torch.Tensor] = None):
         super().__init__()
 
+        self.classes = list(pd.unique(df['cls']))
+
         self._data = df
         self._random_crop = random_crop
         self._crop_width = crop_width
@@ -52,11 +54,14 @@ class JointDataset(torch.utils.data.dataset.Dataset):
         return image, label
 
     @staticmethod
-    def from_csv(csv_path: str, random_crop: bool = False,
+    def from_csv(csv_path: str, split: str = None, random_crop: bool = False,
                  crop_width: int = 256, crop_height: int = 256,
                  transform: Optional[Callable[[Any], torch.Tensor]] = None) \
             -> 'JointDataset':
         df = pd.read_csv(csv_path)
+
+        if split is not None:
+            df = df[df['split'] == split]
 
         return JointDataset(df, random_crop, crop_width, crop_height,
                             transform)
