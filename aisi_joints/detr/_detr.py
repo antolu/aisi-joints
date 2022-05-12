@@ -8,6 +8,9 @@ class Detr(pl.LightningModule):
     def __init__(self, lr: float, lr_backbone: float, weight_decay: float,
                  num_classes: int):
         super().__init__()
+
+        normalize_means = [0.28513786, 0.28513786, 0.28513786]
+        normalize_stds = [0.21466085, 0.21466085, 0.21466085]
         # replace COCO classification head with custom head
         feature_extractor = DetrFeatureExtractor.from_pretrained(
             "facebook/detr-resnet-101")

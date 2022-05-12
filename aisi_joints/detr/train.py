@@ -3,7 +3,7 @@ from functools import partial
 
 import torch
 import yaml
-from pytorch_lightning import Trainer
+from pytorch_lightning import Trainer, Callback
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from transformers import DetrFeatureExtractor
@@ -39,10 +39,18 @@ def train(config: dict, img_folder: str):
         'checkpoints',
         'model-{epoch:02d}-{validation_loss:.2f}',
         monitor='validation_loss',
-        save_top_k=-1)
+        save_top_k=5)
+
+    class EvalCallback(Callback):
+        def on_validation_end(self, trainer: Trainer, pl_module):
+            if trainer.current_epoch % 10 == 0:
+                detected = detect(model, val_dataset, 0.0)
+
+                evaluate_and_print(val_dataset.coco, detected)
 
     trainer = Trainer(max_epochs=config['epochs'], gradient_clip_val=1.0,
-                      callbacks=[checkpoint_callback], accelerator='auto')
+                      callbacks=[checkpoint_callback, EvalCallback()],
+                      accelerator='auto')
 
     try:
         trainer.fit(model, train_dataloader, val_dataloader)
