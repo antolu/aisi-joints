@@ -10,6 +10,8 @@ from transformers import DetrFeatureExtractor
 
 from ._data import CocoDetection, collate_fn
 from ._detr import Detr
+from .evaluate import detect
+from ..eval.evaluate import evaluate_and_print
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -33,13 +35,23 @@ def train(config: dict, img_folder: str):
         val_dataset, collate_fn=partial(collate_fn, feature_extractor),
         batch_size=1, shuffle=False, num_workers=4)
 
-    checkpoint_callback = ModelCheckpoint('checkpoints',
-                                          'model-{epoch:02d}-{val_loss:.2f}',
-                                          monitor='validation_loss')
+    checkpoint_callback = ModelCheckpoint(
+        'checkpoints',
+        'model-{epoch:02d}-{validation_loss:.2f}',
+        monitor='validation_loss',
+        save_top_k=-1)
 
     trainer = Trainer(max_epochs=config['epochs'], gradient_clip_val=1.0,
                       callbacks=[checkpoint_callback], accelerator='auto')
-    trainer.fit(model, train_dataloader, val_dataloader)
+
+    try:
+        trainer.fit(model, train_dataloader, val_dataloader)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        detected = detect(model, val_dataset, 0.0)
+
+        evaluate_and_print(val_dataset.coco, detected)
 
 
 if __name__ == '__main__':
