@@ -22,7 +22,7 @@ def compute_mean_std(df: pd.DataFrame):
 
     for file in df['filepath']:
         image = Image.open(file)
-        arr = np.asarray(image)
+        arr = np.asarray(image) / 255
         pixel_count += image.width * image.height
 
         partial_mean += arr.mean(axis=(0, 1))
@@ -31,8 +31,7 @@ def compute_mean_std(df: pd.DataFrame):
 
     for file in df['filepath']:
         image = Image.open(file)
-        arr = np.asarray(image)
-        pixel_count += image.width * image.height
+        arr = np.asarray(image) / 255
 
         partial_sq += np.sum((arr - mean) ** 2, axis=(0, 1)) / (
                     image.width * image.height)
