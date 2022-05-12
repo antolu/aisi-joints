@@ -12,8 +12,9 @@ class Detr(pl.LightningModule):
         normalize_means = [0.28513786, 0.28513786, 0.28513786]
         normalize_stds = [0.21466085, 0.21466085, 0.21466085]
         # replace COCO classification head with custom head
-        feature_extractor = DetrFeatureExtractor.from_pretrained(
-            "facebook/detr-resnet-101")
+        self.feature_extractor = DetrFeatureExtractor.from_pretrained(
+            "facebook/detr-resnet-101",
+        mean=normalize_means, std=normalize_stds)
         self.model = DetrForObjectDetection.from_pretrained(
             "facebook/detr-resnet-101",
             num_labels=num_classes,

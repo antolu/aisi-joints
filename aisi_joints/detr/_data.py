@@ -18,6 +18,8 @@ def collate_fn(feature_extractor, batch: dict):
     batch['pixel_values'] = encoding['pixel_values']
     batch['pixel_mask'] = encoding['pixel_mask']
     batch['labels'] = labels
+    for lbl in batch['labels']:
+        lbl['class_labels'] -= 1
     return batch
 
 
