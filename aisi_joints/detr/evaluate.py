@@ -8,6 +8,7 @@ from object_detection.metrics.coco_tools import COCOWrapper
 from torch.utils.data import DataLoader
 from tqdm.notebook import tqdm
 
+from aisi_joints.utils.utils import time_execution
 from ._data import CocoDetection, collate_fn, results_to_coco
 from ..detr._detr import Detr
 from ..eval.evaluate import evaluate_and_print
@@ -75,7 +76,10 @@ def main(args: Namespace):
 
     dataset = CocoDetection(args.data_dir, args.split, model.feature_extractor)
 
-    detected = detect(model, dataset, args.score_threshold)
+    with time_execution() as t:
+        detected = detect(model, dataset, args.score_threshold)
+
+    log.info(f'Took {t.duration * 1000 / len(dataset)} ms per sample.')
 
     evaluate_and_print(dataset.coco, detected)
 
