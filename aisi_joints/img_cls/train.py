@@ -63,7 +63,7 @@ def main(config: Config):
 
     train_data = prepare_dataset(train_data, *input_size, config.bs,
                                  random_crop=True, preprocess_fn=preprocess_fn)
-    val_data = prepare_dataset(val_data, config.bs, shuffle=False,
+    val_data = prepare_dataset(val_data, *input_size, config.bs, shuffle=False,
                                random_crop=False, augment_data=False,
                                preprocess_fn=preprocess_fn)
 
