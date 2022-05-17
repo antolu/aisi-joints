@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Callable
 
 import numpy as np
 import tensorflow as tf
@@ -10,22 +10,29 @@ from ..data.generate_tfrecord import read_tfrecord
 log = logging.getLogger(__name__)
 
 
-def load_tfrecord(pth: str, batch_size: int,
-                  random_crop: bool = True,
-                  shuffle: bool = True,
-                  augment_data: bool = True) -> tf.data.TFRecordDataset:
-    data = tf.data.TFRecordDataset(pth)
+def prepare_dataset(dataset: tf.data.Dataset,
+                    crop_width: int = 299,
+                    crop_height: int = 299,
+                    batch_size: int = 32,
+                    random_crop: bool = True,
+                    shuffle: bool = True,
+                    augment_data: bool = True,
+                    preprocess_fn: Callable = None) -> tf.data.Dataset:
 
     if shuffle:
-        data = data.shuffle(2048, reshuffle_each_iteration=True)
-    data = data.map(lambda smpl: process_example(smpl, random_crop, augment_data=augment_data))
-    data = data.batch(batch_size)
+        dataset = dataset.shuffle(2048, reshuffle_each_iteration=True)
+    dataset = dataset.map(lambda smpl: process_example(
+        smpl, crop_width, crop_height, random_crop,
+        augment_data=augment_data, preprocess_fn=preprocess_fn))
+    dataset = dataset.batch(batch_size)
 
-    return data
+    return dataset
 
 
-def load_df(df: pd.DataFrame, random_crop: bool = False,
-            augment_data: bool = True) -> tf.data.Dataset:
+def load_df(df: pd.DataFrame, crop_width: int = 299, crop_height: int = 299,
+            random_crop: bool = False,
+            augment_data: bool = True,
+            preprocess_fn: Callable = None) -> tf.data.Dataset:
     labels_df = df[['cls']].copy()
     labels_df.loc[labels_df['cls'] == 'OK', 'cls'] = 0
     labels_df.loc[labels_df['cls'] == 'DEFECT', 'cls'] = 1
@@ -35,17 +42,20 @@ def load_df(df: pd.DataFrame, random_crop: bool = False,
          df['x0'].to_numpy(), df['x1'].to_numpy(),
          df['y0'].to_numpy(), df['y1'].to_numpy()))
 
-    def preprocess(image: tf.Tensor, label: tf.Tensor,
+    def preprocess_(image_path: tf.Tensor, label: tf.Tensor,
                    x0: tf.Tensor, x1: tf.Tensor, y0: tf.Tensor,
                    y1: tf.Tensor) \
             -> Tuple[tf.Tensor, tf.Tensor]:
-        image = read_image(image)
+        image = read_image(image_path)
         bbox = [x0, x1, y0, y1]
 
+        preprocess(image, bbox, crop_width, crop_height, random_crop,
+                   augment_data, preprocess_fn)
+
         if random_crop:
-            image = random_crop_bbox(image, bbox, 299, 299)
+            image = random_crop_bbox(image, bbox, crop_width, crop_height)
         else:
-            image = center_crop_bbox(image, bbox, 299, 299)
+            image = center_crop_bbox(image, bbox, crop_width, crop_height)
 
         if augment_data:
             image = augment(image)
@@ -56,7 +66,7 @@ def load_df(df: pd.DataFrame, random_crop: bool = False,
 
         return image, labels
 
-    return dataset.map(preprocess)
+    return dataset.map(preprocess_)
 
 
 def shift_lower(bndbox: List[int]) -> List[int]:
@@ -119,7 +129,7 @@ def shift_upper(bndbox: List[int], max_x: int, max_y: int) -> List[int]:
     return [x0, x1, y0, y1]
 
 
-def random_crop_bbox(image: tf.Tensor, bndbox: List[int],
+def random_crop_bbox(image: tf.Tensor, bndbox: List[tf.Tensor],
                      width: int = 299, height: int = 299) -> tf.Tensor:
     """
     Random crop an area around a bounding box to a fixed size.
@@ -240,7 +250,6 @@ def crop_and_pad(image: tf.Tensor, bndbox: List[int],
     return image
 
 
-# @tf.function
 def read_image(image_path: str, fmt: Optional[str] = None) -> tf.Tensor:
     image = tf.io.read_file(image_path)
 
@@ -255,7 +264,6 @@ def read_image(image_path: str, fmt: Optional[str] = None) -> tf.Tensor:
     return image
 
 
-# @tf.function
 def augment(image: tf.Tensor) -> tf.Tensor:
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
@@ -265,9 +273,29 @@ def augment(image: tf.Tensor) -> tf.Tensor:
     return image
 
 
+def preprocess(image: tf.Tensor, bbox: List[tf.Tensor],
+               width: int = 299, height: int = 299,
+               random_crop: bool = True,
+               augment_data: bool = True, preprocess_fn: Callable = None):
+    if random_crop:
+        image = random_crop_bbox(image, bbox, width, height)
+    else:
+        image = center_crop_bbox(image, bbox, width, height)
+
+    if augment_data:
+        image = augment(image)
+    if preprocess_fn is not None:
+        image = preprocess_fn(image)
+
+    return image
+
+
 @tf.function
-def process_example(data: tf.train.Example, random_crop: bool = True,
-                    get_metadata: bool = False, augment_data: bool = True):
+def process_example(data: tf.train.Example,
+                    crop_width: int = 299, crop_height: int = 299,
+                    random_crop: bool = True,
+                    get_metadata: bool = False, augment_data: bool = True,
+                    preprocess_fn: Callable = None):
     sample = read_tfrecord(data)
 
     image_path = sample['image/filename']
@@ -287,14 +315,8 @@ def process_example(data: tf.train.Example, random_crop: bool = True,
 
     image = read_image(image_path, fmt)
 
-    if random_crop:
-        image = random_crop_bbox(image, bbox, 299, 299)
-    else:
-        image = center_crop_bbox(image, bbox, 299, 299)
-
-    if augment_data:
-        image = augment(image)
-    image = tf.keras.applications.inception_resnet_v2.preprocess_input(image)
+    image = preprocess(image, bbox, crop_width, crop_height, random_crop,
+                       augment_data, preprocess_fn)
 
     labels = tf.one_hot(label - 1, 2)
 

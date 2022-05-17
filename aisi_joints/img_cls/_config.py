@@ -46,6 +46,9 @@ class Config:
     batch_size: int
     bs: int
 
+    fc_hidden_dim: int
+    fc_dropout: float
+
     workers: int
 
     base_model: str
@@ -67,6 +70,9 @@ class Config:
 
         self.batch_size = if_hasattr_else(module, 'batch_size', 32)
         self.bs = self.batch_size
+
+        self.fc_hidden_dim = if_hasattr_else(module, 'fc_hidden_dim', 2048)
+        self.fc_dropout = if_hasattr_else(module, 'fc_dropout', 0.8)
 
         self.workers = if_hasattr_else(module, 'workers', 4)
 

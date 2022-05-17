@@ -10,7 +10,7 @@ from keras import Model
 from tensorboard import program, default
 
 from ._config import Config, FitConfig
-from ._dataloader import load_tfrecord
+from ._dataloader import prepare_dataset
 from ._log_images import EvaluateImages
 from ._models import get_model
 from ..utils.logging import setup_logger
@@ -55,11 +55,17 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
 
 
 def main(config: Config):
-    train_data = load_tfrecord(config.train_data, config.bs, random_crop=True)
-    val_data = load_tfrecord(config.validation_data, config.bs, shuffle=False,
-                             random_crop=False, augment_data=False)
+    train_data = tf.data.TFRecordDataset(config.train_data)
+    val_data = tf.data.TFRecordDataset(config.validation_data)
 
-    base_model, model = get_model(config.base_model)
+    base_model, model, preprocess_fn = get_model(config.base_model)
+    input_size = base_model.input_shape[1:3]
+
+    train_data = prepare_dataset(train_data, *input_size, config.bs,
+                                 random_crop=True, preprocess_fn=preprocess_fn)
+    val_data = prepare_dataset(val_data, config.bs, shuffle=False,
+                               random_crop=False, augment_data=False,
+                               preprocess_fn=preprocess_fn)
 
     metrics = [tf.keras.metrics.CategoricalAccuracy(name='accuracy'),
                tf.keras.metrics.Precision(class_id=0, name='precision_OK'),
@@ -76,7 +82,7 @@ def main(config: Config):
 
     def save_model(name: str):
         model.save_weights(
-            path.join(config.checkpoint_dir, f'{name}_latest_model.h5'))
+            path.join(config.checkpoint_dir, f'{name}_last_model.h5'))
 
     # =========================================================================
     # Do training \o/
