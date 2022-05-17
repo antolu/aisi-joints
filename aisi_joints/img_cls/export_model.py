@@ -36,7 +36,7 @@ def export_model(config: Config, checkpoint_dir: str, output_dir: str):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('config', help='Path to config.yml')
+    parser.add_argument('config', help='Path to config.py')
     parser.add_argument('--checkpoint-dir', dest='checkpoint_dir',
                         default='checkpoints', type=str,
                         help='Path to directory with trained checkpoints. '
@@ -49,6 +49,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     setup_logger()
 
-    conf = Config(args.config)
+    if args.config.endswith('.py'):
+        args.config = args.config[:-3]
+    conf = Config(args.config.replace('/', '.'))
 
     export_model(conf, args.checkpoint_dir, args.output_dir)

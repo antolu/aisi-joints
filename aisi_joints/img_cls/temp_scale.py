@@ -75,7 +75,7 @@ def main(config: Config, save_dir: str, model_dir: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('config', help='Path to config.yml')
+    parser.add_argument('config', help='Path to config.py')
     parser.add_argument('--save-dir', type=str, dest='save_dir',
                         default='models',
                         help="Where to save the models.")
@@ -87,6 +87,8 @@ if __name__ == '__main__':
     if len(unparsed) != 0:
         raise SystemExit("Unknown argument: {}".format(unparsed))
 
-    conf = Config(args.config)
+    if args.config.endswith('.py'):
+        args.config = args.config[:-3]
+    conf = Config(args.config.replace('/', '.'))
 
     main(conf, args.save_dir, args.model_dir)
