@@ -31,7 +31,7 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     elif model_name == 'efficientnetv2l':
         base_model: Model = tf.keras.applications.EfficientNetV2L(
             include_top=False, weights='imagenet')
-        preprocess_fn = tf.keras.applications.efficient_net.preprocess_input
+        preprocess_fn = tf.keras.applications.efficientnet_v2.preprocess_input
     else:
         raise NotImplementedError
 
