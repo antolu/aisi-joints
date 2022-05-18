@@ -60,9 +60,9 @@ def csv_detect(csv_path: str, model_path: str,
     df = dataframe_detect(df, model, label_map, score_threshold)
 
     if output is not None:
-        df.to_csv(output)
+        df.to_csv(output, index=False)
     else:
-        df.to_csv(csv_path)
+        df.to_csv(csv_path, index=False)
 
 
 def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
