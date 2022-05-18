@@ -35,11 +35,8 @@ class TableModel(QAbstractTableModel):
     def dataframe(self, new: pd.DataFrame):
         self._data = new.copy()
 
-        if 'ignore' not in self._data.columns:
-            self._data['ignore'] = False
-
-        if 'validate' not in self._data.columns:
-            self._data['validate'] = False
+        if 'flagged' not in self._data.columns:
+            self._data['flagged'] = False
 
         self._header = HEADER.copy()
         if 'split' not in self._data.columns:
@@ -56,15 +53,11 @@ class TableModel(QAbstractTableModel):
             if 'detected_class' in self._data.columns:
                 if self._data['cls'].iloc[index.row()] != self._data['detected_class'].iloc[index.row()]:
                     return QColor('yellow')
-            if self._data['ignore'].iloc[index.row()]:
+            if self._data['flagged'].iloc[index.row()]:
                 return QColor('gray')
-            elif self._data['validate'].iloc[index.row()]:
-                return QColor('red')
         elif role == Qt.ItemDataRole.ToolTipRole:
-            if self._data['ignore'].iloc[index.row()]:
-                return 'This sample is marked as ignored.'
-            elif self._data['validate'].iloc[index.row()]:
-                return 'This sample is marked as needing revalidation.'
+            if self._data['flagged'].iloc[index.row()]:
+                return 'This sample is flagged.'
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self._data)
@@ -83,22 +76,12 @@ class TableModel(QAbstractTableModel):
     def get_sample(self, row: int) -> Sample:
         return Sample.from_dataframe(self._data.iloc[row])
 
-    def toggle_ignore(self, row: int):
-        self._data.loc[self._data.index[row], 'ignore'] = \
-            not self._data.loc[self._data.index[row], 'ignore']
+    def toggle_flagged(self, row: int):
+        self._data.loc[self._data.index[row], 'flagged'] = \
+            not self._data.loc[self._data.index[row], 'flagged']
 
-    def set_ignore(self, row: int):
-        self._data['ignore'].iloc[row] = True
+    def set_flagged(self, row: int):
+        self._data['flagged'].iloc[row] = True
 
-    def unset_ignore(self, row: int):
-        self._data['ignore'].iloc[row] = False
-
-    def toggle_validate(self, row: int):
-        self._data.loc[self._data.index[row], 'validate'] = \
-            not self._data.loc[self._data.index[row], 'validate']
-
-    def set_validate(self, row: int):
-        self._data['validate'].iloc[row] = True
-
-    def unset_validate(self, row: int):
-        self._data['validate'].iloc[row] = False
+    def unset_flagged(self, row: int):
+        self._data['flagged'].iloc[row] = False

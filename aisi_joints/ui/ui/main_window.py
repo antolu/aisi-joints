@@ -27,14 +27,10 @@ class MainWindow(Ui_MainWindow, QMainWindow):
             lambda: self.dispatch_action('export_csv'))
 
         # sample widget actions
-        self.actionIgnore.triggered.connect(
-            self.sampleWidget.ignore_clicked)
-        self.actionValidate.triggered.connect(
-            self.sampleWidget.validate_clicked)
-        self.actionExportIgnored.triggered.connect(
-            self.sampleWidget.export_ignored)
-        self.action_ExportRevalidation.triggered.connect(
-            self.sampleWidget.export_revalidation)
+        self.actionFlag.triggered.connect(
+            self.sampleWidget.flag_clicked)
+        self.actionExportFlagged.triggered.connect(
+            self.sampleWidget.export_flagged)
 
         # manipulate training data actions
         self.action_Partition_Dataset.triggered.connect(
@@ -96,36 +92,34 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionShow_Image.setEnabled(True)
         self.actionExport_csv.setEnabled(True)
 
+        self.action_Update_Filepaths.setEnabled(True)
+
     def disable_data_actions(self):
         self.actionSave_csv.setDisabled(True)
         self.actionShow_Image.setDisabled(True)
         self.actionExport_csv.setDisabled(True)
 
+        self.action_Update_Filepaths.setDisabled(True)
+
     def enable_sample_actions(self):
         self.action_Partition_Dataset.setEnabled(True)
         self.action_Filter_Dataset.setEnabled(True)
-        self.action_Update_Filepaths.setEnabled(True)
         self.action_Generate_tfrecord.setEnabled(True)
         self.actionExport_Labelmap.setEnabled(True)
 
-        self.actionIgnore.setEnabled(True)
-        self.actionValidate.setEnabled(True)
+        self.actionFlag.setEnabled(True)
 
-        self.actionExportIgnored.setEnabled(True)
-        self.action_ExportRevalidation.setEnabled(True)
+        self.actionExportFlagged.setEnabled(True)
 
     def disable_sample_actions(self):
         self.action_Partition_Dataset.setDisabled(True)
         self.action_Filter_Dataset.setDisabled(True)
-        self.action_Update_Filepaths.setDisabled(True)
         self.action_Generate_tfrecord.setDisabled(True)
         self.actionExport_Labelmap.setDisabled(True)
 
-        self.actionIgnore.setDisabled(True)
-        self.actionValidate.setDisabled(True)
+        self.actionFlag.setDisabled(True)
 
-        self.actionExportIgnored.setDisabled(True)
-        self.action_ExportRevalidation.setDisabled(True)
+        self.actionExportFlagged.setDisabled(True)
 
     def enable_eval_actions(self):
         self.actionEvaluation_Metrics.setEnabled(True)

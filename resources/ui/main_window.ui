@@ -44,7 +44,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -63,8 +63,7 @@
     <addaction name="actionSave_csv"/>
     <addaction name="separator"/>
     <addaction name="actionExport_csv"/>
-    <addaction name="actionExportIgnored"/>
-    <addaction name="action_ExportRevalidation"/>
+    <addaction name="actionExportFlagged"/>
     <addaction name="separator"/>
     <addaction name="menuMode"/>
     <addaction name="separator"/>
@@ -96,8 +95,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionIgnore"/>
-   <addaction name="actionValidate"/>
+   <addaction name="actionFlag"/>
    <addaction name="actionShow_Image"/>
   </widget>
   <action name="actionExit">
@@ -105,34 +103,19 @@
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionIgnore">
+  <action name="actionFlag">
    <property name="icon">
     <iconset resource="../resources.qrc">
      <normaloff>:/icons/icons/cancel.svg</normaloff>:/icons/icons/cancel.svg</iconset>
    </property>
    <property name="text">
-    <string>Ignore</string>
+    <string>Flag</string>
    </property>
    <property name="toolTip">
-    <string>Ignore this in the dataset</string>
+    <string>Flag this in the dataset</string>
    </property>
    <property name="shortcut">
     <string>X</string>
-   </property>
-  </action>
-  <action name="actionValidate">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/icons/icons/search.svg</normaloff>:/icons/icons/search.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Validate</string>
-   </property>
-   <property name="toolTip">
-    <string>Mark this sample as needing re-validation</string>
-   </property>
-   <property name="shortcut">
-    <string>V</string>
    </property>
   </action>
   <action name="actionExport_csv">
@@ -148,14 +131,12 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="action_ExportRevalidation">
+  <action name="actionExportFlagged">
    <property name="text">
-    <string>Export Revalidation Samples</string>
+    <string>Export Flagged Samples</string>
    </property>
-  </action>
-  <action name="actionExportIgnored">
-   <property name="text">
-    <string>Export Ignored Samples</string>
+   <property name="toolTip">
+    <string>Export Flagged Samples</string>
    </property>
   </action>
   <action name="actionShow_Image">

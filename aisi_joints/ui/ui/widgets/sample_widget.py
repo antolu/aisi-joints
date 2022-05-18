@@ -31,9 +31,9 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
         sample = self.table_model.get_sample(index.row())
         self.widget.show_image(sample)
 
-    def export_ignored(self):
+    def export_flagged(self):
         df = self.table_model.dataframe
-        file, ok = QFileDialog.getSaveFileName(self, 'Export ignored samples',
+        file, ok = QFileDialog.getSaveFileName(self, 'Export flagged samples',
                                                app.current_dir, '*.csv')
 
         if not ok or file is None or file == '':
@@ -43,43 +43,21 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
 
             app.current_dir = path.split(file)[0]
 
-        log.info(f'Exporting ignored samples to {file}.')
+        log.info(f'Exporting flagged samples to {file}.')
 
-        df = df[df['ignore']]
-
-        try:
-            df.to_csv(file, index=False)
-        except OSError as e:
-            QMessageBox.critical(self, 'Error', str(e))
-
-    def export_revalidation(self):
-        df = self.table_model.dataframe
-        file, ok = QFileDialog.getSaveFileName(self,
-                                               'Export revalidation samples',
-                                               app.current_dir, '*.csv')
-
-        if not ok or file is None or file == '':
-            if not ok or file is None or file == '':
-                log.warning(f'Invalid path selected: {file}.')
-                return
-
-            app.current_dir = path.split(file)[0]
-
-        log.info(f'Exporting revalidation samples to {file}.')
-
-        df = df[df['validate']]
+        df = df[df['flaged']]
 
         try:
             df.to_csv(file, index=False)
         except OSError as e:
             QMessageBox.critical(self, 'Error', str(e))
 
-    def ignore_clicked(self):
+    def flag_clicked(self):
         index = self.sampleTable.currentIndex()
         if index.row() == -1:
             return
 
-        self.table_model.toggle_ignore(index.row())
+        self.table_model.toggle_flagged(index.row())
         self.sampleTable.dataChanged(
             self.table_model.index(index.row(), 0),
             self.table_model.index(0, self.table_model.columnCount()))

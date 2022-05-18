@@ -45,10 +45,10 @@ class ExportDialog(Ui_ExportDialog, QDialog):
             QMessageBox.critical(self, 'Error', 'Must select export path first.')
 
         df = self._df.copy()
-        if not self.checkIgnore.isChecked():
-            df = df[~df['ignore']]
+        if not self.checkFlagged.isChecked():
+            df = df[~df['flagged']]
         if not self.checkValidate.isChecked():
-            df = df[~df['validate']]
+            df = df[~df['flagged']]
 
         log.info(f'Exporting .csv to {self.textBrowse.text()}.')
 

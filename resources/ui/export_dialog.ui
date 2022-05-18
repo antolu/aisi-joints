@@ -58,16 +58,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkIgnore">
+       <widget class="QCheckBox" name="checkFlagged">
         <property name="text">
-         <string>Include ignored samples</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkValidate">
-        <property name="text">
-         <string>Include samples needing re-validation</string>
+         <string>Include flagged samples</string>
         </property>
        </widget>
       </item>
