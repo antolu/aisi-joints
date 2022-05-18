@@ -58,14 +58,14 @@ def main(config: Config):
     train_data = tf.data.TFRecordDataset(config.train_data)
     val_data = tf.data.TFRecordDataset(config.validation_data)
 
-    base_model, model, preprocess_fn = get_model(config.base_model)
+    base_model, model, _ = get_model(config.base_model)
     input_size = base_model.input_shape[1:3]
 
+
     train_data = prepare_dataset(train_data, *input_size, config.bs,
-                                 random_crop=True, preprocess_fn=preprocess_fn)
+                                 random_crop=True)
     val_data = prepare_dataset(val_data, *input_size, config.bs, shuffle=False,
-                               random_crop=False, augment_data=False,
-                               preprocess_fn=preprocess_fn)
+                               random_crop=False, augment_data=False)
 
     metrics = [tf.keras.metrics.CategoricalAccuracy(name='accuracy'),
                tf.keras.metrics.Precision(class_id=0, name='precision_OK'),

@@ -57,6 +57,9 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     else:
         raise NotImplementedError
 
+    input_ = base_model.input
+    preprocessed_input = preprocess_fn(input_)
+
     # add a global spatial average pooling layer
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
@@ -67,6 +70,6 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     predictions = Dense(2, activation='softmax')(x)
 
     # this is the model we will train
-    model = Model(inputs=base_model.input, outputs=predictions)
+    model = Model(input=preprocessed_input, outputs=predictions)
 
     return base_model, model, preprocess_fn
