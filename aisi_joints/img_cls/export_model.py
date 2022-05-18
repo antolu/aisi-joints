@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 def export_model(config: Config, checkpoint_dir: str, output_dir: str):
-    base_model, model = get_model(config.base_model)
+    base_model, model, _ = get_model(config.base_model)
 
     if path.isdir(checkpoint_dir):
         files = [path.join(checkpoint_dir, o)
