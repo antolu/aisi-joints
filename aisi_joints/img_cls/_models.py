@@ -70,6 +70,6 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     predictions = Dense(2, activation='softmax')(x)
 
     # this is the model we will train
-    model = Model(input=preprocessed_input, outputs=predictions)
+    model = Model(inputs=preprocessed_input, outputs=predictions)
 
     return base_model, model, preprocess_fn
