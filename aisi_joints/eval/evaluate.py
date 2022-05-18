@@ -10,7 +10,7 @@ import tensorflow as tf
 from object_detection.metrics.coco_tools import COCOWrapper, COCOEvalWrapper
 from pycocotools.coco import COCO
 
-from .coco_format import df_to_coco
+from ..data.coco_format import df_to_coco
 from .detect import dataframe_detect
 from ..constants import LABEL_MAP
 
