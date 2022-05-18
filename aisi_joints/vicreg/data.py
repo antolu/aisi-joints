@@ -38,12 +38,12 @@ class JointDataset(torch.utils.data.dataset.Dataset):
 
         bbox = sample.bbox.to_pascal_voc()
 
-        if self._random_crop:
-            image = random_crop_bbox(image, bbox, self._crop_width,
-                                     self._crop_height)
-        else:
-            image = center_crop_bbox(image, bbox, self._crop_width,
-                                     self._crop_height)
+        # if self._random_crop:
+        #     image = random_crop_bbox(image, bbox, self._crop_width,
+        #                              self._crop_height)
+        # else:
+        image = center_crop_bbox(image, bbox, self._crop_width,
+                                 self._crop_height)
 
         label = LABEL_MAP[sample.bbox.cls] - 1
 
