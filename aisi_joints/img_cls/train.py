@@ -13,7 +13,7 @@ from ._config import Config, FitConfig
 from ._dataloader import prepare_dataset
 from ._log_images import EvaluateImages
 from ._models import get_model
-from ..utils.logging import setup_logger
+from .._utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +60,6 @@ def main(config: Config):
 
     base_model, model, _ = get_model(config.base_model)
     input_size = base_model.input_shape[1:3]
-
 
     train_data = prepare_dataset(train_data, *input_size, config.bs,
                                  random_crop=True)

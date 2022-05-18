@@ -16,14 +16,13 @@ def prepare_dataset(dataset: tf.data.Dataset,
                     batch_size: int = 32,
                     random_crop: bool = True,
                     shuffle: bool = True,
-                    augment_data: bool = True,
-                    preprocess_fn: Callable = None) -> tf.data.Dataset:
+                    augment_data: bool = True) -> tf.data.Dataset:
 
     if shuffle:
         dataset = dataset.shuffle(2048, reshuffle_each_iteration=True)
     dataset = dataset.map(lambda smpl: process_example(
         smpl, crop_width, crop_height, random_crop,
-        augment_data=augment_data, preprocess_fn=preprocess_fn))
+        augment_data=augment_data))
     dataset = dataset.batch(batch_size)
 
     return dataset
@@ -294,8 +293,7 @@ def preprocess(image: tf.Tensor, bbox: List[tf.Tensor],
 def process_example(data: tf.train.Example,
                     crop_width: int = 299, crop_height: int = 299,
                     random_crop: bool = True,
-                    get_metadata: bool = False, augment_data: bool = True,
-                    preprocess_fn: Callable = None):
+                    get_metadata: bool = False, augment_data: bool = True):
     sample = read_tfrecord(data)
 
     image_path = sample['image/filename']
@@ -316,7 +314,7 @@ def process_example(data: tf.train.Example,
     image = read_image(image_path, fmt)
 
     image = preprocess(image, bbox, crop_width, crop_height, random_crop,
-                       augment_data, preprocess_fn)
+                       augment_data)
 
     labels = tf.one_hot(label - 1, 2)
 
