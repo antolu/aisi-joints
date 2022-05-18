@@ -55,7 +55,6 @@ class EvaluateImages:
             bboxes = tf.expand_dims(bboxes, axis=1)
             scores = tf.expand_dims(tf.reduce_max(predictions, axis=1), 1)
 
-            images = undo_preprocess(images)
             images = tf.cast(images, tf.uint8)
             orig_images = tf.identity(images)
 
