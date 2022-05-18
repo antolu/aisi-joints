@@ -20,7 +20,7 @@ import pandas as pd
 from PIL import Image
 
 from ..constants import LABEL_MAP
-from ..utils.logging import setup_logger
+from .._utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
 

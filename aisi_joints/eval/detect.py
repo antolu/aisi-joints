@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from ..utils.logging import setup_logger
-from ..utils.utils import time_execution
+from .._utils.logging import setup_logger
+from .._utils.utils import time_execution
 from .utils import load_model, load_labelmap, load_image, run_inference, plot_and_save, format_detections
 
 log = logging.getLogger(__name__)

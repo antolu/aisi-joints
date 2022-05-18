@@ -8,8 +8,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 from ._dataloader import load_df
 from ..constants import CLASS_OK, CLASS_DEFECT
-from ..utils.logging import setup_logger
-from ..utils.utils import time_execution
+from .._utils.logging import setup_logger
+from .._utils.utils import time_execution
 
 log = logging.getLogger(__name__)
 
