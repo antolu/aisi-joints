@@ -37,13 +37,11 @@ class TempScale(tf.keras.layers.Layer):
 def main(config: Config, save_dir: str, model_dir: str):
     dataset = tf.data.TFRecordDataset(config.validation_data)
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
-    preprocess_fn = get_preprocess_fn(config.base_model)
 
     input_size = model.input_shape[1:3]
 
     dataset = prepare_dataset(dataset, *input_size, config.bs, shuffle=False,
-                              random_crop=False, augment_data=False,
-                              preprocess_fn=preprocess_fn)
+                              random_crop=False, augment_data=False)
 
     input_ = model.input
     classification_layer = model.layers[-1]
