@@ -99,7 +99,7 @@ def main(args: Namespace):
 
 
 if __name__ == '__main__':
-    from ..utils.logging import setup_logger
+    from .._utils.logging import setup_logger
 
     parser = ArgumentParser()
     parser.add_argument('-i', '--images', nargs='+', help='Path to images.')
