@@ -4,8 +4,9 @@ from os import path
 
 import tensorflow as tf
 
+from ._models import get_preprocess_fn
 from ._config import Config
-from ._dataloader import load_tfrecord
+from ._dataloader import prepare_dataset
 
 
 class TempScale(tf.keras.layers.Layer):
@@ -34,11 +35,15 @@ class TempScale(tf.keras.layers.Layer):
 
 
 def main(config: Config, save_dir: str, model_dir: str):
-    dataset = load_tfrecord(config.validation_data, config.batch_size,
-                            shuffle=False, random_crop=False,
-                            augment_data=False)
+    dataset = tf.data.TFRecordDataset(config.validation_data)
+    model: tf.keras.Model = tf.keras.models.load_model(model_dir)
+    preprocess_fn = get_preprocess_fn(config.base_model)
 
-    model: tf.keras.models.Model = tf.keras.models.load_model(model_dir)
+    input_size = model.input_shape[1:3]
+
+    dataset = prepare_dataset(dataset, *input_size, config.bs, shuffle=False,
+                              random_crop=False, augment_data=False,
+                              preprocess_fn=preprocess_fn)
 
     input_ = model.input
     classification_layer = model.layers[-1]
