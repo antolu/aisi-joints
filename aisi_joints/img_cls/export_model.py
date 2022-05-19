@@ -7,13 +7,14 @@ import tensorflow as tf
 
 from ._config import Config
 from ._models import get_model
-from ..utils.logging import setup_logger
+from .._utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
 
 
 def export_model(config: Config, checkpoint_dir: str, output_dir: str):
-    base_model, model, _ = get_model(config.base_model)
+    base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
+                                     config.fc_dropout)
 
     if path.isdir(checkpoint_dir):
         files = [path.join(checkpoint_dir, o)
