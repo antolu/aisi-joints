@@ -1,9 +1,8 @@
+import os
 from typing import Dict
 
-import torchvision
-import os
-import numpy as np
 import torch
+import torchvision
 from pycocotools.coco import COCO
 
 from ..constants import LABEL_MAP
@@ -50,7 +49,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
 
 def results_to_coco(coco_gt: COCO, results: list,
-                  labelmap: Dict[int, str] = None) -> dict:
+                    labelmap: Dict[int, str] = None) -> dict:
     if labelmap is None:
         labelmap = LABEL_MAP
 

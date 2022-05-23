@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     """
-    Calculate predictions based on raw data and run COCO eval on it.
+    Calculate predictions based on raw data and run COCO tfod on it.
     Print results to terminal.
     """
 

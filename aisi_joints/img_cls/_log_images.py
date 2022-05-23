@@ -2,13 +2,11 @@
 Write Tensorboard Summary at some validations step
 """
 import logging
-from typing import Optional
 
-import numpy as np
 import tensorflow as tf
 from object_detection.utils import visualization_utils as viz_utils
 
-from ._dataloader import process_example, undo_preprocess
+from ._dataloader import process_example
 from ..constants import INV_LABEL_MAP
 
 log = logging.getLogger(__name__)

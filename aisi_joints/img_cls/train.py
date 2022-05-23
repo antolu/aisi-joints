@@ -9,7 +9,7 @@ import tensorflow as tf
 from keras import Model
 from tensorboard import program, default
 
-from ._config import Config, FitConfig
+from ._config import Config
 from ._dataloader import prepare_dataset
 from ._log_images import EvaluateImages
 from ._models import get_model

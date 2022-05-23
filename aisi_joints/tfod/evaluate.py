@@ -10,16 +10,16 @@ import tensorflow as tf
 from object_detection.metrics.coco_tools import COCOWrapper, COCOEvalWrapper
 from pycocotools.coco import COCO
 
-from ..data.coco_format import df_to_coco
 from .detect import dataframe_detect
 from ..constants import LABEL_MAP
+from ..data.coco_format import df_to_coco
 
 log = logging.getLogger(__name__)
 
 
 def format_metrics(metrics: dict):
     """
-    Convert COCO eval metrics to printable message.
+    Convert COCO tfod metrics to printable message.
     """
     max_len = max([len(o) for o in list(metrics.keys())])
 
@@ -45,12 +45,14 @@ def evaluate_and_print(coco_gt: COCO, coco_pred: COCO):
     print(format_metrics(per_cat_metrics))
 
 
-def evaluate(df: pd.DataFrame, model: tf.keras.Model, score_threshold: float = 0.5):
+def evaluate(df: pd.DataFrame, model: tf.keras.Model,
+             score_threshold: float = 0.5):
     """
-    Calculate predictions based on raw data and run COCO eval on it. Print results
+    Calculate predictions based on raw data and run COCO tfod on it. Print results
     to terminal.
     """
-    inv_label_map = {idx: {'name': name, 'id': idx} for name, idx in LABEL_MAP.items()}
+    inv_label_map = {idx: {'name': name, 'id': idx} for name, idx in
+                     LABEL_MAP.items()}
 
     predictions = dataframe_detect(df, model, inv_label_map, score_threshold)
 
@@ -86,7 +88,8 @@ if __name__ == '__main__':
                         help='Path to label map file.')
     parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
                         help='Path to directory containing exported model.')
-    parser.add_argument('-s', '--split', choices=['train', 'validation', 'test'],
+    parser.add_argument('-s', '--split',
+                        choices=['train', 'validation', 'test'],
                         default=None,
                         help='Specific split to evaluate on.')
     parser.add_argument('-t', '--score-threshold', dest='score_threshold',

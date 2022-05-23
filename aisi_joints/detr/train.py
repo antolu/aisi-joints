@@ -6,13 +6,11 @@ import yaml
 from pytorch_lightning import Trainer, Callback
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
-from transformers import DetrFeatureExtractor
 
 from ._data import CocoDetection, collate_fn
 from ._detr import Detr
 from .evaluate import detect
-from ..eval.evaluate import evaluate_and_print
-
+from ..tfod.evaluate import evaluate_and_print
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 

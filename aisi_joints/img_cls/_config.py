@@ -1,7 +1,8 @@
-from importlib import import_module
 import datetime
 import logging
+from importlib import import_module
 from typing import Union, List, Dict
+
 import tensorflow as tf
 
 log = logging.getLogger(__name__)
@@ -28,8 +29,9 @@ def if_hasattr_else(data: ..., key: str, default_value: ... = None):
             msg = f'Could not find required attribute {key}.'
             raise AttributeError(msg)
         else:
-            log.debug(f'Could not find attribute {key}, replacing with default '
-                      f'value: {default_value}')
+            log.debug(
+                f'Could not find attribute {key}, replacing with default '
+                f'value: {default_value}')
             return default_value
 
 

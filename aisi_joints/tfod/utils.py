@@ -4,8 +4,8 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
 import pandas as pd
+import tensorflow as tf
 from PIL import Image
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as viz_utils
@@ -40,11 +40,16 @@ def load_image(pth: str) -> np.ndarray:
 
 
 def remove_duplicate_boxes(detections):
-    nms_indices = tf.image.non_max_suppression(detections['detection_boxes'], detections['detection_scores'], 40)
+    nms_indices = tf.image.non_max_suppression(detections['detection_boxes'],
+                                               detections['detection_scores'],
+                                               40)
 
-    detections['detection_scores'] = tf.gather(detections['detection_scores'], nms_indices, axis=0)
-    detections['detection_boxes'] = tf.gather(detections['detection_boxes'], nms_indices, axis=0)
-    detections['detection_classes'] = tf.gather(detections['detection_classes'], nms_indices, axis=0)
+    detections['detection_scores'] = tf.gather(detections['detection_scores'],
+                                               nms_indices, axis=0)
+    detections['detection_boxes'] = tf.gather(detections['detection_boxes'],
+                                              nms_indices, axis=0)
+    detections['detection_classes'] = tf.gather(
+        detections['detection_classes'], nms_indices, axis=0)
 
     return detections
 
@@ -75,10 +80,12 @@ def run_inference(image: np.ndarray, model: tf.keras.Model) -> dict:
                   for k, v in detections.items()}
     detections['num_detections'] = num_detections
 
-    detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+    detections['detection_classes'] = detections['detection_classes'].astype(
+        np.int64)
 
     filtered_detections = remove_duplicate_boxes(detections)
-    filtered_detections['detection_boxes'] = scale_boxes_to_img_size(image, filtered_detections)
+    filtered_detections['detection_boxes'] = scale_boxes_to_img_size(image,
+                                                                     filtered_detections)
 
     return detections
 
@@ -95,7 +102,9 @@ def format_detections(detections: dict) -> pd.DataFrame:
                        }
 
     boxes_info_df = pd.DataFrame.from_records(boxes_info_dict,
-                                              columns=['detection_classes', 'detection_scores', 'left', 'bottom',
+                                              columns=['detection_classes',
+                                                       'detection_scores',
+                                                       'left', 'bottom',
                                                        'right', 'top'])
 
     return boxes_info_df
@@ -105,9 +114,12 @@ def plot_and_save(image: np.ndarray, label_map: dict, detections: dict,
                   score_threshold: float, output_path: str):
     image_copy = np.array(image)
     viz_utils.visualize_boxes_and_labels_on_image_array(image_copy,
-                                                        np.array(detections['detection_boxes']),
-                                                        np.array(detections['detection_classes']),
-                                                        np.array(detections['detection_scores']),
+                                                        np.array(detections[
+                                                                     'detection_boxes']),
+                                                        np.array(detections[
+                                                                     'detection_classes']),
+                                                        np.array(detections[
+                                                                     'detection_scores']),
                                                         label_map,
                                                         use_normalized_coordinates=False,
                                                         max_boxes_to_draw=40,

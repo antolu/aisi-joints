@@ -3,15 +3,15 @@ import os
 from argparse import ArgumentParser, Namespace
 from os import path
 from typing import Dict, Union, Optional
-import tensorflow as tf
-import numpy as np
 
 import pandas as pd
+import tensorflow as tf
 from tqdm import tqdm
 
+from .utils import load_model, load_labelmap, load_image, run_inference, \
+    plot_and_save, format_detections
 from .._utils.logging import setup_logger
 from .._utils.utils import time_execution
-from .utils import load_model, load_labelmap, load_image, run_inference, plot_and_save, format_detections
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +40,8 @@ def detect(args: Namespace):
 
         boxes = format_detections(detections)
 
-        boxes_filtered = boxes[boxes['detection_scores'] >= args.score_threshold]
+        boxes_filtered = boxes[
+            boxes['detection_scores'] >= args.score_threshold]
 
         if args.save_plot:
             plot_and_save(image, label_map, detections, args.score_threshold,
@@ -48,7 +49,8 @@ def detect(args: Namespace):
 
 
 def csv_detect(csv_path: str, model_path: str,
-               label_map: Union[Dict[str, int], str], score_threshold: float = 0.5,
+               label_map: Union[Dict[str, int], str],
+               score_threshold: float = 0.5,
                output: Optional[str] = None):
     df = pd.read_csv(csv_path)
 
@@ -67,8 +69,7 @@ def csv_detect(csv_path: str, model_path: str,
 
 def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
                      label_map: Dict[int, dict], score_threshold: float = 0.5) \
-            -> pd.DataFrame:
-
+        -> pd.DataFrame:
     results = []
     with time_execution() as t:
         for sample in df.itertuples():
@@ -77,7 +78,8 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
 
             boxes = format_detections(detections)
 
-            boxes_filtered = boxes[boxes['detection_scores'] >= score_threshold]
+            boxes_filtered = boxes[
+                boxes['detection_scores'] >= score_threshold]
 
             detected_class = []
             x0 = []
@@ -139,6 +141,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     setup_logger()
-    csv_detect(args.input, args.model_dir, args.labelmap, args.score_threshold, args.output)
+    csv_detect(args.input, args.model_dir, args.labelmap, args.score_threshold,
+               args.output)
     # detect(args)
-

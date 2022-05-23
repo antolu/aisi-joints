@@ -6,12 +6,13 @@ from typing import Dict
 import torch
 from object_detection.metrics.coco_tools import COCOWrapper
 from torch.utils.data import DataLoader
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 from ._data import CocoDetection, collate_fn, results_to_coco
+from .._utils.logging import setup_logger
+from .._utils.utils import time_execution
 from ..detr._detr import Detr
-from ..eval.evaluate import evaluate_and_print
-from .._utils.logging import setup_logger, time_execution
+from ..tfod.evaluate import evaluate_and_print
 
 log = logging.getLogger(__name__)
 

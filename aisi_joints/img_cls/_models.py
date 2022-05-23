@@ -15,7 +15,7 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
         base_model: Model = tf.keras.applications.InceptionResNetV2(
             include_top=False, weights='imagenet',
             input_tensor=Input(shape=(299, 299, 3)))
-        preprocess_fn = tf.keras.applications.inception_resnet_v2\
+        preprocess_fn = tf.keras.applications.inception_resnet_v2 \
             .preprocess_input
     elif model_name == 'vgg19':
         base_model: Model = tf.keras.applications.VGG19(

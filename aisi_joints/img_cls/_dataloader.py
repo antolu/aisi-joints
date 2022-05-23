@@ -2,8 +2,8 @@ import logging
 from typing import List, Optional, Tuple, Callable
 
 import numpy as np
-import tensorflow as tf
 import pandas as pd
+import tensorflow as tf
 
 from ..data.generate_tfrecord import read_tfrecord
 
@@ -17,7 +17,6 @@ def prepare_dataset(dataset: tf.data.Dataset,
                     random_crop: bool = True,
                     shuffle: bool = True,
                     augment_data: bool = True) -> tf.data.Dataset:
-
     if shuffle:
         dataset = dataset.shuffle(2048, reshuffle_each_iteration=True)
     dataset = dataset.map(lambda smpl: process_example(
@@ -42,8 +41,8 @@ def load_df(df: pd.DataFrame, crop_width: int = 299, crop_height: int = 299,
          df['y0'].to_numpy(), df['y1'].to_numpy()))
 
     def preprocess_(image_path: tf.Tensor, label: tf.Tensor,
-                   x0: tf.Tensor, x1: tf.Tensor, y0: tf.Tensor,
-                   y1: tf.Tensor) \
+                    x0: tf.Tensor, x1: tf.Tensor, y0: tf.Tensor,
+                    y1: tf.Tensor) \
             -> Tuple[tf.Tensor, tf.Tensor]:
         image = read_image(image_path)
         bbox = [x0, x1, y0, y1]
@@ -155,15 +154,18 @@ def random_crop_bbox(image: tf.Tensor, bndbox: List[tf.Tensor],
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]
 
-    offset_x = tf.random.uniform([1], 0, tf.reshape(width - crop_width, []), dtype=tf.int64)
-    offset_y = tf.random.uniform([1], 0, tf.reshape(height - crop_height, []), dtype=tf.int64)
+    offset_x = tf.random.uniform([1], 0, tf.reshape(width - crop_width, []),
+                                 dtype=tf.int64)
+    offset_y = tf.random.uniform([1], 0, tf.reshape(height - crop_height, []),
+                                 dtype=tf.int64)
 
     log.debug(f'Sampled offsets: x: {offset_x}, y: {offset_y}')
 
     log.debug(f'Original bounding box: {bndbox}')
 
     x0, x1 = bndbox[0] - offset_x, bndbox[1] + (width - crop_width - offset_x)
-    y0, y1 = bndbox[2] - offset_y, bndbox[3] + (height - crop_height - offset_y)
+    y0, y1 = bndbox[2] - offset_y, bndbox[3] + (
+                height - crop_height - offset_y)
 
     box = [x0, x1, y0, y1]
 
@@ -176,7 +178,8 @@ def random_crop_bbox(image: tf.Tensor, bndbox: List[tf.Tensor],
     return crop_and_pad(image, box, width, height)
 
 
-def center_crop_bbox(image: tf.Tensor, bndbox: list, width: int = 299, height: int = 299) -> tf.Tensor:
+def center_crop_bbox(image: tf.Tensor, bndbox: list, width: int = 299,
+                     height: int = 299) -> tf.Tensor:
     """
     Center crop an area around a bounding box to a fixed size.
     If output size is greater than maximum crop size the image will

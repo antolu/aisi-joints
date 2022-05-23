@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
-from transformers import DetrConfig, DetrForObjectDetection, \
-    DetrFeatureExtractor
 import torch
+from transformers import DetrForObjectDetection, \
+    DetrFeatureExtractor
 
 
 class Detr(pl.LightningModule):
@@ -14,7 +14,7 @@ class Detr(pl.LightningModule):
         # replace COCO classification head with custom head
         self.feature_extractor = DetrFeatureExtractor.from_pretrained(
             "facebook/detr-resnet-101",
-        mean=normalize_means, std=normalize_stds)
+            mean=normalize_means, std=normalize_stds)
         self.model = DetrForObjectDetection.from_pretrained(
             "facebook/detr-resnet-101",
             num_labels=num_classes,
@@ -57,7 +57,8 @@ class Detr(pl.LightningModule):
         loss, loss_dict = self.common_step(batch, batch_idx)
         self.log("validation_loss", loss, batch_size=len(batch['labels']))
         for k, v in loss_dict.items():
-            self.log("validation_" + k, v.item(), batch_size=len(batch['labels']))
+            self.log("validation_" + k, v.item(),
+                     batch_size=len(batch['labels']))
 
         return loss
 
