@@ -53,18 +53,27 @@ class JointDataset(torch.utils.data.dataset.Dataset):
 
         return image, label
 
-    @staticmethod
-    def from_csv(csv_path: str, split: str = None, random_crop: bool = False,
+    @classmethod
+    def from_csv(cls, csv_path: str, split: str = None,
+                 random_crop: bool = False,
                  crop_width: int = 256, crop_height: int = 256,
                  transform: Optional[Callable[[Any], torch.Tensor]] = None) \
             -> 'JointDataset':
         df = pd.read_csv(csv_path)
 
+        return cls.from_df(df, split, random_crop, crop_width, crop_height,
+                           transform)
+
+    @classmethod
+    def from_df(cls, df: pd.DataFrame, split: str = None,
+                 random_crop: bool = False,
+                 crop_width: int = 256, crop_height: int = 256,
+                 transform: Optional[Callable[[Any], torch.Tensor]] = None):
+
         if split is not None:
             df = df[df['split'] == split]
 
-        return JointDataset(df, random_crop, crop_width, crop_height,
-                            transform)
+        return cls(df, random_crop, crop_width, crop_height, transform)
 
 
 def shift_lower(bndbox: List[int]) -> List[int]:
