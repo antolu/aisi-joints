@@ -65,7 +65,8 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
             auto_insert_metric_name=False)
 
         trainer = pl.Trainer(accelerator='auto',
-                             callbacks=[checkpoint_callback])
+                             callbacks=[checkpoint_callback],
+                             max_epochs=classifier_params.max_epochs)
 
         trainer.fit(linear_model)
 
