@@ -24,7 +24,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            'model-{epoch:02d}-{loss:.2f}',
+            'model-base-{v_num}-{epoch:02d}-{loss:.2f}',
             monitor='loss',
             save_top_k=5,
             auto_insert_metric_name=False)
@@ -59,7 +59,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            'model-{epoch:02d}-{loss:.2f}',
+            'model-classifier-{v_num}-{epoch:02d}-{loss:.2f}',
             monitor='loss',
             save_top_k=5,
             auto_insert_metric_name=False)
