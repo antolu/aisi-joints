@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/anton/code/aisi-joints/resources/ui/main_window.ui'
+# Form implementation generated from reading ui file 'D:\Documents\SBB\aisi-joints\resources\ui\main_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
