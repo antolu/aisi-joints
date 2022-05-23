@@ -1,44 +1,77 @@
+import logging
 import os
 from argparse import ArgumentParser, Namespace
+from collections import OrderedDict
 from importlib import import_module
+from os import path
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from self_supervised import LinearClassifierMethod
 from self_supervised.moco import SelfSupervisedMethod
-from self_supervised.model_params import VICRegParams
+
+log = logging.getLogger(__name__)
 
 
-def train(dataset_path: str, checkpoint_dir: str, config):
+def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
     os.environ['DATA_PATH'] = dataset_path
-    params = config.model_params
-    classifier_params = config.classifier_params
 
-    model = SelfSupervisedMethod(params)
+    if mode in ('both', 'base'):
+        params = config.model_params
 
-    checkpoint_callback = ModelCheckpoint(
-        checkpoint_dir,
-        'model-{epoch:02d}-{loss:.2f}',
-        monitor='loss',
-        save_top_k=5,
-        auto_insert_metric_name=False)
+        model = SelfSupervisedMethod(params)
 
-    trainer = pl.Trainer(accelerator='auto',
-                         callbacks=[checkpoint_callback],
-                         max_epochs=params.max_epochs)
-    trainer.fit(model)
+        checkpoint_callback = ModelCheckpoint(
+            checkpoint_dir,
+            'model-{epoch:02d}-{loss:.2f}',
+            monitor='loss',
+            save_top_k=5,
+            auto_insert_metric_name=False)
 
-    linear_model = LinearClassifierMethod(classifier_params)
-    linear_model.load_state_dict({k: v for k, v in model.state_dict().items()
-                                  if k.startswith('model.')}, strict=False)
-    trainer = pl.Trainer(accelerator='auto')
+        trainer = pl.Trainer(accelerator='auto',
+                             callbacks=[checkpoint_callback],
+                             max_epochs=params.max_epochs)
+        trainer.fit(model)
 
-    trainer.fit(linear_model)
+    if mode in ('both', 'linear'):
+        classifier_params = config.classifier_params
+        linear_model = LinearClassifierMethod(classifier_params)
+
+        # model loading
+        if mode == 'both':
+            linear_model.load_state_dict(
+                OrderedDict({k: v for k, v in model.state_dict().items()
+                             if k.startswith('model.')}), strict=False)
+        elif mode == 'linear':
+            if path.isdir(checkpoint_dir):
+                files = [path.join(checkpoint_dir, o)
+                         for o in os.listdir(checkpoint_dir)
+                         if o.endswith('.ckpt')]
+
+                latest = max(files, key=path.getctime)
+                log.info(f'Reading classifier checkpoint from {latest}.')
+                linear_model.load_from_checkpoint(latest)
+            else:
+                log.info(
+                    f'Reading classifier checkpoint from {checkpoint_dir}.')
+                linear_model.load_from_checkpoint(checkpoint_dir)
+
+        checkpoint_callback = ModelCheckpoint(
+            checkpoint_dir,
+            'model-{epoch:02d}-{loss:.2f}',
+            monitor='loss',
+            save_top_k=5,
+            auto_insert_metric_name=False)
+
+        trainer = pl.Trainer(accelerator='auto',
+                             callbacks=[checkpoint_callback])
+
+        trainer.fit(linear_model)
 
 
 def main(args: Namespace, config):
-    train(args.dataset, args.checkpoint_dir, config)
+    train(args.dataset, args.checkpoint_dir, config, args.mode)
 
 
 if __name__ == '__main__':
@@ -48,6 +81,10 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('-c', '--checkpoint-dir', dest='checkpoint_dir',
                         help='Path to checkpoint dir.', default='checkpoints')
+    parser.add_argument('-m', '--mode', choices=['both', 'base', 'linear'],
+                        default='both',
+                        help='Train base encoder model, linear classifier '
+                             'or both.')
 
     args = parser.parse_args()
 

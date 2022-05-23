@@ -20,7 +20,6 @@ def export_model(config: Config, checkpoint_dir: str, output_dir: str):
 
         latest = max(files, key=path.getctime)
         log.info(f'Reading checkpoint from {latest}.')
-        model.trainable = False
         model.load_weights(latest)
     else:
         log.info(f'Reading checkpoint from {checkpoint_dir}.')
