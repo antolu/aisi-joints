@@ -58,7 +58,8 @@ def main(config: Config):
     train_data = tf.data.TFRecordDataset(config.train_data)
     val_data = tf.data.TFRecordDataset(config.validation_data)
 
-    base_model, model, _ = get_model(config.base_model)
+    base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
+                                     config.fc_dropout)
     input_size = base_model.input_shape[1:3]
 
     train_data = prepare_dataset(train_data, *input_size, config.bs,
@@ -80,6 +81,7 @@ def main(config: Config):
         os.makedirs(args.checkpoint_dir, exist_ok=True)
 
     def save_model(name: str):
+        model.trainable = False
         model.save_weights(
             path.join(config.checkpoint_dir, f'{name}_last_model.h5'))
 
@@ -88,6 +90,10 @@ def main(config: Config):
     # =========================================================================
 
     base_model.trainable = False
+
+    chkpt = 'checkpoint.h5'
+    model.save_weights(chkpt)
+    model.load_weights(chkpt)
 
     try:
         fit_model(model, config.transfer_config.optimizer, train_data,

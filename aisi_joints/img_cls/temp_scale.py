@@ -4,7 +4,6 @@ from os import path
 
 import tensorflow as tf
 
-from ._models import get_preprocess_fn
 from ._config import Config
 from ._dataloader import prepare_dataset
 

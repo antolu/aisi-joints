@@ -8,23 +8,6 @@ from keras.layers import GlobalAveragePooling2D, Dense, Dropout
 log = logging.getLogger(__name__)
 
 
-_preprocess_fn = {
-    'inception_resnet_v2': tf.keras.applications.inception_resnet_v2
-        .preprocess_input,
-    'vgg19': tf.keras.applications.vgg19.preprocess_input,
-    'resnet101v2': tf.keras.applications.resnet_v2.preprocess_input,
-    'resnet152v2': tf.keras.applications.resnet_v2.preprocess_input,
-    'efficientnetv2l': tf.keras.applications.efficientnet_v2.preprocess_input
-}
-
-
-def get_preprocess_fn(model_name: str):
-    try:
-        return _preprocess_fn[model_name]
-    except KeyError:
-        raise NotImplementedError
-
-
 def get_model(model_name: str, fc_hidden_dim: int = 2048,
               fc_dropout: float = 0.8) \
         -> Tuple[Model, Model, Callable]:
