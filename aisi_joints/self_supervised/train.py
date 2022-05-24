@@ -51,7 +51,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
                 latest = max(files, key=path.getctime)
                 log.info(f'Reading classifier checkpoint from {latest}.')
-                linear_model.load_from_checkpoint(latest)
+                linear_model.from_moco_checkpoint(latest)
             else:
                 log.info(
                     f'Reading classifier checkpoint from {checkpoint_dir}.')
@@ -62,7 +62,8 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
             'model-classifier-{v_num}-{epoch:02d}-{valid_loss:.2f}',
             monitor='valid_acc1',
             save_top_k=5,
-            auto_insert_metric_name=False)
+            auto_insert_metric_name=False,
+            save_on_train_epoch_end=False)
 
         trainer = pl.Trainer(accelerator='auto',
                              callbacks=[checkpoint_callback],
