@@ -57,7 +57,8 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
             else:
                 log.info(
                     f'Reading classifier checkpoint from {checkpoint_dir}.')
-                linear_model.load_from_checkpoint(checkpoint_dir)
+                linear_model.from_moco_checkpoint(checkpoint_dir)
+                checkpoint_dir = path.split(checkpoint_dir)[0]
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
