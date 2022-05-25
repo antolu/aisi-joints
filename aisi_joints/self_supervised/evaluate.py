@@ -1,4 +1,5 @@
 import logging
+import os
 from argparse import ArgumentParser, Namespace
 from importlib import import_module
 from pprint import pformat
@@ -50,13 +51,14 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
     with time_execution() as t:
         for i, batch in enumerate(dataloader):
             input_, labels = batch
+            input_, labels = input_.to(device), labels.to(device)
             logits = model(input_)
 
             logits = logits.detach().to('cpu')
 
             model_outputs.append(logits)
 
-    logits = torch.stack(model_outputs)
+    logits = torch.cat(model_outputs)
 
     predictions = torch.nn.functional.softmax(logits)
 
@@ -64,8 +66,7 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
              f'per sample.')
     log.info('Calculating evaluation metrics.')
 
-    pred_labels = torch.argmax(predictions, dim=1).numpy()
-    scores = torch.max(predictions, dim=1).numpy()
+    scores, pred_labels = (o.numpy() for o in torch.max(predictions, dim=1))
 
     report = classification_report(
         labels, pred_labels, target_names=[CLASS_OK, CLASS_DEFECT],
@@ -100,13 +101,14 @@ def main(args: Namespace):
     else:
         log.info('Evaluating on entire dataset.')
 
-    log.info(f'Loading model from {args.model_dir}')
+    log.info(f'Loading model from {args.model}')
 
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
     config_module = import_module(args.config.replace('/', '.'))
 
     params = config_module.classifier_params
+    os.environ['DATA_PATH'] = args.input
     model = LinearClassifierMethod(params)
     model.load_from_checkpoint(args.model)
     log.info('Model loaded.')

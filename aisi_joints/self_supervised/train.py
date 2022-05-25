@@ -24,14 +24,16 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            'model-base-{v_num}-{epoch:02d}-{loss:.2f}',
-            monitor='loss',
+            'model-base-v{v_num}-{epoch:02d}-{step_train_loss:.2f}',
+            monitor='valid_class_acc',
             save_top_k=5,
-            auto_insert_metric_name=False)
+            auto_insert_metric_name=False,
+            save_on_train_epoch_end=False)
 
         trainer = pl.Trainer(accelerator='auto',
                              callbacks=[checkpoint_callback],
                              max_epochs=params.max_epochs)
+
         trainer.fit(model)
 
     if mode in ('both', 'linear'):
@@ -59,7 +61,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            'model-classifier-{v_num}-{epoch:02d}-{valid_loss:.2f}',
+            'model-classifier-v{v_num}-{epoch:02d}-{valid_loss:.2f}',
             monitor='valid_acc1',
             save_top_k=5,
             auto_insert_metric_name=False,
@@ -67,7 +69,8 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         trainer = pl.Trainer(accelerator='auto',
                              callbacks=[checkpoint_callback],
-                             max_epochs=classifier_params.max_epochs)
+                             max_epochs=classifier_params.max_epochs,
+                             auto_lr_find=True)
 
         trainer.fit(linear_model)
 
