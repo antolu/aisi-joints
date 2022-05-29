@@ -31,7 +31,9 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         trainer = pl.Trainer(accelerator='auto',
                              callbacks=[checkpoint_callback],
-                             max_epochs=params.max_epochs)
+                             max_epochs=params.max_epochs,
+                             precision=16,
+                             amp_backend='apex')
         trainer.fit(model)
 
     if mode in ('both', 'linear'):
