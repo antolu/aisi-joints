@@ -1,7 +1,6 @@
 import logging
 import os
 from argparse import ArgumentParser, Namespace
-from collections import OrderedDict
 from importlib import import_module
 from os import path
 
@@ -42,9 +41,8 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         # model loading
         if mode == 'both':
-            linear_model.load_state_dict(
-                OrderedDict({k: v for k, v in model.state_dict().items()
-                             if k.startswith('model.')}), strict=False)
+            linear_model.from_moco_checkpoint(
+                checkpoint_callback.best_model_path)
         elif mode == 'linear':
             if path.isdir(checkpoint_dir):
                 files = [path.join(checkpoint_dir, o)
