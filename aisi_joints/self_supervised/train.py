@@ -23,7 +23,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            'model-base-v{v_num}-{epoch:02d}-{step_train_loss:.2f}',
+            'model-base-v{v_num}-{epoch}-{step_train_loss:.2f}',
             monitor='valid_class_acc',
             save_top_k=5,
             auto_insert_metric_name=False,
@@ -60,7 +60,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            'model-classifier-v{v_num}-{epoch:02d}-{valid_loss:.2f}',
+            'model-classifier-v{v_num}-{epoch}-{valid_loss:.2f}',
             monitor='valid_acc1',
             save_top_k=5,
             auto_insert_metric_name=False,
