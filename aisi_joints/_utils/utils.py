@@ -4,6 +4,8 @@ import time as t
 from os import path
 from typing import Callable
 
+from tensorboard import program, default
+
 log = logging.getLogger(__name__)
 
 
@@ -39,3 +41,22 @@ def get_latest(dir_, condition: Callable):
         return path.join(dir_, latest)
     else:
         return dir_  # is actually a file
+
+
+class TensorBoardTool:
+
+    def __init__(self, log_dir: str):
+        self.log_dir: str = log_dir
+
+    def run(self):
+        if not path.exists(self.log_dir):
+            os.makedirs(self.log_dir, exist_ok=True)
+
+        # Suppress http messages
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+        # Start tensorboard server
+        tb = program.TensorBoard(default.get_plugins())
+        tb.configure(argv=[None, '--logdir', self.log_dir, '--bind_all'])
+
+        url = tb.launch()
+        print(f'TensorBoard at {url}')

@@ -8,7 +8,8 @@ from typing import Optional
 
 import attr
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning import Callback
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities import AttributeDict
 
@@ -21,26 +22,37 @@ log = logging.getLogger(__name__)
 
 
 def train_encoder(params: ModelParams, checkpoint_dir: str,
-                  log_dir: str, timestamp: Optional[str] = None) \
+                  log_dir: str, timestamp: Optional[str] = None,
+                  callbacks: Optional[Callback] = None) \
         -> ModelCheckpoint:
     if timestamp is None:
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
     model = SelfSupervisedMethod(params)
 
-    checkpoint_callback = ModelCheckpoint(
-        checkpoint_dir,
-        f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
-        monitor='valid_class_acc',
-        save_top_k=5,
-        auto_insert_metric_name=False,
-        save_on_train_epoch_end=False)
+    callbacks = [] if callbacks is None else callbacks
+    if checkpoint_dir is not None:
+        checkpoint_callback = ModelCheckpoint(
+            checkpoint_dir,
+            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
+            monitor='valid_class_acc',
+            save_top_k=3,
+            auto_insert_metric_name=False,
+            save_on_train_epoch_end=False)
+        callbacks.append(callbacks)
+    else:
+        checkpoint_callback = None
 
-    logger = TensorBoardLogger(
-        path.join(log_dir, f'model-base-{timestamp}'))
+    if log_dir is not None:
+        logger = TensorBoardLogger(
+            path.join(log_dir, f'model-base-{timestamp}'))
+    else:
+        logger = True
 
+    progress_bar = TQDMProgressBar()
+    callbacks.append(progress_bar)
     trainer = pl.Trainer(logger=logger, accelerator='auto',
-                         callbacks=[checkpoint_callback],
+                         callbacks=callbacks,
                          max_epochs=params.max_epochs)
 
     trainer.fit(model)
@@ -67,7 +79,7 @@ def train_classifier(params: LinearClassifierMethodParams,
         f'model-classifier-{timestamp} '
         '-{epoch}-{valid_loss:.2f}',
         monitor='valid_acc1',
-        save_top_k=5,
+        save_top_k=3,
         auto_insert_metric_name=False,
         save_on_train_epoch_end=False)
 

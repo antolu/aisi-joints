@@ -1,14 +1,13 @@
 import logging
 import os
-import sys
 from argparse import ArgumentParser
 from os import path
 from typing import Optional, List
 
 import tensorflow as tf
 from keras import Model
-from tensorboard import program, default
 
+from .._utils.utils import TensorBoardTool
 from ._config import Config
 from ._dataloader import prepare_dataset
 from ._log_images import EvaluateImages
@@ -108,25 +107,6 @@ def main(config: Config):
     except KeyboardInterrupt:
         save_model('finetune')
         raise
-
-
-class TensorBoardTool:
-
-    def __init__(self, log_dir: str):
-        self.log_dir: str = log_dir
-
-    def run(self):
-        if not path.exists(self.log_dir):
-            os.makedirs(self.log_dir, exist_ok=True)
-
-        # Suppress http messages
-        logging.getLogger('werkzeug').setLevel(logging.ERROR)
-        # Start tensorboard server
-        tb = program.TensorBoard(default.get_plugins())
-        tb.configure(argv=[None, '--logdir', self.log_dir, '--bind_all'])
-
-        url = tb.launch()
-        sys.stdout.write(f'TensorBoard at {url} \n')
 
 
 if __name__ == '__main__':
