@@ -43,7 +43,7 @@ def main(args: Namespace, config):
             'weight_decay': tune.loguniform(1.e-5, 1.e-1),
             'momentum': tune.uniform(0.6, 1.0),
             'lars_eta': tune.loguniform(1.e-4, 1.e-1),
-            # "batch_size": tune.choice([32, 64, 128]),
+            "batch_size": tune.choice([32, 64, 128]),
         }
 
         scheduler = ASHAScheduler(
