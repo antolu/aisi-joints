@@ -96,10 +96,10 @@ def main(dataset_csv: str, config: Config):
     tuner = Hyperband(hypermodel=partial(model_builder_full, config=config,
                                          train_base_model=False,
                                          metrics=metrics),
-                      objective=Objective('accuracy', direction='max'),
+                      objective=Objective('val_accuracy', direction='max'),
                       max_epochs=50, project_name='Transfer')
 
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
                                                   patience=5)
 
     tuner.search(train_data,
@@ -108,7 +108,7 @@ def main(dataset_csv: str, config: Config):
                  epochs=50,
                  shuffle=True,
                  initial_epoch=0,
-                 use_multiprocessing=True,
+                 use_multiprocessing=False,
                  workers=config.workers,
                  class_weight=config.class_weights,
                  callbacks=[stop_early])
@@ -137,7 +137,7 @@ def main(dataset_csv: str, config: Config):
 
     # train the model on the new data for a few epochs
     model.fit(train_data, batch_size=config.batch_size,
-              validation_data=val_data, use_multiprocessing=True,
+              validation_data=val_data, use_multiprocessing=False,
               workers=config.workers, epochs=config.transfer_config.epochs,
               class_weight=config.class_weights,
               callbacks=[model_checkpoint_callback, tb_callback])
@@ -152,10 +152,10 @@ def main(dataset_csv: str, config: Config):
     tuner = Hyperband(hypermodel=partial(model_builder_optimizer,
                                          model=model,
                                          metrics=metrics),
-                      objective=Objective('accuracy', direction='max'),
+                      objective=Objective('val_accuracy', direction='max'),
                       max_epochs=50, project_name='Finetune')
 
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='accuracy',
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
                                                   patience=5)
 
     tuner.search(train_data,
@@ -164,7 +164,7 @@ def main(dataset_csv: str, config: Config):
                  epochs=50,
                  shuffle=True,
                  initial_epoch=0,
-                 use_multiprocessing=True,
+                 use_multiprocessing=False,
                  workers=config.workers,
                  class_weight=config.class_weights,
                  callbacks=[stop_early])
@@ -191,7 +191,7 @@ def main(dataset_csv: str, config: Config):
     model = tuner.hypermodel.build(best_hps_finetune)
 
     model.fit(train_data, batch_size=config.batch_size,
-              validation_data=val_data, use_multiprocessing=True,
+              validation_data=val_data, use_multiprocessing=False,
               workers=config.workers, epochs=config.transfer_config.epochs,
               class_weight=config.class_weights,
               callbacks=[model_checkpoint_callback, tb_callback])
