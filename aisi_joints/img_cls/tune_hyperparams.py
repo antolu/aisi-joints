@@ -13,7 +13,7 @@ from tensorflow_addons.optimizers import AdamW
 
 from .._utils.logging import setup_logger
 from .._utils.utils import get_latest
-from ._dataloader import prepare_dataset
+from ._dataloader import prepare_dataset, JointsSequence
 from .train import TensorBoardTool
 from ._config import Config
 from ._models import get_model
@@ -73,18 +73,16 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
     return model
 
 
-def main(config: Config):
-    train_data = tf.data.TFRecordDataset(config.train_data)
-    val_data = tf.data.TFRecordDataset(config.validation_data)
-
+def main(dataset_csv: str, config: Config):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout)
     input_size = base_model.input_shape[1:3]
 
-    train_data = prepare_dataset(train_data, *input_size, config.bs,
-                                 random_crop=True)
-    val_data = prepare_dataset(val_data, *input_size, config.bs, shuffle=False,
-                               random_crop=False, augment_data=False)
+    train_data = JointsSequence(dataset_csv, 'train', *input_size,
+                                batch_size=config.batch_size)
+    val_data = JointsSequence(dataset_csv, 'validation', *input_size,
+                              random_crop=False, augment_data=False,
+                              batch_size=config.batch_size)
 
     metrics = [tf.keras.metrics.CategoricalAccuracy(name='accuracy'),
                tf.keras.metrics.Precision(class_id=0, name='precision_OK'),
@@ -204,8 +202,8 @@ if __name__ == '__main__':
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
                         help='Tensorboard logdir.')
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help='Debug logs')
+    parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
+                        required=True)
     parser.add_argument('--tensorboard', action='store_true',
                         help='Launch tensorboard as part of the script.')
     parser.add_argument('-c', '--checkpoint-dir', default='checkpoints',
@@ -214,7 +212,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    setup_logger(args.debug)
+    setup_logger()
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
     config = Config(args.config.replace('/', '.'))
@@ -226,6 +224,6 @@ if __name__ == '__main__':
         tensorboard.run()
 
     try:
-        main(config)
+        main(args.dataset, config)
     except KeyboardInterrupt:
         pass

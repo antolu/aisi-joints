@@ -1,13 +1,72 @@
 import logging
+import math
 from typing import List, Optional, Tuple, Callable
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 
+from ..constants import LABEL_MAP
+from ..data.common import Sample
 from ..data.generate_tfrecord import read_tfrecord
 
 log = logging.getLogger(__name__)
+
+
+class JointsSequence(tf.keras.utils.Sequence):
+    def __init__(self, csv_path: str, split: Optional[str] = None,
+                 crop_width: int = 299, crop_height: int = 299,
+                 batch_size: int = 32, random_crop: bool = True,
+                 augment_data: bool = True):
+
+        with open(csv_path, 'r') as f:
+            df = pd.read_csv(f)
+
+        if split is not None:
+            df = df[df['split'] == split]
+
+        self._df = df
+
+        self._crop_width = crop_width
+        self._crop_height = crop_height
+        self._batch_size = batch_size
+        self._random_crop = random_crop
+        self._augment_data = augment_data
+
+    def __len__(self) -> int:
+        return math.ceil(len(self._df) / self._batch_size)
+
+    def __getitem__(self, index: int) -> Tuple[tf.Tensor, tf.Tensor]:
+
+        images = []
+        labels = []
+
+        for i in range(index * self._batch_size,
+                       (index + 1) * self._batch_size):
+            sample = Sample.from_dataframe(self._df.iloc[i])
+            image, label = self._load_sample(sample)
+
+            images.append(image)
+            labels.append(label)
+
+        return tf.stack(images, axis=0), tf.stack(labels)
+
+    def on_epoch_end(self):
+        pass
+
+    def _load_sample(self, sample: Sample) -> Tuple[tf.Tensor, tf.Tensor]:
+        image = read_image(sample.filepath, 'png')
+
+        image = preprocess(image,
+                           sample.bbox.to_pascal_voc(),
+                           self._crop_width,
+                           self._crop_height,
+                           self._random_crop,
+                           self._augment_data)
+
+        label = tf.one_hot(LABEL_MAP[sample.bbox.cls] - 1, 2)
+
+        return image, label
 
 
 def prepare_dataset(dataset: tf.data.Dataset,
