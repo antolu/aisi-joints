@@ -32,11 +32,12 @@ def model_builder_full(hp: HyperParameters, config: Config,
     if metrics is None:
         metrics = []
 
-    fc_hidden_dim = hp.Choice('fc_hidden_dim', [1024, 1536, 2048])
-    fc_dropout = hp.Float('fc_dropout', 0.5, 1.0)
+    fc_hidden_dim = hp.Choice('fc_hidden_dim', [1024, 1536, 2048, 3072, 4096])
+    # fc_num_layers = hp.Choice('fc_num_layers', [1, 2, 3])
+    fc_dropout = hp.Float('fc_dropout', 0.3, 1.0)
 
-    base_lr = hp.Float('lr', 0.0001, 0.01, sampling='log')
-    weight_decay = hp.Float('weight_decay', 1.e-5, 1., sampling='log')
+    base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
+    weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
 
     base_model, model, _ = get_model(config.base_model, fc_hidden_dim,
                                      fc_dropout)
@@ -61,8 +62,8 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
     if metrics is None:
         metrics = []
 
-    base_lr = hp.Float('lr', 0.0001, 0.01, sampling='log')
-    weight_decay = hp.Float('weight_decay', 1.e-5, 1., sampling='log')
+    base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
+    weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
 
     model.trainable = True
     optimizer = AdamW(weight_decay, base_lr)
@@ -103,7 +104,7 @@ def main(config: Config):
     stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                   patience=5)
 
-    tuner.search(training_data=train_data,
+    tuner.search(train_data,
                  validation_data=val_data,
                  batch_size=config.batch_size,
                  epochs=50,
@@ -159,7 +160,7 @@ def main(config: Config):
     stop_early = tf.keras.callbacks.EarlyStopping(monitor='accuracy',
                                                   patience=5)
 
-    tuner.search(training_data=train_data,
+    tuner.search(train_data,
                  validation_data=val_data,
                  batch_size=config.batch_size,
                  epochs=50,
