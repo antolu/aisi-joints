@@ -41,8 +41,9 @@ class JointsSequence(tf.keras.utils.Sequence):
         images = []
         labels = []
 
-        for i in range(index * self._batch_size,
-                       (index + 1) * self._batch_size):
+        low = index * self._batch_size
+        high = (index + 1) * self._batch_size
+        for i in range(low, high if high < self.__len__() else self.__len__()):
             sample = Sample.from_dataframe(self._df.iloc[i])
             image, label = self._load_sample(sample)
 
