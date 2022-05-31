@@ -55,8 +55,12 @@ def train_classifier(params: LinearClassifierMethodParams,
     if timestamp is None:
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
+    params_dict = AttributeDict(attr.asdict(params))
+    params_dict.pop('encoder_arch')
+    params_dict.pop('embedding_dim')
+    params_dict.pop('dataset_name')
     model = LinearClassifierMethod.from_moco_checkpoint(
-        checkpoint_path, **AttributeDict(attr.asdict(params)))
+        checkpoint_path, **params_dict)
 
     checkpoint_callback = ModelCheckpoint(
         checkpoint_dir,
