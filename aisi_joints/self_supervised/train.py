@@ -4,15 +4,79 @@ import os
 from argparse import ArgumentParser, Namespace
 from importlib import import_module
 from os import path
+from typing import Optional
 
+import attr
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.utilities import AttributeDict
 
-from self_supervised import LinearClassifierMethod
+from self_supervised import LinearClassifierMethod, ModelParams, \
+    LinearClassifierMethodParams
 from self_supervised.moco import SelfSupervisedMethod
+from .._utils.utils import get_latest
 
 log = logging.getLogger(__name__)
+
+
+def train_encoder(params: ModelParams, checkpoint_dir: str,
+                  log_dir: str, timestamp: Optional[str] = None) \
+        -> ModelCheckpoint:
+    if timestamp is None:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    model = SelfSupervisedMethod(params)
+
+    checkpoint_callback = ModelCheckpoint(
+        checkpoint_dir,
+        f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
+        monitor='valid_class_acc',
+        save_top_k=5,
+        auto_insert_metric_name=False,
+        save_on_train_epoch_end=False)
+
+    logger = TensorBoardLogger(
+        path.join(log_dir, f'model-base-{timestamp}'))
+
+    trainer = pl.Trainer(logger=logger, accelerator='auto',
+                         callbacks=[checkpoint_callback],
+                         max_epochs=params.max_epochs)
+
+    trainer.fit(model)
+
+    return checkpoint_callback
+
+
+def train_classifier(params: LinearClassifierMethodParams,
+                     checkpoint_path: str,
+                     checkpoint_dir: str, log_dir: str,
+                     timestamp: Optional[str] = None) -> ModelCheckpoint:
+    if timestamp is None:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    model = LinearClassifierMethod.from_moco_checkpoint(
+        checkpoint_path, **AttributeDict(attr.asdict(params)))
+
+    checkpoint_callback = ModelCheckpoint(
+        checkpoint_dir,
+        f'model-classifier-{timestamp} '
+        '-{epoch}-{valid_loss:.2f}',
+        monitor='valid_acc1',
+        save_top_k=5,
+        auto_insert_metric_name=False,
+        save_on_train_epoch_end=False)
+
+    logger = TensorBoardLogger(
+        path.join(log_dir, f'model-classifier-{timestamp}'))
+
+    trainer = pl.Trainer(logger=logger, accelerator='auto',
+                         callbacks=[checkpoint_callback],
+                         max_epochs=params.max_epochs)
+
+    trainer.fit(model)
+
+    return checkpoint_callback
 
 
 def train(dataset_path: str, checkpoint_dir: str, log_dir: str, config,
@@ -24,66 +88,26 @@ def train(dataset_path: str, checkpoint_dir: str, log_dir: str, config,
     if mode in ('both', 'base'):
         params = config.model_params
 
-        model = SelfSupervisedMethod(params)
-
-        checkpoint_callback = ModelCheckpoint(
-            checkpoint_dir,
-            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
-            monitor='valid_class_acc',
-            save_top_k=5,
-            auto_insert_metric_name=False,
-            save_on_train_epoch_end=False)
-
-        logger = TensorBoardLogger(
-            path.join(log_dir, f'model-base-{timestamp}'))
-
-        trainer = pl.Trainer(logger=logger, accelerator='auto',
-                             callbacks=[checkpoint_callback],
-                             max_epochs=params.max_epochs)
-
-        trainer.fit(model)
+        model_checkpoint = train_encoder(config.model_params, checkpoint_dir,
+                                         log_dir, timestamp)
 
     if mode in ('both', 'linear'):
-        classifier_params = config.classifier_params
+        classifier_params: LinearClassifierMethodParams = config \
+            .classifier_params
         linear_model = LinearClassifierMethod(classifier_params)
 
+        checkpoint_path = ''
         # model loading
         if mode == 'both':
-            linear_model.from_moco_checkpoint(
-                checkpoint_callback.best_model_path)
+            checkpoint_path = model_checkpoint.best_model_path
         elif mode == 'linear':
-            if path.isdir(checkpoint_dir):
-                files = [path.join(checkpoint_dir, o)
-                         for o in os.listdir(checkpoint_dir)
-                         if o.endswith('.ckpt')]
+            checkpoint_path = get_latest(checkpoint_dir,
+                                         lambda o: o.endswith('.ckpt'))
+        else:
+            raise NotImplementedError
 
-                latest = max(files, key=path.getctime)
-                log.info(f'Reading classifier checkpoint from {latest}.')
-                linear_model.from_moco_checkpoint(latest)
-            else:
-                log.info(
-                    f'Reading classifier checkpoint from {checkpoint_dir}.')
-                linear_model.from_moco_checkpoint(checkpoint_dir)
-                checkpoint_dir = path.split(checkpoint_dir)[0]
-
-        checkpoint_callback = ModelCheckpoint(
-            checkpoint_dir,
-            f'model-classifier-{timestamp} '
-            '-{epoch}-{valid_loss:.2f}',
-            monitor='valid_acc1',
-            save_top_k=5,
-            auto_insert_metric_name=False,
-            save_on_train_epoch_end=False)
-
-        logger = TensorBoardLogger(
-            path.join(log_dir, f'model-classifier-{timestamp}'))
-
-        trainer = pl.Trainer(logger=logger, accelerator='auto',
-                             callbacks=[checkpoint_callback],
-                             max_epochs=classifier_params.max_epochs,
-                             auto_lr_find=True)
-
-        trainer.fit(linear_model)
+        model_checkpoint = train_classifier(classifier_params, checkpoint_path,
+                                            checkpoint_dir, log_dir, timestamp)
 
 
 def main(args: Namespace, config):

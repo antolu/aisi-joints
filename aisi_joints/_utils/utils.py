@@ -36,6 +36,6 @@ def get_latest(dir_, condition: Callable):
                  for o in os.listdir(dir_) if condition(o)]
 
         latest = max(files, key=path.getctime)
-        return latest
+        return path.join(dir_, latest)
     else:
         return dir_  # is actually a file

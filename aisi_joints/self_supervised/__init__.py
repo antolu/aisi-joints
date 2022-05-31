@@ -7,5 +7,7 @@ install_requires = [
     'pillow',
     'torch',
     'torchvision',
-    'pytorch_lightning'
+    'pytorch_lightning',
+    'ray[tune]',
+    'attr'
 ]
