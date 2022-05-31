@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 from argparse import ArgumentParser, Namespace
@@ -6,6 +7,7 @@ from os import path
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from self_supervised import LinearClassifierMethod
 from self_supervised.moco import SelfSupervisedMethod
@@ -13,8 +15,11 @@ from self_supervised.moco import SelfSupervisedMethod
 log = logging.getLogger(__name__)
 
 
-def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
+def train(dataset_path: str, checkpoint_dir: str, log_dir: str, config,
+          mode: str):
     os.environ['DATA_PATH'] = dataset_path
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
     if mode in ('both', 'base'):
         params = config.model_params
@@ -23,13 +28,16 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            f'model-base-v{model._version}' '-{epoch}-{step_train_loss:.2f}',
+            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
             monitor='valid_class_acc',
             save_top_k=5,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
 
-        trainer = pl.Trainer(accelerator='auto',
+        logger = TensorBoardLogger(
+            path.join(log_dir, f'model-base-{timestamp}'))
+
+        trainer = pl.Trainer(logger=logger, accelerator='auto',
                              callbacks=[checkpoint_callback],
                              max_epochs=params.max_epochs)
 
@@ -60,14 +68,17 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            f'model-classifier-v{linear_model._version} '
+            f'model-classifier-{timestamp} '
             '-{epoch}-{valid_loss:.2f}',
             monitor='valid_acc1',
             save_top_k=5,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
 
-        trainer = pl.Trainer(accelerator='auto',
+        logger = TensorBoardLogger(
+            path.join(log_dir, f'model-classifier-{timestamp}'))
+
+        trainer = pl.Trainer(logger=logger, accelerator='auto',
                              callbacks=[checkpoint_callback],
                              max_epochs=classifier_params.max_epochs,
                              auto_lr_find=True)
@@ -76,7 +87,7 @@ def train(dataset_path: str, checkpoint_dir: str, config, mode: str):
 
 
 def main(args: Namespace, config):
-    train(args.dataset, args.checkpoint_dir, config, args.mode)
+    train(args.dataset, args.checkpoint_dir, args.logdir, config, args.mode)
 
 
 if __name__ == '__main__':
@@ -90,6 +101,8 @@ if __name__ == '__main__':
                         default='both',
                         help='Train base encoder model, linear classifier '
                              'or both.')
+    parser.add_argument('-l', '--logdir', type=str, default='logs',
+                        help='Tensorboard logdir.')
 
     args = parser.parse_args()
 
