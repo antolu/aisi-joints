@@ -1,4 +1,5 @@
 import logging
+import os
 from argparse import ArgumentParser
 from functools import partial
 from os import path
@@ -124,6 +125,9 @@ def main(dataset_csv: str, config: Config):
     model = tuner.hypermodel.build(best_hps)
 
     print('\n'.join([separator, 'Training fully connected layers', separator]))
+
+    if not path.isdir(config.checkpoint_dir):
+        os.makedirs(config.checkpoint_dir)
 
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=path.join(config.checkpoint_dir,
