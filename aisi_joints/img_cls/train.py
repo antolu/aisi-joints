@@ -91,10 +91,6 @@ def main(config: Config):
 
     base_model.trainable = False
 
-    chkpt = 'checkpoint.h5'
-    model.save_weights(chkpt)
-    model.load_weights(chkpt)
-
     try:
         fit_model(model, config.transfer_config.optimizer, train_data,
                   val_data, config, config.transfer_config.epochs, 'transfer',

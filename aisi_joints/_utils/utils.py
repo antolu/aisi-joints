@@ -1,4 +1,10 @@
+import logging
+import os
 import time as t
+from os import path
+from typing import Callable
+
+log = logging.getLogger(__name__)
 
 
 class time_execution:
@@ -23,3 +29,13 @@ class time_execution:
         self.end = t.time()
         self.duration = self.end - self.start
 
+
+def get_latest(dir_, condition: Callable):
+    if path.isdir(dir_):
+        files = [path.join(dir_, o)
+                 for o in os.listdir(dir_) if condition(o)]
+
+        latest = max(files, key=path.getctime)
+        return latest
+    else:
+        return dir_  # is actually a file
