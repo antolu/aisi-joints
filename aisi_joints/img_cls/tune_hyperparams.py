@@ -12,12 +12,12 @@ from keras.metrics import Metric
 from keras_tuner import HyperParameters, Hyperband, Objective
 from tensorflow_addons.optimizers import AdamW
 
+from ._config import Config
+from ._dataloader import JointsSequence
+from ._models import get_model
+from .train import TensorBoardTool
 from .._utils.logging import setup_logger
 from .._utils.utils import get_latest
-from ._dataloader import prepare_dataset, JointsSequence
-from .train import TensorBoardTool
-from ._config import Config
-from ._models import get_model
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
     return model
 
 
-def main(dataset_csv: str, config: Config):
+def main(dataset_csv: str, config: Config, mode: str = 'both'):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout)
     input_size = base_model.input_shape[1:3]
@@ -92,113 +92,132 @@ def main(dataset_csv: str, config: Config):
                tf.keras.metrics.Recall(class_id=1, name='recall_DEFECT')]
 
     separator = 80 * '='
-    print('\n'.join([separator, 'Tuning fully connected layers', separator]))
 
-    tuner = Hyperband(hypermodel=partial(model_builder_full, config=config,
-                                         train_base_model=False,
-                                         metrics=metrics),
-                      objective=Objective('val_accuracy', direction='max'),
-                      max_epochs=50, project_name='Transfer')
+    # =========================================================================
+    # Transfer
+    # =========================================================================
+    if mode in ('both', 'transfer'):
+        log.info('\n'.join([separator,
+                            'Tuning fully connected layers',
+                            separator]))
 
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
-                                                  patience=5)
+        tuner = Hyperband(hypermodel=partial(model_builder_full, config=config,
+                                             train_base_model=False,
+                                             metrics=metrics),
+                          objective=Objective('val_accuracy', direction='max'),
+                          max_epochs=50, project_name='Transfer')
 
-    tuner.search(train_data,
-                 validation_data=val_data,
-                 batch_size=config.batch_size,
-                 epochs=50,
-                 shuffle=True,
-                 initial_epoch=0,
-                 use_multiprocessing=False,
-                 workers=config.workers,
-                 class_weight=config.class_weights,
-                 callbacks=[stop_early])
+        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
+                                                      patience=5)
 
-    print(separator)
-    print('Transfer tuning results')
-    print(tuner.results_summary())
-    print(separator)
+        tuner.search(train_data,
+                     validation_data=val_data,
+                     batch_size=config.batch_size,
+                     epochs=50,
+                     shuffle=True,
+                     initial_epoch=0,
+                     use_multiprocessing=False,
+                     workers=config.workers,
+                     class_weight=config.class_weights,
+                     callbacks=[stop_early])
 
-    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
-    best_hps_transfer = best_hps
+        log.info(separator)
+        log.info('Transfer tuning results')
+        log.info(tuner.results_summary())
+        log.info(separator)
 
-    model = tuner.hypermodel.build(best_hps)
+        best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+        best_hps_transfer = best_hps
 
-    print('\n'.join([separator, 'Training fully connected layers', separator]))
+        model = tuner.hypermodel.build(best_hps)
 
-    if not path.isdir(config.checkpoint_dir):
-        os.makedirs(config.checkpoint_dir)
+        # =====================================================================
+        # Train fully connected layers
+        # =====================================================================
+        log.info('\n'.join([separator,
+                            'Training fully connected layers',
+                            separator]))
 
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=path.join(config.checkpoint_dir,
-                           'model.{epoch:02d}-{val_loss:.2f}.h5'),
-        save_weights_only=True,
-        monitor='val_accuracy',
-        mode='max',
-        save_best_only=True)
-    tb_callback = tf.keras.callbacks.TensorBoard(
-        log_dir=path.join(config.log_dir, config.timestamp, 'transfer'))
+        if not path.isdir(config.checkpoint_dir):
+            os.makedirs(config.checkpoint_dir)
 
-    # train the model on the new data for a few epochs
-    model.fit(train_data, batch_size=config.batch_size,
-              validation_data=val_data, use_multiprocessing=False,
-              workers=config.workers, epochs=config.transfer_config.epochs,
-              class_weight=config.class_weights,
-              callbacks=[model_checkpoint_callback, tb_callback])
+        model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+            filepath=path.join(config.checkpoint_dir,
+                               'model.{epoch:02d}-{val_loss:.2f}.h5'),
+            save_weights_only=True,
+            monitor='val_accuracy',
+            mode='max',
+            save_best_only=True)
+        tb_callback = tf.keras.callbacks.TensorBoard(
+            log_dir=path.join(config.log_dir, config.timestamp, 'transfer'))
 
-    model.load_weights(get_latest(config.checkpoint_dir,
-                                  lambda o: o.endswith('.h5')))
+        # train the model on the new data for a few epochs
+        model.fit(train_data, batch_size=config.batch_size,
+                  validation_data=val_data, use_multiprocessing=False,
+                  workers=config.workers, epochs=config.transfer_config.epochs,
+                  class_weight=config.class_weights,
+                  callbacks=[model_checkpoint_callback, tb_callback])
 
-    print('\n'.join([separator,
-                     'Tuning optimizer for fine tuning',
-                     separator]))
+    # =========================================================================
+    # Fine tuning
+    # =========================================================================
+    if mode in ('both', 'finetune'):
+        model.load_weights(get_latest(config.checkpoint_dir,
+                                      lambda o: o.endswith('.h5')))
 
-    tuner = Hyperband(hypermodel=partial(model_builder_optimizer,
-                                         model=model,
-                                         metrics=metrics),
-                      objective=Objective('val_accuracy', direction='max'),
-                      max_epochs=50, project_name='Finetune')
+        log.info('\n'.join([separator,
+                            'Tuning optimizer for fine tuning',
+                            separator]))
 
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
-                                                  patience=5)
+        tuner = Hyperband(hypermodel=partial(model_builder_optimizer,
+                                             model=model,
+                                             metrics=metrics),
+                          objective=Objective('val_accuracy', direction='max'),
+                          max_epochs=50, project_name='Finetune')
 
-    tuner.search(train_data,
-                 validation_data=val_data,
-                 batch_size=config.batch_size,
-                 epochs=50,
-                 shuffle=True,
-                 initial_epoch=0,
-                 use_multiprocessing=False,
-                 workers=config.workers,
-                 class_weight=config.class_weights,
-                 callbacks=[stop_early])
+        stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
+                                                      patience=5)
 
-    print(separator)
-    print('Finetune results')
-    print(tuner.results_summary())
-    print(separator)
+        tuner.search(train_data,
+                     validation_data=val_data,
+                     batch_size=config.batch_size,
+                     epochs=50,
+                     shuffle=True,
+                     initial_epoch=0,
+                     use_multiprocessing=False,
+                     workers=config.workers,
+                     class_weight=config.class_weights,
+                     callbacks=[stop_early])
 
-    best_hps_finetune = tuner.get_best_hyperparameters(num_trials=1)[0]
+        # =====================================================================
+        # Train full model
+        # =====================================================================
+        log.info(separator)
+        log.info('Finetune results')
+        log.info(tuner.results_summary())
+        log.info(separator)
 
-    print('\n'.join([separator, 'Training full model', separator]))
+        best_hps_finetune = tuner.get_best_hyperparameters(num_trials=1)[0]
 
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=path.join(config.checkpoint_dir,
-                           'model.{epoch:02d}-{val_loss:.2f}.h5'),
-        save_weights_only=True,
-        monitor='val_accuracy',
-        mode='max',
-        save_best_only=True)
-    tb_callback = tf.keras.callbacks.TensorBoard(
+        log.info('\n'.join([separator, 'Training full model', separator]))
+
+        model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+            filepath=path.join(config.checkpoint_dir,
+                               'model.{epoch:02d}-{val_loss:.2f}.h5'),
+            save_weights_only=True,
+            monitor='val_accuracy',
+            mode='max',
+            save_best_only=True)
+        tb_callback = tf.keras.callbacks.TensorBoard(
             log_dir=path.join(config.log_dir, config.timestamp, 'finetune'))
 
-    model = tuner.hypermodel.build(best_hps_finetune)
+        model = tuner.hypermodel.build(best_hps_finetune)
 
-    model.fit(train_data, batch_size=config.batch_size,
-              validation_data=val_data, use_multiprocessing=False,
-              workers=config.workers, epochs=config.transfer_config.epochs,
-              class_weight=config.class_weights,
-              callbacks=[model_checkpoint_callback, tb_callback])
+        model.fit(train_data, batch_size=config.batch_size,
+                  validation_data=val_data, use_multiprocessing=False,
+                  workers=config.workers, epochs=config.transfer_config.epochs,
+                  class_weight=config.class_weights,
+                  callbacks=[model_checkpoint_callback, tb_callback])
 
 
 if __name__ == '__main__':
@@ -213,6 +232,11 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--checkpoint-dir', default='checkpoints',
                         dest='checkpoint_dir',
                         help='Directory to save checkpoint files.')
+    parser.add_argument('-m', '--mode',
+                        choices=['both', 'transfer', 'finetune'],
+                        default='both',
+                        help='Perform full transfer learning, or just the'
+                             'fully connected layers, or finetuning the cnn.')
 
     args = parser.parse_args()
 
@@ -228,6 +252,6 @@ if __name__ == '__main__':
         tensorboard.run()
 
     try:
-        main(args.dataset, config)
+        main(args.dataset, config, args.mode)
     except KeyboardInterrupt:
         pass
