@@ -26,7 +26,12 @@ def tune_encoder(config: dict, params: ModelParams,
     for k, v in config.items():
         setattr(params, k, v)
 
-    return train_encoder(params, log_dir=tune.get_trial_dir(), **kwargs)
+    if 'log_dir' in kwargs:
+        log_dir = kwargs.pop('log_dir')
+    else:
+        log_dir = tune.get_trial_dir()
+
+    return train_encoder(params, log_dir=log_dir, **kwargs)
 
 
 def tune_classifier(config: dict, params: LinearClassifierMethodParams,
@@ -36,7 +41,12 @@ def tune_classifier(config: dict, params: LinearClassifierMethodParams,
     for k, v in config.items():
         setattr(params, k, v)
 
-    return train_classifier(params, log_dir=tune.get_trial_dir(), **kwargs)
+    if 'log_dir' in kwargs:
+        log_dir = kwargs.pop('log_dir')
+    else:
+        log_dir = tune.get_trial_dir()
+
+    return train_classifier(params, log_dir=log_dir, **kwargs)
 
 
 def main(args: Namespace, config):
