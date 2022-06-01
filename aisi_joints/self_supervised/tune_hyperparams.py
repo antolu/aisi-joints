@@ -73,7 +73,8 @@ def main(args: Namespace, config):
         callback = TuneReportCallback(
             {
                 'loss': 'step_train_loss',
-                'val_accuracy': 'valid_class_acc'
+                'val_accuracy': 'valid_class_acc',
+                'epoch': 'epoch'
             },
             on='validation_end')
 
@@ -111,7 +112,7 @@ def main(args: Namespace, config):
         else:
             checkpoint_path = get_latest(
                 args.checkpoint_dir, lambda o: o.startswith('model-base')
-                and o.endswith('.ckpt'))
+                                               and o.endswith('.ckpt'))
 
         grid = {
             'lr': tune.loguniform(1.e-4, 1),
@@ -136,7 +137,8 @@ def main(args: Namespace, config):
         callback = TuneReportCallback(
             {
                 'loss': 'step_train_loss',
-                'val_accuracy': 'valid_acc1'
+                'val_accuracy': 'valid_acc1',
+                'epoch': 'epoch'
             },
             on='validation_end'
         )
