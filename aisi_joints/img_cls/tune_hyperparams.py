@@ -46,7 +46,10 @@ def model_builder_full(hp: HyperParameters, config: Config,
     if not train_base_model:
         base_model.trainable = False
 
-    optimizer = AdamW(weight_decay, base_lr)
+    lr_scheduler = tf.keras.optimizers.schedules.ExponentialDecay(
+        base_lr, decay_steps=50, decay_rate=0.94
+    )
+    optimizer = AdamW(weight_decay, lr_scheduler)
     model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(),
                   metrics=metrics)
 
@@ -67,7 +70,11 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
     weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
 
     model.trainable = True
-    optimizer = AdamW(weight_decay, base_lr)
+
+    lr_scheduler = tf.keras.optimizers.schedules.CosineDecay(
+        base_lr, decay_steps=30000, alpha=1.e-6
+    )
+    optimizer = AdamW(weight_decay, lr_scheduler)
     model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(),
                   metrics=metrics)
 
