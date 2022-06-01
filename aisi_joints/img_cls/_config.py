@@ -55,14 +55,12 @@ class Config:
 
     base_model: str
 
-    train_data: Union[str, List[str]]
-    validation_data: Union[str, List[str]]
-
     transfer_config: FitConfig
     finetune_config: FitConfig
 
     class_weights: Dict[int, float]
 
+    dataset: str
     log_dir: str
     checkpoint_dir: str
     timestamp: str
@@ -81,9 +79,6 @@ class Config:
         self.base_model = if_hasattr_else(module, 'base_model',
                                           'inception_resnet_v2')
 
-        self.train_data = if_hasattr_else(module, 'train_data')
-        self.validation_data = if_hasattr_else(module, 'validation_data')
-
         self.transfer_config = FitConfig(
             if_hasattr_else(module, 'transfer_config'))
         self.finetune_config = FitConfig(
@@ -93,4 +88,5 @@ class Config:
 
         self.log_dir = 'logs'
         self.checkpoint_dir = 'checkpoints'
+        self.dataset = None
         self.timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

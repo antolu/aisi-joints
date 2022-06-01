@@ -1,11 +1,15 @@
 import argparse
+import logging
 import os
 from os import path
 
 import tensorflow as tf
 
 from ._config import Config
-from ._dataloader import prepare_dataset
+from ._dataloader import JointsSequence
+from .._utils import setup_logger
+
+log = logging.getLogger(__name__)
 
 
 class TempScale(tf.keras.layers.Layer):
@@ -34,13 +38,12 @@ class TempScale(tf.keras.layers.Layer):
 
 
 def main(config: Config, save_dir: str, model_dir: str):
-    dataset = tf.data.TFRecordDataset(config.validation_data)
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
-
     input_size = model.input_shape[1:3]
 
-    dataset = prepare_dataset(dataset, *input_size, config.bs, shuffle=False,
-                              random_crop=False, augment_data=False)
+    dataset = JointsSequence(config.dataset, 'validation', *input_size,
+                             random_crop=False, augment_data=False,
+                             batch_size=config.batch_size)
 
     input_ = model.input
     classification_layer = model.layers[-1]
@@ -63,7 +66,7 @@ def main(config: Config, save_dir: str, model_dir: str):
     model.compile(optimizer=optimizer, loss=nll_criterion)
     model.fit(dataset, epochs=250, callbacks=[early_stop])
 
-    print(f'Trained model temperature to {temp_scale.temperature}.')
+    log.info(f'Trained model temperature to {temp_scale.temperature}.')
 
     predictions = tf.keras.activations.softmax(x)
     model_to_export = tf.keras.models.Model(input_, predictions)
@@ -78,6 +81,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
+    parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
+                        required=True)
     parser.add_argument('--save-dir', type=str, dest='save_dir',
                         default='models',
                         help="Where to save the models.")
@@ -93,4 +98,12 @@ if __name__ == '__main__':
         args.config = args.config[:-3]
     conf = Config(args.config.replace('/', '.'))
 
+    if args.dataset is not None:
+        conf.dataset = args.dataset
+    else:
+        if conf.dataset is None:
+            raise ValueError('Must supply either config.dataset or '
+                             'dataset command line argument.')
+
+    setup_logger()
     main(conf, args.save_dir, args.model_dir)

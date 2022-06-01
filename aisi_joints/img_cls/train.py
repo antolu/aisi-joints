@@ -2,14 +2,14 @@ import logging
 import os
 from argparse import ArgumentParser
 from os import path
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import tensorflow as tf
 from keras import Model
 
 from .._utils.utils import TensorBoardTool
 from ._config import Config
-from ._dataloader import prepare_dataset
+from ._dataloader import prepare_dataset, JointsSequence
 from ._log_images import EvaluateImages
 from ._models import get_model
 from .._utils.logging import setup_logger
@@ -18,12 +18,13 @@ log = logging.getLogger(__name__)
 
 
 def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
-              train_data: tf.data.Dataset, val_data: tf.data.Dataset,
+              train_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
+              val_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               config: Config, epochs: int, name: str,
               metrics: Optional[List[tf.keras.metrics.Metric]] = None):
     img_writer = tf.summary.create_file_writer(
         path.join(config.log_dir, config.timestamp, f'{name}/images'))
-    image_eval = EvaluateImages(model, config.validation_data, img_writer,
+    image_eval = EvaluateImages(model, config.dataset, img_writer,
                                 config.bs, 10)
     tensorboard_img_cb = tf.keras.callbacks.LambdaCallback(
         on_epoch_end=lambda epoch, logs: image_eval.evaluate(epoch))
@@ -54,17 +55,15 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
 
 
 def main(config: Config):
-    train_data = tf.data.TFRecordDataset(config.train_data)
-    val_data = tf.data.TFRecordDataset(config.validation_data)
-
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout)
     input_size = base_model.input_shape[1:3]
 
-    train_data = prepare_dataset(train_data, *input_size, config.bs,
-                                 random_crop=True)
-    val_data = prepare_dataset(val_data, *input_size, config.bs, shuffle=False,
-                               random_crop=False, augment_data=False)
+    train_data = JointsSequence(config.dataset, 'train', *input_size,
+                                batch_size=config.batch_size)
+    val_data = JointsSequence(config.dataset, 'validation', *input_size,
+                              random_crop=False, augment_data=False,
+                              batch_size=config.batch_size)
 
     metrics = [tf.keras.metrics.CategoricalAccuracy(name='accuracy'),
                tf.keras.metrics.Precision(class_id=0, name='precision_OK'),
@@ -114,8 +113,8 @@ if __name__ == '__main__':
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
                         help='Tensorboard logdir.')
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help='Debug logs')
+    parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
+                        required=True)
     parser.add_argument('--tensorboard', action='store_true',
                         help='Launch tensorboard as part of the script.')
     parser.add_argument('-c', '--checkpoint-dir', default='checkpoints',
@@ -130,6 +129,12 @@ if __name__ == '__main__':
     config = Config(args.config.replace('/', '.'))
     config.log_dir = args.logdir
     config.checkpoint_dir = args.checkpoint_dir
+    if args.dataset is not None:
+        config.dataset = args.dataset
+    else:
+        if config.dataset is None:
+            raise ValueError('Must supply either config.dataset or '
+                             'dataset command line argument.')
 
     if args.tensorboard:
         tensorboard = TensorBoardTool(config.log_dir)

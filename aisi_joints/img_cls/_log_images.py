@@ -1,39 +1,34 @@
 """
-Write Tensorboard Summary at some validations step
+This module contains the EvaluateImages class that can be used as a callback
+during validation to perform inference using a dataset and display predicted
+vs ground truth labeling side by side in TensorBoard.
 """
 import logging
+from typing import Union
 
 import tensorflow as tf
 from object_detection.utils import visualization_utils as viz_utils
 
-from ._dataloader import process_example
+from ._dataloader import process_example, JointsSequence
 from ..constants import INV_LABEL_MAP
 
 log = logging.getLogger(__name__)
 
 
 class EvaluateImages:
-    def __init__(self, model: tf.keras.Model, dataset_pth: str,
-                 tb_writer: tf.summary.SummaryWriter,
-                 batch_size: int = 32, log_every: int = 10):
+    def __init__(self, model: tf.keras.Model,
+                 val_data: JointsSequence,
+                 tb_writer: tf.summary.SummaryWriter, log_every: int = 10):
         self._model = model
         self._writer = tb_writer
         self._log_every = log_every
 
-        self._data = tf.data.TFRecordDataset(dataset_pth)
-        self._preprocess_data(batch_size)
-
-    def _preprocess_data(self, batch_size: int):
-        self._data = self._data.map(
-            lambda smpl: process_example(
-                smpl, random_crop=False, get_metadata=True,
-                augment_data=False))
-        self._data = self._data.batch(batch_size)
+        self._data = val_data
 
     def evaluate(self, step: int, num_images: int = 20):
         if step % self._log_every != 0:
             return
-        for i, (images, labels, bboxes, eventIds) in enumerate(self._data):
+        for i, (images, labels) in enumerate(self._data):
             batch_size = tf.shape(images)[0]
             predictions = self._model(images)
 

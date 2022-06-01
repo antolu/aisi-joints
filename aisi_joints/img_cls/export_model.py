@@ -3,6 +3,7 @@ import os
 from argparse import ArgumentParser
 from os import path
 
+from .._utils import get_latest
 from ._config import Config
 from ._models import get_model
 from .._utils.logging import setup_logger
@@ -14,16 +15,9 @@ def export_model(config: Config, checkpoint_dir: str, output_dir: str):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout)
 
-    if path.isdir(checkpoint_dir):
-        files = [path.join(checkpoint_dir, o)
-                 for o in os.listdir(checkpoint_dir) if o.endswith('.h5')]
-
-        latest = max(files, key=path.getctime)
-        log.info(f'Reading checkpoint from {latest}.')
-        model.load_weights(latest)
-    else:
-        log.info(f'Reading checkpoint from {checkpoint_dir}.')
-        model.load_weights(checkpoint_dir)
+    checkpoint_path = get_latest(checkpoint_dir, lambda o: o.endswith('.h5'))
+    log.info(f'Reading checkpoint from {checkpoint_path}.')
+    model.load_weights(checkpoint_dir)
 
     log.info(f'Writing model to {output_dir}.')
     os.makedirs(output_dir, exist_ok=True)
