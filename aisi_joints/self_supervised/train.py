@@ -4,7 +4,7 @@ import os
 from argparse import ArgumentParser, Namespace
 from importlib import import_module
 from os import path
-from typing import Optional
+from typing import Optional, List
 
 import attr
 import pytorch_lightning as pl
@@ -63,7 +63,9 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
 def train_classifier(params: LinearClassifierMethodParams,
                      checkpoint_path: str,
                      checkpoint_dir: str, log_dir: str,
-                     timestamp: Optional[str] = None) -> ModelCheckpoint:
+                     timestamp: Optional[str] = None,
+                     callbacks: Optional[List[Callback]] = None) \
+        -> ModelCheckpoint:
     if timestamp is None:
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
@@ -74,20 +76,28 @@ def train_classifier(params: LinearClassifierMethodParams,
     model = LinearClassifierMethod.from_moco_checkpoint(
         checkpoint_path, **params_dict)
 
-    checkpoint_callback = ModelCheckpoint(
-        checkpoint_dir,
-        f'model-classifier-{timestamp} '
-        '-{epoch}-{valid_loss:.2f}',
-        monitor='valid_acc1',
-        save_top_k=3,
-        auto_insert_metric_name=False,
-        save_on_train_epoch_end=False)
+    callbacks = callbacks if callbacks is not None else []
+    if checkpoint_dir is not None:
+        checkpoint_callback = ModelCheckpoint(
+            checkpoint_dir,
+            f'model-classifier-{timestamp} '
+            '-{epoch}-{valid_loss:.2f}',
+            monitor='valid_acc1',
+            save_top_k=3,
+            auto_insert_metric_name=False,
+            save_on_train_epoch_end=False)
+        callbacks.append(checkpoint_callback)
+    else:
+        checkpoint_callback = None
 
-    logger = TensorBoardLogger(
-        path.join(log_dir, f'model-classifier-{timestamp}'))
+    if log_dir is not None:
+        logger = TensorBoardLogger(
+            path.join(log_dir, f'model-classifier-{timestamp}'))
+    else:
+        logger = True
 
     trainer = pl.Trainer(logger=logger, accelerator='auto',
-                         callbacks=[checkpoint_callback],
+                         callbacks=callbacks,
                          max_epochs=params.max_epochs)
 
     trainer.fit(model)

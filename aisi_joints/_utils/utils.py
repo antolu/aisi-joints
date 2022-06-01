@@ -6,6 +6,8 @@ from typing import Callable
 
 from tensorboard import program, default
 
+__all__ = ['time_execution', 'get_latest', 'TensorBoardTool']
+
 log = logging.getLogger(__name__)
 
 

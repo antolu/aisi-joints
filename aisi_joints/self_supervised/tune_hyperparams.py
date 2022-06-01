@@ -4,34 +4,46 @@ import os
 from argparse import ArgumentParser, Namespace
 from copy import copy
 from importlib import import_module
+from typing import Union
 
-import torch
+from pytorch_lightning.callbacks import ModelCheckpoint
 from ray import tune
 from ray.tune import CLIReporter
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from ray.tune.schedulers import ASHAScheduler
 
-from self_supervised import ModelParams
-from .train import train_encoder
-from .._utils.utils import TensorBoardTool
+from self_supervised import ModelParams, LinearClassifierMethodParams
+from .train import train_encoder, train_classifier
+from .._utils import TensorBoardTool, setup_logger, get_latest
 
 log = logging.getLogger(__name__)
 
 
 def tune_encoder(config: dict, params: ModelParams,
-                 *args, **kwargs):
+                 **kwargs) -> Union[None, ModelCheckpoint]:
     params = copy(params)
 
     for k, v in config.items():
         setattr(params, k, v)
 
-    train_encoder(params, *args, log_dir=tune.get_trial_dir(), **kwargs)
+    return train_encoder(params, log_dir=tune.get_trial_dir(), **kwargs)
+
+
+def tune_classifier(config: dict, params: LinearClassifierMethodParams,
+                    **kwargs) -> Union[None, ModelCheckpoint]:
+    params = copy(params)
+
+    for k, v in config.items():
+        setattr(params, k, v)
+
+    return train_classifier(params, log_dir=tune.get_trial_dir(), **kwargs)
 
 
 def main(args: Namespace, config):
     os.environ['DATA_PATH'] = os.path.abspath(args.dataset)
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    resources_per_trial = {'cpu': 4, 'gpu': 1}
 
     if args.mode in ('both', 'base'):
         params: ModelParams = config.model_params
@@ -56,12 +68,12 @@ def main(args: Namespace, config):
         reporter = CLIReporter(
             parameter_columns=['lr', 'weight_decay', 'momentum',
                                'mlp_hidden_dim', 'dim', 'lars_eta'],
-            metric_columns=['loss', 'mean_accuracy', 'training_iteration'])
+            metric_columns=['loss', 'val_accuracy', 'epochs'])
 
         callback = TuneReportCallback(
             {
                 'loss': 'step_train_loss',
-                'mean_accuracy': 'valid_class_acc'
+                'val_accuracy': 'valid_class_acc'
             },
             on='validation_end')
 
@@ -73,8 +85,6 @@ def main(args: Namespace, config):
             callbacks=[callback],
         )
 
-        resources_per_trial = {'cpu': 4, 'gpu': 1}
-
         analysis = tune.run(train_fn_with_parameters,
                             metric='loss',
                             mode='min',
@@ -85,7 +95,80 @@ def main(args: Namespace, config):
                             resources_per_trial=resources_per_trial,
                             name='tune_encoder')
 
-        print('Best hyperparameters found were: ', analysis.best_config)
+        log.info('Best hyperparameters found were: ', analysis.best_config)
+
+        log.info('Training model with tuned parameters.')
+
+        checkpoint = tune_encoder(analysis.best_config, params,
+                                  checkpoint_dir=args.checkpoint_dir,
+                                  log_dir=args.logdir,
+                                  timestamp=timestamp)
+
+    if args.mode in ('both', 'linear'):
+        params: LinearClassifierMethodParams = config.classifier_params
+        if args.mode == 'both':
+            checkpoint_path = checkpoint.best_model_path
+        else:
+            checkpoint_path = get_latest(
+                args.checkpoint_dir, lambda o: o.startswith('model-base')
+                and o.endswith('.ckpt'))
+
+        grid = {
+            'lr': tune.loguniform(1.e-4, 1),
+            'weight_decay': tune.loguniform(1.e-5, 1.e-1),
+            'momentum': tune.uniform(0.6, 1.0),
+            "batch_size": tune.choice([32, 64, 128, 256]),
+        }
+
+        scheduler = ASHAScheduler(
+            time_attr='epochs',
+            max_t=50,
+            grace_period=5,
+            reduction_factor=2
+        )
+
+        reporter = CLIReporter(
+            parameter_columns=['lr', 'weight_decay', 'momentum',
+                               'mlp_hidden_dim', 'dim', 'lars_eta'],
+            metric_columns=['loss', 'val_accuracy', 'epochs']
+        )
+
+        callback = TuneReportCallback(
+            {
+                'loss': 'step_train_loss',
+                'val_accuracy': 'valid_acc1'
+            },
+            on='validation_end'
+        )
+
+        train_fn_with_parameters = tune.with_parameters(
+            tune_classifier,
+            params=params,
+            checkpoint_path=checkpoint_path,
+            checkpoint_dir=None,
+            timestamp=None,
+            callbacks=[callback],
+        )
+
+        analysis = tune.run(train_fn_with_parameters,
+                            metric='loss',
+                            mode='min',
+                            config=grid,
+                            num_samples=-1,
+                            scheduler=scheduler,
+                            progress_reporter=reporter,
+                            resources_per_trial=resources_per_trial,
+                            name='tune_classifier')
+
+        log.info('Best hyperparameters found were: ', analysis.best_config)
+
+        log.info('Training classifier with tuned parameters.')
+
+        checkpoint = tune_classifier(analysis.best_config, params,
+                                     checkpoint_path=checkpoint_path,
+                                     checkpoint_dir=args.checkpoint_dir,
+                                     log_dir=args.logdir,
+                                     timestamp=timestamp)
 
 
 if __name__ == '__main__':
@@ -114,4 +197,5 @@ if __name__ == '__main__':
         tensorboard = TensorBoardTool(args.logdir)
         tensorboard.run()
 
+    setup_logger()
     main(args, config_module)
