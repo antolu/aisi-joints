@@ -59,7 +59,7 @@ def main(args: Namespace, config):
         }
 
         scheduler = ASHAScheduler(
-            time_attr='epochs',
+            time_attr='epoch',
             max_t=25,
             grace_period=5,
             reduction_factor=2
@@ -68,7 +68,7 @@ def main(args: Namespace, config):
         reporter = CLIReporter(
             parameter_columns=['lr', 'weight_decay', 'momentum',
                                'mlp_hidden_dim', 'dim', 'lars_eta'],
-            metric_columns=['loss', 'val_accuracy', 'epochs'])
+            metric_columns=['loss', 'val_accuracy', 'epoch'])
 
         callback = TuneReportCallback(
             {
@@ -121,7 +121,7 @@ def main(args: Namespace, config):
         }
 
         scheduler = ASHAScheduler(
-            time_attr='epochs',
+            time_attr='epoch',
             max_t=50,
             grace_period=5,
             reduction_factor=2
@@ -130,7 +130,7 @@ def main(args: Namespace, config):
         reporter = CLIReporter(
             parameter_columns=['lr', 'weight_decay', 'momentum',
                                'mlp_hidden_dim', 'dim', 'lars_eta'],
-            metric_columns=['loss', 'val_accuracy', 'epochs']
+            metric_columns=['loss', 'val_accuracy', 'epoch']
         )
 
         callback = TuneReportCallback(
