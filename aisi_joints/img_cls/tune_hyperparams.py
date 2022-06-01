@@ -111,7 +111,7 @@ def main(dataset_csv: str, config: Config, mode: str = 'both'):
         tuner = Hyperband(hypermodel=partial(model_builder_full, config=config,
                                              train_base_model=False,
                                              metrics=metrics),
-                          objective=Objective('val_accuracy', direction='max'),
+                          objective=Objective('loss', direction='min'),
                           max_epochs=50, project_name='Transfer')
 
         stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
