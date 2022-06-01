@@ -40,7 +40,7 @@ def get_latest(dir_, condition: Callable):
                  for o in os.listdir(dir_) if condition(o)]
 
         latest = max(files, key=path.getctime)
-        return path.join(dir_, latest)
+        return latest
     else:
         return dir_  # is actually a file
 
