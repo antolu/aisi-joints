@@ -1,0 +1,1 @@
+This directory contains the configuration files used for the experiments run during the master thesis
