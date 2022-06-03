@@ -39,7 +39,7 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
             save_top_k=3,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
-        callbacks.append(callbacks)
+        callbacks.append(checkpoint_callback)
     else:
         checkpoint_callback = None
 
