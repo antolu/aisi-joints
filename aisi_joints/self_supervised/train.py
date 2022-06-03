@@ -8,6 +8,7 @@ from typing import Optional, List
 
 import attr
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -19,6 +20,8 @@ from self_supervised.moco import SelfSupervisedMethod
 from .._utils.utils import get_latest
 
 log = logging.getLogger(__name__)
+
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 
 def train_encoder(params: ModelParams, checkpoint_dir: str,
