@@ -3,7 +3,7 @@ import os
 from argparse import ArgumentParser
 from functools import partial
 from os import path
-from typing import List
+from typing import List, Optional
 
 import tensorflow as tf
 from keras import Model
@@ -57,6 +57,7 @@ def model_builder_full(hp: HyperParameters, config: Config,
 
 
 def model_builder_optimizer(hp: HyperParameters, model: Model,
+                            checkpoint_path: Optional[str] = None,
                             metrics: List[Metric] = None) -> Model:
     """
     Build model for hyperparameters tuning
@@ -69,6 +70,8 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
     base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
     weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
 
+    if checkpoint_path is not None:
+        model.load_weights(checkpoint_path)
     model.trainable = True
 
     lr_scheduler = tf.keras.optimizers.schedules.CosineDecay(
@@ -111,7 +114,10 @@ def main(dataset_csv: str, config: Config, mode: str = 'both'):
         tuner = Hyperband(hypermodel=partial(model_builder_full, config=config,
                                              train_base_model=False,
                                              metrics=metrics),
-                          objective=Objective('loss', direction='min'),
+                          objective=[
+                              Objective('val_accuracy', direction=max),
+                              Objective('loss', direction='min'),
+                          ],
                           max_epochs=50, project_name='Transfer')
 
         stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
@@ -169,8 +175,8 @@ def main(dataset_csv: str, config: Config, mode: str = 'both'):
     # Fine tuning
     # =========================================================================
     if mode in ('both', 'finetune'):
-        model.load_weights(get_latest(config.checkpoint_dir,
-                                      lambda o: o.endswith('.h5')))
+        checkpoint_path = get_latest(config.checkpoint_dir,
+                                     lambda o: o.endswith('.h5'))
 
         log.info('\n'.join([separator,
                             'Tuning optimizer for fine tuning',
@@ -178,8 +184,12 @@ def main(dataset_csv: str, config: Config, mode: str = 'both'):
 
         tuner = Hyperband(hypermodel=partial(model_builder_optimizer,
                                              model=model,
+                                             checkpoint_path=checkpoint_path,
                                              metrics=metrics),
-                          objective=Objective('val_accuracy', direction='max'),
+                          objective=[
+                              Objective('val_accuracy', direction='max'),
+                              Objective('loss', direction='min'),
+                          ],
                           max_epochs=50, project_name='Finetune')
 
         stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
