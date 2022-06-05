@@ -24,8 +24,8 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
               metrics: Optional[List[tf.keras.metrics.Metric]] = None):
     img_writer = tf.summary.create_file_writer(
         path.join(config.log_dir, config.timestamp, f'{name}/images'))
-    image_eval = EvaluateImages(model, config.dataset, img_writer,
-                                config.bs, 10)
+    image_eval = EvaluateImages(model, val_data, img_writer,
+                                10)
     tensorboard_img_cb = tf.keras.callbacks.LambdaCallback(
         on_epoch_end=lambda epoch, logs: image_eval.evaluate(epoch))
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    setup_logger(args.debug)
+    setup_logger()
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
     config = Config(args.config.replace('/', '.'))
