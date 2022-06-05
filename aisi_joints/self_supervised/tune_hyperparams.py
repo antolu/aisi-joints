@@ -100,10 +100,11 @@ def main(args: Namespace, config):
                             metric='loss',
                             mode='min',
                             config=grid,
-                            num_samples=-1,
+                            num_samples=256,
                             scheduler=scheduler,
                             progress_reporter=reporter,
                             resources_per_trial=resources_per_trial,
+                            local_dir=f'{args.logdir}/ray_results',
                             name='tune_encoder')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
