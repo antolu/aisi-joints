@@ -105,6 +105,7 @@ def main(args: Namespace, config):
                             progress_reporter=reporter,
                             resources_per_trial=resources_per_trial,
                             local_dir=f'{args.logdir}/ray_results',
+                            log_to_file=True,
                             name='tune_encoder')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
@@ -171,6 +172,8 @@ def main(args: Namespace, config):
                             scheduler=scheduler,
                             progress_reporter=reporter,
                             resources_per_trial=resources_per_trial,
+                            local_dir=f'{args.logdir}/ray_results',
+                            log_to_file=True,
                             name='tune_classifier')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
