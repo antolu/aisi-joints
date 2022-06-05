@@ -4,6 +4,7 @@ import os
 from argparse import ArgumentParser, Namespace
 from copy import copy
 from importlib import import_module
+from pprint import pformat
 from typing import Union
 
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -109,6 +110,7 @@ def main(args: Namespace, config):
                             name='tune_encoder')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
+        log.info(f'All results: \n' + pformat(analysis.results))
 
         log.info('Training model with tuned parameters.')
 
@@ -177,6 +179,7 @@ def main(args: Namespace, config):
                             name='tune_classifier')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
+        log.info(f'All results: \n' + pformat(analysis.results))
 
         log.info('Training classifier with tuned parameters.')
 
