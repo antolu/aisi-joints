@@ -49,7 +49,7 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
 
     # train the model on the new data for a few epochs
     model.fit(train_data, batch_size=config.batch_size,
-              validation_data=val_data, use_multiprocessing=True,
+              validation_data=val_data, use_multiprocessing=False,
               workers=config.workers, epochs=epochs,
               callbacks=callbacks, class_weight=config.class_weights)
 
