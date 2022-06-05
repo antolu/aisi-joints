@@ -213,5 +213,5 @@ if __name__ == '__main__':
         tensorboard = TensorBoardTool(args.logdir)
         tensorboard.run()
 
-    setup_logger()
+    setup_logger(file_logger=f'{args.logdir}/log.log')
     main(args, config_module)
