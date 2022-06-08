@@ -117,8 +117,9 @@ def load_df(df: pd.DataFrame, crop_width: int = 299, crop_height: int = 299,
 
         if augment_data:
             image = augment(image)
-        image = tf.keras.applications.inception_resnet_v2.preprocess_input(
-            image)
+
+        if preprocess_fn is not None:
+            image = preprocess_fn(image)
 
         labels = tf.one_hot(label, 2)
 
