@@ -34,14 +34,14 @@ def model_builder_full(hp: HyperParameters, config: Config,
         metrics = []
 
     fc_hidden_dim = hp.Choice('fc_hidden_dim', [1024, 1536, 2048, 3072, 4096])
-    # fc_num_layers = hp.Choice('fc_num_layers', [1, 2, 3])
+    fc_num_layers = hp.Choice('fc_num_layers', [0, 1, 2, 3])
     fc_dropout = hp.Float('fc_dropout', 0.3, 1.0)
 
     base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
     weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
 
     base_model, model, _ = get_model(config.base_model, fc_hidden_dim,
-                                     fc_dropout)
+                                     fc_dropout, fc_num_layers)
 
     if not train_base_model:
         base_model.trainable = False
@@ -56,7 +56,8 @@ def model_builder_full(hp: HyperParameters, config: Config,
     return model
 
 
-def model_builder_optimizer(hp: HyperParameters, model: Model,
+def model_builder_optimizer(hp: HyperParameters, base_model: Model,
+                            model: Model,
                             checkpoint_path: Optional[str] = None,
                             metrics: List[Metric] = None) -> Model:
     """
@@ -71,6 +72,7 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
     weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
 
     if checkpoint_path is not None:
+        base_model.trainable = False
         model.load_weights(checkpoint_path)
     model.trainable = True
 
@@ -86,7 +88,7 @@ def model_builder_optimizer(hp: HyperParameters, model: Model,
 
 def main(dataset_csv: str, config: Config, mode: str = 'both'):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
-                                     config.fc_dropout)
+                                     config.fc_dropout, config.fc_num_layers)
     input_size = base_model.input_shape[1:3]
 
     train_data = JointsSequence(dataset_csv, 'train', *input_size,
@@ -183,6 +185,7 @@ def main(dataset_csv: str, config: Config, mode: str = 'both'):
                             separator]))
 
         tuner = Hyperband(hypermodel=partial(model_builder_optimizer,
+                                             base_model=base_model,
                                              model=model,
                                              checkpoint_path=checkpoint_path,
                                              metrics=metrics),

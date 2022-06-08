@@ -6,6 +6,7 @@ batch_size: int = 32
 
 fc_hidden_dim: int = 2048
 fc_dropout: float = 0.8
+fc_num_layers: int = 1
 
 train_data: str = 'dataset/train.tfrecord'
 validation_data: str = 'dataset/validation.tfrecord'
