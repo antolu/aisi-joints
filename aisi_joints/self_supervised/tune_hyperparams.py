@@ -4,6 +4,7 @@ import os
 from argparse import ArgumentParser, Namespace
 from copy import copy
 from importlib import import_module
+from pprint import pformat
 from typing import Union
 
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -100,13 +101,16 @@ def main(args: Namespace, config):
                             metric='loss',
                             mode='min',
                             config=grid,
-                            num_samples=-1,
+                            num_samples=256,
                             scheduler=scheduler,
                             progress_reporter=reporter,
                             resources_per_trial=resources_per_trial,
+                            local_dir=f'{args.logdir}/ray_results',
+                            log_to_file=True,
                             name='tune_encoder')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
+        log.info(f'All results: \n' + pformat(analysis.results))
 
         log.info('Training model with tuned parameters.')
 
@@ -170,9 +174,12 @@ def main(args: Namespace, config):
                             scheduler=scheduler,
                             progress_reporter=reporter,
                             resources_per_trial=resources_per_trial,
+                            local_dir=f'{args.logdir}/ray_results',
+                            log_to_file=True,
                             name='tune_classifier')
 
         log.info('Best hyperparameters found were: ', analysis.best_config)
+        log.info(f'All results: \n' + pformat(analysis.results))
 
         log.info('Training classifier with tuned parameters.')
 
@@ -209,5 +216,5 @@ if __name__ == '__main__':
         tensorboard = TensorBoardTool(args.logdir)
         tensorboard.run()
 
-    setup_logger()
+    setup_logger(file_logger=f'{args.logdir}/log.log')
     main(args, config_module)

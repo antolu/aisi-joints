@@ -3,7 +3,7 @@ import logging
 __all__ = ['setup_logger']
 
 
-def setup_logger(debug: bool = False):
+def setup_logger(debug: bool = False, file_logger: str = None):
     log = logging.getLogger()
     log.setLevel(logging.DEBUG)
 
@@ -19,3 +19,9 @@ def setup_logger(debug: bool = False):
         "%Y-%m-%d %H:%M:%S")
     ch.setFormatter(formatter)
     log.addHandler(ch)
+
+    if file_logger is not None:
+        fh = logging.FileHandler(file_logger)
+        fh.setFormatter(formatter)
+
+        log.addHandler(fh)
