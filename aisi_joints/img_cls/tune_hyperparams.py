@@ -266,12 +266,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    setup_logger(file_logger=path.join(args.logdir, 'log.log'))
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
     config = Config(args.config.replace('/', '.'))
     config.log_dir = args.logdir
     config.checkpoint_dir = args.checkpoint_dir
+
+    setup_logger(file_logger=path.join(args.logdir, config.timestamp,
+                                       'log.log'))
 
     if args.tensorboard:
         tensorboard = TensorBoardTool(config.log_dir)
