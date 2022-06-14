@@ -38,7 +38,8 @@ def model_builder_full(hp: HyperParameters, config: Config,
     fc_dropout = hp.Float('fc_dropout', 0.3, 1.0)
 
     base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
-    weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
+    # weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
+    momentum = hp.Float('momentum', 0.5, 1.0)
 
     base_model, model, _ = get_model(config.base_model, fc_hidden_dim,
                                      fc_dropout, fc_num_layers)
@@ -49,7 +50,9 @@ def model_builder_full(hp: HyperParameters, config: Config,
     lr_scheduler = tf.keras.optimizers.schedules.ExponentialDecay(
         base_lr, decay_steps=50, decay_rate=0.94
     )
-    optimizer = AdamW(weight_decay, lr_scheduler)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=lr_scheduler,
+                                        momentum=momentum)
+    # optimizer = AdamW(weight_decay, lr_scheduler)
     model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(),
                   metrics=metrics)
 
@@ -69,7 +72,8 @@ def model_builder_optimizer(hp: HyperParameters, base_model: Model,
         metrics = []
 
     base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
-    weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
+    # weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
+    momentum = hp.Float('momentum', 0.5, 1.0)
 
     if checkpoint_path is not None:
         base_model.trainable = False
@@ -79,7 +83,9 @@ def model_builder_optimizer(hp: HyperParameters, base_model: Model,
     lr_scheduler = tf.keras.optimizers.schedules.CosineDecay(
         base_lr, decay_steps=30000, alpha=1.e-6
     )
-    optimizer = AdamW(weight_decay, lr_scheduler)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=lr_scheduler,
+                                        momentum=momentum)
+    # optimizer = AdamW(weight_decay, lr_scheduler)
     model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(),
                   metrics=metrics)
 
@@ -260,7 +266,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    setup_logger()
+    setup_logger(file_logger=path.join(args.logdir, 'log.log'))
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
     config = Config(args.config.replace('/', '.'))
