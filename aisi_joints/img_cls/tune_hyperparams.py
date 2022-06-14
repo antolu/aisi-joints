@@ -272,6 +272,7 @@ if __name__ == '__main__':
     config.log_dir = args.logdir
     config.checkpoint_dir = args.checkpoint_dir
 
+    os.makedirs(path.join(args.logdir, config.timestamp), exist_ok=True)
     setup_logger(file_logger=path.join(args.logdir, config.timestamp,
                                        'log.log'))
 
