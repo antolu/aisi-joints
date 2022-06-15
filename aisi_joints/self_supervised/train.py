@@ -83,7 +83,7 @@ def train_classifier(params: LinearClassifierMethodParams,
     if checkpoint_dir is not None:
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            f'model-classifier-{timestamp} '
+            f'model-classifier-{timestamp}'
             '-{epoch}-{valid_loss:.2f}',
             monitor='valid_acc1',
             save_top_k=3,
