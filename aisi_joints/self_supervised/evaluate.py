@@ -70,7 +70,7 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
 
     predictions = torch.nn.functional.softmax(logits)
 
-    log.info(f'Done. Took {t.duration * 1000 / len(dataloader)} ms '
+    log.info(f'Done. Took {t.duration * 1000 / len(labels)} ms '
              f'per sample.')
     log.info('Calculating evaluation metrics.')
 
