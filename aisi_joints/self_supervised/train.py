@@ -17,7 +17,8 @@ from pytorch_lightning.utilities import AttributeDict
 from self_supervised import LinearClassifierMethod, ModelParams, \
     LinearClassifierMethodParams
 from self_supervised.moco import SelfSupervisedMethod
-from .._utils.utils import get_latest
+from .._utils import get_latest, setup_logger
+from .evaluate import evaluate
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
             checkpoint_dir,
             f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
             monitor='valid_class_acc',
+            mode='max',
             save_top_k=3,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
@@ -83,9 +85,10 @@ def train_classifier(params: LinearClassifierMethodParams,
     if checkpoint_dir is not None:
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            f'model-classifier-{timestamp} '
+            f'model-classifier-{timestamp}'
             '-{epoch}-{valid_loss:.2f}',
             monitor='valid_acc1',
+            mode='max',
             save_top_k=3,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
@@ -105,6 +108,8 @@ def train_classifier(params: LinearClassifierMethodParams,
 
     trainer.fit(model)
 
+    evaluate(None, model)
+
     return checkpoint_callback
 
 
@@ -113,25 +118,21 @@ def train(dataset_path: str, checkpoint_dir: str, log_dir: str, config,
     os.environ['DATA_PATH'] = dataset_path
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    setup_logger(file_logger=path.join(log_dir, f'{timestamp}.log'))
 
     if mode in ('both', 'base'):
-        params = config.model_params
-
         model_checkpoint = train_encoder(config.model_params, checkpoint_dir,
                                          log_dir, timestamp)
 
     if mode in ('both', 'linear'):
         classifier_params: LinearClassifierMethodParams = config \
             .classifier_params
-        linear_model = LinearClassifierMethod(classifier_params)
-
-        checkpoint_path = ''
         # model loading
         if mode == 'both':
             checkpoint_path = model_checkpoint.best_model_path
         elif mode == 'linear':
             checkpoint_path = get_latest(checkpoint_dir,
-                                         lambda o: o.endswith('.ckpt'))
+                                         lambda o: o.startswith('model-base') and o.endswith('.ckpt'))
         else:
             raise NotImplementedError
 
