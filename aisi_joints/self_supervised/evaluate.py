@@ -48,6 +48,7 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
     model = model.to(device)
 
     model_outputs = []
+    all_labels = []
     with time_execution() as t:
         for i, batch in enumerate(dataloader):
             input_, labels = batch
@@ -57,8 +58,10 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
             logits = logits.detach().to('cpu')
 
             model_outputs.append(logits)
+            all_labels.append(labels)
 
     logits = torch.cat(model_outputs)
+    labels = torch.cat(all_labels)
 
     predictions = torch.nn.functional.softmax(logits)
 
