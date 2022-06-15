@@ -61,7 +61,7 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
             all_labels.append(labels)
 
     logits = torch.cat(model_outputs)
-    labels = torch.cat(all_labels)
+    labels = torch.cat(all_labels).cpu().numpy()
 
     predictions = torch.nn.functional.softmax(logits)
 

@@ -31,6 +31,11 @@ class MLP(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         self._sublayers = []
+        self._units = units
+        self._use_bias = use_bias
+        self._activation = activation
+        self._dropout = dropout
+        self._final_activation = final_activation
 
         if len(units) == 0:
             raise ValueError('List of units must not be empty.')
@@ -44,6 +49,19 @@ class MLP(tf.keras.layers.Layer):
         self._sublayers.append(
             Dense(
                 units[-1], activation=final_activation, use_bias=use_bias))
+
+    def get_config(self):
+        config = super().get_config()
+
+        config.update({
+            'units': self._units,
+            'use_bias': self._use_bias,
+            'activation': self._activation,
+            'dropout': self._dropout,
+            'final_activation': self._final_activation,
+        })
+
+        return config
 
     def call(self, x: tf.Tensor) -> tf.Tensor:
         """Performs the forward computation of the block."""
