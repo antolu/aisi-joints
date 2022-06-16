@@ -58,7 +58,8 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
     callbacks.append(progress_bar)
     trainer = pl.Trainer(logger=logger, accelerator='auto',
                          callbacks=callbacks,
-                         max_epochs=params.max_epochs)
+                         max_epochs=params.max_epochs,
+                         log_every_n_steps=5)
 
     trainer.fit(model)
 
@@ -104,7 +105,8 @@ def train_classifier(params: LinearClassifierMethodParams,
 
     trainer = pl.Trainer(logger=logger, accelerator='auto',
                          callbacks=callbacks,
-                         max_epochs=params.max_epochs)
+                         max_epochs=params.max_epochs,
+                         log_every_n_steps=5)
 
     trainer.fit(model)
 
