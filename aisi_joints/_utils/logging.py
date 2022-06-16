@@ -22,6 +22,7 @@ def setup_logger(debug: bool = False, file_logger: str = None):
 
     if file_logger is not None:
         fh = logging.FileHandler(file_logger)
+        fh.setLevel(logging.INFO)
         fh.setFormatter(formatter)
 
         log.addHandler(fh)
