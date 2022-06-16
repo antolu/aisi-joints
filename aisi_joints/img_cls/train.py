@@ -30,7 +30,7 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
         on_epoch_end=lambda epoch, logs: image_eval.evaluate(epoch))
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=path.join(config.checkpoint_dir,
-                           'model.{epoch:02d}-{val_loss:.2f}.h5'),
+                           'model-' + name + '.{epoch}-{val_loss:.2f}.h5'),
         save_weights_only=True,
         monitor='val_accuracy',
         mode='max',
