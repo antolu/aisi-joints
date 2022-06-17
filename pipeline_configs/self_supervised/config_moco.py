@@ -1,23 +1,16 @@
 from self_supervised import LinearClassifierMethodParams
-from self_supervised.model_params import BYOLParams
+from self_supervised.model_params import VICRegParams, ModelParams, BYOLParams
 
-
-model_params = BYOLParams(
+model_params = ModelParams(
     dataset_name='aisi',
     encoder_arch='inception_resnet_v2',
     embedding_dim=1536,
     dim=2048,
     mlp_hidden_dim=2048,
-    mlp_normalization='bn',
     lr=0.00315,
     batch_size=32,
-    lars_eta=0.0846,
-    lars_warmup_epochs=10,
     max_epochs=300,
-    loss_constant_factor=2,
     pretrained=True,
-    momentum=0.9,
-    weight_decay=0.001
 )
 
 classifier_params = LinearClassifierMethodParams(
