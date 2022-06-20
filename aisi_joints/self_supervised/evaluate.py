@@ -1,19 +1,19 @@
 import logging
 import os
 from argparse import ArgumentParser, Namespace
-from importlib import import_module
 from pprint import pformat
 
 import pandas as pd
+import torch
+from self_supervised.utils import get_class_dataset
 from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import torch
 
+from aisi_joints.self_supervised.data import JointDataset
 from self_supervised import LinearClassifierMethod
-from .data import JointDataset
 from .._utils.logging import setup_logger
-from .._utils.utils import time_execution
+from .._utils.utils import time_execution, get_latest
 from ..constants import CLASS_OK, CLASS_DEFECT
 
 log = logging.getLogger(__name__)
@@ -39,10 +39,15 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
         ]
     )
 
+    dataset = get_class_dataset('aisi')
+
     dataloader = DataLoader(
-        JointDataset.from_df(df, None, False, 224, 224, transforms_),
+        # JointDataset.from_df(df, None, False, 224, 224, transforms_),
+        dataset.configure_test(),
         batch_size=model.hparams.batch_size,
         num_workers=model.hparams.num_data_workers)
+
+    # dataloader = model.val_dataloader()
 
     model.eval()
     model = model.to(device)
@@ -65,7 +70,7 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
 
     predictions = torch.nn.functional.softmax(logits)
 
-    log.info(f'Done. Took {t.duration * 1000 / len(dataloader)} ms '
+    log.info(f'Done. Took {t.duration * 1000 / len(labels)} ms '
              f'per sample.')
     log.info('Calculating evaluation metrics.')
 
@@ -80,23 +85,24 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
              + '\n' + pformat(report) + '\n')
     log.info(('=' * 10) + 'CONFUSION MATRIX' + ('=' * 10) + '\n' + pformat(cf))
 
-    df = df.assign(detected_class=pred_labels)
-
-    class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
-    df['detected_class'] = df['detected_class'].map(
-        {v: k for k, v in class_map.items()})
-    df['detection_score'] = scores
-    df['num_detections'] = 1
-    df['detected_x0'] = df['x0']
-    df['detected_x1'] = df['x1']
-    df['detected_y0'] = df['y0']
-    df['detected_y1'] = df['y1']
-
-    return df
+    # df = df.assign(detected_class=pred_labels)
+    #
+    # class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
+    # df['detected_class'] = df['detected_class'].map(
+    #     {v: k for k, v in class_map.items()})
+    # df['detection_score'] = scores
+    # df['num_detections'] = 1
+    # df['detected_x0'] = df['x0']
+    # df['detected_x1'] = df['x1']
+    # df['detected_y0'] = df['y0']
+    # df['detected_y1'] = df['y1']
+    #
+    # return df
 
 
 def main(args: Namespace):
-    df = pd.read_csv(args.input)
+    os.environ['DATA_PATH'] = args.dataset
+    df = pd.read_csv(args.dataset)
 
     if args.split is not None and 'split' in df.columns:
         df = df[df['split'] == args.split]
@@ -104,16 +110,19 @@ def main(args: Namespace):
     else:
         log.info('Evaluating on entire dataset.')
 
-    log.info(f'Loading model from {args.model}')
+    if os.path.isfile(args.model):
+        classifier_checkpoint = args.model
+    elif os.path.isdir(args.model):
+        classifier_checkpoint = get_latest(args.model, lambda o: o.startswith(
+            'model-classifier') and o.endswith('.ckpt'))
+    else:
+        raise FileNotFoundError('Could not find checkpoint file at ' +
+                                args.model)
 
-    if args.config.endswith('.py'):
-        args.config = args.config[:-3]
-    config_module = import_module(args.config.replace('/', '.'))
+    log.info(f'Loading model from {classifier_checkpoint}.')
+    # need to load base weights and classifier weights separately
 
-    params = config_module.classifier_params
-    os.environ['DATA_PATH'] = args.input
-    model = LinearClassifierMethod(params)
-    model.load_from_checkpoint(args.model)
+    model = LinearClassifierMethod.from_trained_checkpoint(classifier_checkpoint)
     log.info('Model loaded.')
 
     df = evaluate(df, model)
@@ -126,18 +135,16 @@ def main(args: Namespace):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('-i', '--input', required=True,
+    parser.add_argument('-d', '--dataset', required=True,
                         help='Path to .csv containing dataset, '
                              'or path to directory containing images.')
-    parser.add_argument('-m', '--model', dest='model',
+    parser.add_argument('-m', '--model', dest='model', default='checkpoints',
                         help='Path to directory containing save model '
                              '(state dict).')
     parser.add_argument('-s', '--split',
                         choices=['train', 'validation', 'test'],
                         default=None,
                         help='Specific split to evaluate on.')
-    parser.add_argument('-c', '--config', default='config.py',
-                        help='Path to config.py.')
     parser.add_argument('-o', '--output', type=str, default=None,
                         help='Output .csv with predictions.')
 
