@@ -64,7 +64,7 @@ def main(args: Namespace, config):
             'dim': tune.choice([1024, 2048, 3072, 4096]),
             'lr': tune.loguniform(1.e-4, 1),
             'weight_decay': tune.loguniform(1.e-5, 1.e-1),
-            'momentum': tune.uniform(0.6, 1.0),
+            'momentum': tune.uniform(0.9, 1.0),
             'lars_eta': tune.loguniform(1.e-4, 1.e-1),
             "batch_size": tune.choice([32, 64, 128]),
         }

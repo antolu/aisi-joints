@@ -39,7 +39,7 @@ def model_builder_full(hp: HyperParameters, config: Config,
 
     base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
     # weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
-    momentum = hp.Float('momentum', 0.5, 1.0)
+    momentum = hp.Float('momentum', 0.9, 1.0)
 
     base_model, model, _ = get_model(config.base_model, fc_hidden_dim,
                                      fc_dropout, fc_num_layers)
@@ -73,7 +73,7 @@ def model_builder_optimizer(hp: HyperParameters, base_model: Model,
 
     base_lr = hp.Float('lr', 1.e-5, 1.e-1, sampling='log')
     # weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
-    momentum = hp.Float('momentum', 0.5, 1.0)
+    momentum = hp.Float('momentum', 0.9, 1.0)
 
     if checkpoint_path is not None:
         base_model.trainable = False
