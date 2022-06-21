@@ -72,7 +72,8 @@ def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7):
 def main(args: Namespace):
     model = Detr.load_from_checkpoint(args.checkpoint_path,
                                       lr=0.0, lr_backbone=0.0,
-                                      weight_decay=0.0, num_classes=2)
+                                      weight_decay=0.0, momentum=0.0,
+                                      num_classes=2)
 
     dataset = CocoDetection(args.data_dir, args.split, model.feature_extractor)
 
