@@ -73,7 +73,9 @@ def main(args: Namespace):
         log.info(f'Loading model from {args.model_dir}')
         model = tf.keras.models.load_model(args.model_dir)
     else:
-        config = Config(args.config)
+        if args.config.endswith('.py'):
+            args.config = args.config[:-3]
+        config = Config(args.config.replace('/', '.'))
         base_model, model, _ = get_model(config.base_model,
                                          config.fc_hidden_dim,
                                          config.fc_dropout,

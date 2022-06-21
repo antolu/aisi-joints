@@ -56,7 +56,7 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
 
 def main(config: Config):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
-                                     config.fc_dropout)
+                                     config.fc_dropout, config.fc_num_layers)
     input_size = base_model.input_shape[1:3]
 
     train_data = JointsSequence(config.dataset, 'train', *input_size,
