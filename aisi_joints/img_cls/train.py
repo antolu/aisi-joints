@@ -7,7 +7,7 @@ from typing import Optional, List, Union
 import tensorflow as tf
 from keras import Model
 
-from .._utils.utils import TensorBoardTool
+from .._utils.tensorboard import TensorBoardTool
 from ._config import Config
 from ._dataloader import prepare_dataset, JointsSequence
 from ._log_images import EvaluateImages

@@ -1,0 +1,8 @@
+git+https://github.com/antolu/self_supervised.git
+pillow
+timm
+torch
+torchvision
+pytorch_lightning
+ray[tune]
+attr

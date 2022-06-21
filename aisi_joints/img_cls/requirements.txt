@@ -1,0 +1,5 @@
+tensorflow>=2.8.0
+object_detection
+scikit-learn
+pandas
+keras_tuner
