@@ -17,7 +17,8 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 def train(config: dict, img_folder: str):
     model = Detr(lr=config['lr'], lr_backbone=config['lr_backbone'],
-                 weight_decay=config['weight_decay'], num_classes=2)
+                 weight_decay=config['weight_decay'],
+                 momentum=config['momentum'], num_classes=2)
     feature_extractor = model.feature_extractor
 
     train_dataset = CocoDetection(img_folder, 'train',

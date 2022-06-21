@@ -6,7 +6,7 @@ from transformers import DetrForObjectDetection, \
 
 class Detr(pl.LightningModule):
     def __init__(self, lr: float, lr_backbone: float, weight_decay: float,
-                 num_classes: int):
+                 momentum: float, num_classes: int):
         super().__init__()
 
         normalize_means = [0.28513786, 0.28513786, 0.28513786]
@@ -72,7 +72,7 @@ class Detr(pl.LightningModule):
                 "lr": self.lr_backbone,
             },
         ]
-        optimizer = torch.optim.AdamW(param_dicts, lr=self.lr,
+        optimizer = torch.optim.SGD(param_dicts, lr=self.lr,
                                       weight_decay=self.weight_decay)
 
         return optimizer
