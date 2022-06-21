@@ -20,9 +20,7 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     Print results to terminal.
     """
 
-    dataset = load_df(df, random_crop=False, augment_data=False,
-                      preprocess_fn=tf.keras.applications
-                      .inception_resnet_v2.preprocess_input)
+    dataset = load_df(df, random_crop=False, augment_data=False)
     class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
     labels = df['cls'].map(class_map).to_numpy()
     total = len(labels)
