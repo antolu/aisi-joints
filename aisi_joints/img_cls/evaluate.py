@@ -9,7 +9,9 @@ from sklearn.metrics import classification_report, confusion_matrix
 from ._dataloader import load_df
 from ..constants import CLASS_OK, CLASS_DEFECT
 from .._utils.logging import setup_logger
-from .._utils.utils import time_execution
+from .._utils import time_execution, get_latest
+from ._config import Config
+from ._models import get_model
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +21,6 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     Calculate predictions based on raw data and run COCO tfod on it.
     Print results to terminal.
     """
-
     dataset = load_df(df, random_crop=False, augment_data=False)
     class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
     labels = df['cls'].map(class_map).to_numpy()
@@ -68,8 +69,22 @@ def main(args: Namespace):
     else:
         log.info('Evaluating on entire dataset.')
 
-    log.info(f'Loading model from {args.model_dir}')
-    model = tf.keras.models.load_model(args.model_dir)
+    if args.config is None:
+        log.info(f'Loading model from {args.model_dir}')
+        model = tf.keras.models.load_model(args.model_dir)
+    else:
+        config = Config(args.config)
+        base_model, model, _ = get_model(config.base_model,
+                                         config.fc_hidden_dim,
+                                         config.fc_dropout,
+                                         config.fc_num_layers)
+
+        checkpoint_path = get_latest(args.model_dir,
+                                     lambda o: o.endswith('.h5'))
+
+        log.info(f'Loading model weights from {checkpoint_path}.')
+        model.load_weights(checkpoint_path)
+
     log.info('Model loaded.')
 
     df = evaluate(df, model)
@@ -87,7 +102,10 @@ if __name__ == '__main__':
                              'or path to directory containing images.')
     parser.add_argument('-m', '--model-dir', dest='model_dir',
                         default='export_models',
-                        help='Path to directory containing exported model.')
+                        help='Path to directory containing exported model '
+                             'or checkpoint.')
+    parser.add_argument('-c', '--config', default=None,
+                        help='Path to config.py if evaluating checkpoint.')
     parser.add_argument('-s', '--split',
                         choices=['train', 'validation', 'test'],
                         default=None,
