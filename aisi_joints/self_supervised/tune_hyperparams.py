@@ -16,7 +16,8 @@ from ray.tune.schedulers import ASHAScheduler
 
 from self_supervised import ModelParams, LinearClassifierMethodParams
 from .train import train_encoder, train_classifier
-from .._utils import TensorBoardTool, setup_logger, get_latest
+from .._utils import setup_logger, get_latest
+from .._utils.tensorboard import TensorBoardTool
 
 log = logging.getLogger(__name__)
 

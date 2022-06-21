@@ -4,9 +4,7 @@ import time as t
 from os import path
 from typing import Callable
 
-from tensorboard import program, default
-
-__all__ = ['time_execution', 'get_latest', 'TensorBoardTool']
+__all__ = ['time_execution', 'get_latest']
 
 log = logging.getLogger(__name__)
 
@@ -36,29 +34,9 @@ class time_execution:
 
 def get_latest(dir_, condition: Callable):
     if path.isdir(dir_):
-        files = [path.join(dir_, o)
-                 for o in os.listdir(dir_) if condition(o)]
+        files = [path.join(dir_, o) for o in os.listdir(dir_) if condition(o)]
 
         latest = max(files, key=path.getctime)
         return latest
     else:
         return dir_  # is actually a file
-
-
-class TensorBoardTool:
-
-    def __init__(self, log_dir: str):
-        self.log_dir: str = log_dir
-
-    def run(self):
-        if not path.exists(self.log_dir):
-            os.makedirs(self.log_dir, exist_ok=True)
-
-        # Suppress http messages
-        logging.getLogger('werkzeug').setLevel(logging.ERROR)
-        # Start tensorboard server
-        tb = program.TensorBoard(default.get_plugins())
-        tb.configure(argv=[None, '--logdir', self.log_dir, '--bind_all'])
-
-        url = tb.launch()
-        print(f'TensorBoard at {url}')

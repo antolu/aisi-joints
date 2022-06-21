@@ -11,13 +11,3 @@ class Flags(object):
 
 
 flags = Flags('DEBUG', False)
-
-
-install_requires = [
-    'PyQt5',
-    'pyqtgraph',
-    'pyqt5ac',
-    'opencv-python'
-    'pandas',
-    'numpy'
-]
