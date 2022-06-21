@@ -44,6 +44,18 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
             save_top_k=3,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
+
+        checkpoint_callback_loss = ModelCheckpoint(
+            checkpoint_dir,
+            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
+            monitor='step_train_loss',
+            mode='min',
+            save_top_k=2,
+            auto_insert_metric_name=False,
+            save_on_train_epoch_end=False,
+        )
+
+        callbacks.append(checkpoint_callback)
         callbacks.append(checkpoint_callback)
     else:
         checkpoint_callback = None
