@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from os import path
+from typing import Iterable, Optional
 
 import tensorflow as tf
 
@@ -13,10 +14,13 @@ log = logging.getLogger(__name__)
 
 
 class TempScale(tf.keras.layers.Layer):
-    def __init__(self):
+    def __init__(self, temperature: Optional[float] = None):
         super().__init__()
 
-        self._temperature = tf.Variable(1.5, dtype="float32", trainable=True)
+        if temperature is None:
+            temperature = 1.5
+        self._temperature = tf.Variable(temperature, dtype="float32",
+                                        trainable=True)
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         """
@@ -37,6 +41,23 @@ class TempScale(tf.keras.layers.Layer):
         return self._temperature.value()
 
 
+@tf.function
+def get_logits(model: tf.keras.Model, dataset: Iterable):
+    all_logits = []
+    all_labels = []
+
+    for images, labels in dataset:
+        logits = model(images)
+
+        all_logits.append(logits)
+        all_labels.append(labels)
+
+    all_logits = tf.concat(all_logits, 0, name='logits_valid')
+    all_labels = tf.concat(all_labels, 0, name='labels_valid')
+
+    return all_logits, all_labels
+
+
 def main(config: Config, save_dir: str, model_dir: str):
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
     input_size = model.input_shape[1:3]
@@ -45,30 +66,50 @@ def main(config: Config, save_dir: str, model_dir: str):
                              random_crop=False, augment_data=False,
                              batch_size=config.batch_size)
 
+    # remove softmax layer
     input_ = model.input
     classification_layer = model.layers[-1]
     classification_layer.activation = tf.keras.activations.linear
     model.trainable = False  # freeze all layers
 
-    temp_scale = TempScale()
-    x = temp_scale(classification_layer.output)
-    model = tf.keras.models.Model(input_, x)
+    model_wo_softmax = model
+
+    logits, labels = get_logits(model_wo_softmax, dataset)
+    logits = tf.constant(logits)
+    labels = tf.constant(labels)
+
+    @tf.function
+    def temp_scale(logits, temperature):
+        return logits / temperature
+
+    temp_var = tf.Variable(1., name='temperature', trainable=True)
+
+    nll_loss = tf.losses.CategoricalCrossentropy(from_logits=True)
+
+    def compute_loss() -> tf.Tensor:
+        logits_w_temp = tf.divide(logits, temp_var)
+        loss = nll_loss(labels, logits_w_temp)
+
+        return loss
 
     optimizer = tf.keras.optimizers.SGD(learning_rate=1)
-    nll_criterion = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
 
-    early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor='loss',
-        patience=20,
-        restore_best_weights=True
-    )
+    tol = 1e-3
+    old_val = 1e8
+    for i in range(1000):
+        optimizer.minimize(compute_loss, [temp_var])
 
-    model.compile(optimizer=optimizer, loss=nll_criterion)
-    model.fit(dataset, epochs=250, callbacks=[early_stop])
+        loss = compute_loss()
+        if tf.math.abs(loss - old_val) < tol:
+            break
+        else:
+            old_val = loss
 
-    log.info(f'Trained model temperature to {temp_scale.temperature}.')
+    log.info(f'Trained model temperature to {temp_scale.temperature} after '
+             f'{i} iterations.')
 
-    predictions = tf.keras.activations.softmax(x)
+    predictions = tf.keras.activations.softmax(
+        tf.divide(classification_layer.output, temp_var))
     model_to_export = tf.keras.models.Model(input_, predictions)
     model_to_export.trainable = True
 
