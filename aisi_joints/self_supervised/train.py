@@ -38,16 +38,16 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
     if checkpoint_dir is not None:
         checkpoint_callback = ModelCheckpoint(
             checkpoint_dir,
-            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
+            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}_val_acc',
             monitor='valid_class_acc',
             mode='max',
-            save_top_k=3,
+            save_top_k=2,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
 
         checkpoint_callback_loss = ModelCheckpoint(
             checkpoint_dir,
-            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}',
+            f'model-base-{timestamp}' '-{epoch}-{step_train_loss:.2f}_loss',
             monitor='step_train_loss',
             mode='min',
             save_top_k=2,
@@ -56,7 +56,7 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
         )
 
         callbacks.append(checkpoint_callback)
-        callbacks.append(checkpoint_callback)
+        callbacks.append(checkpoint_callback_loss)
     else:
         checkpoint_callback = None
 
@@ -75,7 +75,7 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
 
     trainer.fit(model)
 
-    return checkpoint_callback
+    return checkpoint_callback_loss
 
 
 def train_classifier(params: LinearClassifierMethodParams,
@@ -102,7 +102,7 @@ def train_classifier(params: LinearClassifierMethodParams,
             '-{epoch}-{valid_loss:.2f}',
             monitor='valid_acc1',
             mode='max',
-            save_top_k=3,
+            save_top_k=2,
             auto_insert_metric_name=False,
             save_on_train_epoch_end=False)
         callbacks.append(checkpoint_callback)
