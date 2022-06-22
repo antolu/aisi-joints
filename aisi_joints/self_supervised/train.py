@@ -154,7 +154,7 @@ def train(dataset_path: str, checkpoint_dir: str, log_dir: str, config,
                                             checkpoint_dir, log_dir, timestamp)
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
@@ -178,3 +178,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
+    main()

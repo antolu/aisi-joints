@@ -1,9 +1,8 @@
 import logging
 import os
-import sys
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pprint import pformat
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 import torch
@@ -12,7 +11,6 @@ from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from aisi_joints.self_supervised.data import JointDataset
 from self_supervised import LinearClassifierMethod
 from .._utils.logging import setup_logger
 from .._utils.utils import time_execution, get_latest
@@ -87,22 +85,25 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
              + '\n' + pformat(report) + '\n')
     log.info(('=' * 10) + 'CONFUSION MATRIX' + ('=' * 10) + '\n' + pformat(cf))
 
-    # df = df.assign(detected_class=pred_labels)
-    #
-    # class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
-    # df['detected_class'] = df['detected_class'].map(
-    #     {v: k for k, v in class_map.items()})
-    # df['detection_score'] = scores
-    # df['num_detections'] = 1
-    # df['detected_x0'] = df['x0']
-    # df['detected_x1'] = df['x1']
-    # df['detected_y0'] = df['y0']
-    # df['detected_y1'] = df['y1']
-    #
-    # return df
+    if df is None:
+        return
+
+    df = df.assign(detected_class=pred_labels)
+
+    class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
+    df['detected_class'] = df['detected_class'].map(
+        {v: k for k, v in class_map.items()})
+    df['detection_score'] = scores
+    df['num_detections'] = 1
+    df['detected_x0'] = df['x0']
+    df['detected_x1'] = df['x1']
+    df['detected_y0'] = df['y0']
+    df['detected_y1'] = df['y1']
+
+    return df
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('-d', '--dataset', required=True,
@@ -143,7 +144,8 @@ def main(argv: List[str]):
     log.info(f'Loading model from {classifier_checkpoint}.')
     # need to load base weights and classifier weights separately
 
-    model = LinearClassifierMethod.from_trained_checkpoint(classifier_checkpoint)
+    model = LinearClassifierMethod.from_trained_checkpoint(
+        classifier_checkpoint)
     log.info('Model loaded.')
 
     df = evaluate(df, model)
@@ -154,4 +156,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

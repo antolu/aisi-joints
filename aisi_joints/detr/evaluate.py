@@ -1,8 +1,7 @@
 import logging
-import sys
 from argparse import ArgumentParser, Namespace
 from functools import partial
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 from object_detection.metrics.coco_tools import COCOWrapper
@@ -86,7 +85,7 @@ def evaluate(args: Namespace):
     evaluate_and_print(dataset.coco, detected)
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('-d', '--data', dest='data_dir',
@@ -114,4 +113,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

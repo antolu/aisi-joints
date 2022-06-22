@@ -3,9 +3,8 @@ This script serves as a helper to evaluate an exported tensorflow object detecti
 model on a custom formatted dataset (used in this package).
 """
 import logging
-import sys
-from argparse import ArgumentParser, Namespace
-from typing import List
+from argparse import ArgumentParser
+from typing import List, Optional
 
 import pandas as pd
 import tensorflow as tf
@@ -69,7 +68,7 @@ def evaluate(df: pd.DataFrame, model: tf.keras.Model,
     evaluate_and_print(coco_gt, coco_pred)
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('-i', '--input', required=True,
@@ -101,4 +100,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

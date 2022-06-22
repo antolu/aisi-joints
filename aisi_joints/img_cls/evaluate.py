@@ -1,8 +1,7 @@
 import logging
-import sys
 from argparse import ArgumentParser, Namespace
 from pprint import pformat
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 import tensorflow as tf
@@ -62,7 +61,7 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     return df
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('-d', '--dataset', required=True,
@@ -120,4 +119,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

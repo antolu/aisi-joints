@@ -246,7 +246,7 @@ def tune_hyperparams(dataset_csv: str, config: Config, mode: str = 'both'):
                   callbacks=[model_checkpoint_callback, tb_callback])
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
@@ -287,4 +287,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

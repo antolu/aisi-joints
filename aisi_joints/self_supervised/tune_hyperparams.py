@@ -6,7 +6,7 @@ from argparse import ArgumentParser, Namespace
 from copy import copy
 from importlib import import_module
 from pprint import pformat
-from typing import Union, List
+from typing import Union, List, Optional
 
 from pytorch_lightning.callbacks import ModelCheckpoint
 from ray import tune
@@ -191,7 +191,7 @@ def tune_hyperparams(args: Namespace, config):
                                      timestamp=timestamp)
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
@@ -223,4 +223,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

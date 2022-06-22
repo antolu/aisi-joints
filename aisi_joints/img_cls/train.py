@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from argparse import ArgumentParser
 from os import path
 from typing import Optional, List, Union
@@ -8,12 +7,12 @@ from typing import Optional, List, Union
 import tensorflow as tf
 from keras import Model
 
-from .._utils.utils import TensorBoardTool, get_latest
 from ._config import Config
-from ._dataloader import prepare_dataset, JointsSequence
+from ._dataloader import JointsSequence
 from ._log_images import EvaluateImages
 from ._models import get_model
 from .._utils.logging import setup_logger
+from .._utils.utils import TensorBoardTool, get_latest
 
 log = logging.getLogger(__name__)
 
@@ -126,7 +125,7 @@ def train(config: Config, mode: str):
                 raise
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
@@ -169,4 +168,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

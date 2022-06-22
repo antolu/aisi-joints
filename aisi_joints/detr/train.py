@@ -1,7 +1,6 @@
-import sys
 from argparse import ArgumentParser
 from functools import partial
-from typing import List
+from typing import List, Optional
 
 import torch
 import yaml
@@ -63,7 +62,7 @@ def train(config: dict, img_folder: str):
         evaluate_and_print(val_dataset.coco, detected)
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('-d', '--data', dest='data_dir',
@@ -80,4 +79,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()

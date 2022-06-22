@@ -1,9 +1,8 @@
 import argparse
 import logging
 import os
-import sys
 from os import path
-from typing import List
+from typing import List, Optional
 
 import tensorflow as tf
 
@@ -79,7 +78,7 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     model_to_export.save(save_dir)
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
@@ -112,4 +111,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
