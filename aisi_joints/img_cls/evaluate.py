@@ -1,6 +1,8 @@
 import logging
+import sys
 from argparse import ArgumentParser, Namespace
 from pprint import pformat
+from typing import List
 
 import pandas as pd
 import tensorflow as tf
@@ -60,8 +62,29 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     return df
 
 
-def main(args: Namespace):
-    df = pd.read_csv(args.input)
+def main(argv: List[str]):
+    parser = ArgumentParser()
+
+    parser.add_argument('-d', '--dataset', required=True,
+                        help='Path to .csv containing dataset, '
+                             'or path to directory containing images.')
+    parser.add_argument('-m', '--model-dir', dest='model_dir',
+                        default='export_models',
+                        help='Path to directory containing exported model '
+                             'or checkpoint.')
+    parser.add_argument('-c', '--config', default=None,
+                        help='Path to config.py if evaluating checkpoint.')
+    parser.add_argument('-s', '--split',
+                        choices=['train', 'validation', 'test'],
+                        default=None,
+                        help='Specific split to evaluate on.')
+    parser.add_argument('-o', '--output', type=str, default=None,
+                        help='Output .csv with predictions.')
+
+    args = parser.parse_args(argv)
+
+    setup_logger()
+    df = pd.read_csv(args.dataset)
 
     if args.split is not None and 'split' in df.columns:
         df = df[df['split'] == args.split]
@@ -97,25 +120,4 @@ def main(args: Namespace):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
-
-    parser.add_argument('-i', '--input', required=True,
-                        help='Path to .csv containing dataset, '
-                             'or path to directory containing images.')
-    parser.add_argument('-m', '--model-dir', dest='model_dir',
-                        default='export_models',
-                        help='Path to directory containing exported model '
-                             'or checkpoint.')
-    parser.add_argument('-c', '--config', default=None,
-                        help='Path to config.py if evaluating checkpoint.')
-    parser.add_argument('-s', '--split',
-                        choices=['train', 'validation', 'test'],
-                        default=None,
-                        help='Specific split to evaluate on.')
-    parser.add_argument('-o', '--output', type=str, default=None,
-                        help='Output .csv with predictions.')
-
-    args = parser.parse_args()
-
-    setup_logger()
-    main(args)
+    main(sys.argv)

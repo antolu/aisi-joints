@@ -1,7 +1,9 @@
 import logging
 import os
+import sys
 from argparse import ArgumentParser, Namespace
 from pprint import pformat
+from typing import List
 
 import pandas as pd
 import torch
@@ -100,7 +102,26 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
     # return df
 
 
-def main(args: Namespace):
+def main(argv: List[str]):
+    parser = ArgumentParser()
+
+    parser.add_argument('-d', '--dataset', required=True,
+                        help='Path to .csv containing dataset, '
+                             'or path to directory containing images.')
+    parser.add_argument('-m', '--model', dest='model', default='checkpoints',
+                        help='Path to directory containing save model '
+                             '(state dict).')
+    parser.add_argument('-s', '--split',
+                        choices=['train', 'validation', 'test'],
+                        default=None,
+                        help='Specific split to evaluate on.')
+    parser.add_argument('-o', '--output', type=str, default=None,
+                        help='Output .csv with predictions.')
+
+    args = parser.parse_args(argv)
+
+    setup_logger()
+
     os.environ['DATA_PATH'] = args.dataset
     df = pd.read_csv(args.dataset)
 
@@ -133,22 +154,4 @@ def main(args: Namespace):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
-
-    parser.add_argument('-d', '--dataset', required=True,
-                        help='Path to .csv containing dataset, '
-                             'or path to directory containing images.')
-    parser.add_argument('-m', '--model', dest='model', default='checkpoints',
-                        help='Path to directory containing save model '
-                             '(state dict).')
-    parser.add_argument('-s', '--split',
-                        choices=['train', 'validation', 'test'],
-                        default=None,
-                        help='Specific split to evaluate on.')
-    parser.add_argument('-o', '--output', type=str, default=None,
-                        help='Output .csv with predictions.')
-
-    args = parser.parse_args()
-
-    setup_logger()
-    main(args)
+    main(sys.argv)

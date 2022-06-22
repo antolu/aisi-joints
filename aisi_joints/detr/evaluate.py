@@ -1,7 +1,8 @@
 import logging
+import sys
 from argparse import ArgumentParser, Namespace
 from functools import partial
-from typing import Dict
+from typing import Dict, List
 
 import torch
 from object_detection.metrics.coco_tools import COCOWrapper
@@ -69,7 +70,7 @@ def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7):
     return COCOWrapper(results_to_coco(dataset.coco, all_results))
 
 
-def main(args: Namespace):
+def evaluate(args: Namespace):
     model = Detr.load_from_checkpoint(args.checkpoint_path,
                                       lr=0.0, lr_backbone=0.0,
                                       weight_decay=0.0, momentum=0.0,
@@ -85,7 +86,7 @@ def main(args: Namespace):
     evaluate_and_print(dataset.coco, detected)
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
 
     parser.add_argument('-d', '--data', dest='data_dir',
@@ -106,7 +107,11 @@ if __name__ == '__main__':
                         help='Detection score threshold. All detections under '
                              'this confidence score are discarded.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     setup_logger()
-    main(args)
+    evaluate(args)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

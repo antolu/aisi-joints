@@ -154,11 +154,7 @@ def train(dataset_path: str, checkpoint_dir: str, log_dir: str, config,
                                             checkpoint_dir, log_dir, timestamp)
 
 
-def main(args: Namespace, config):
-    train(args.dataset, args.checkpoint_dir, args.logdir, config, args.mode)
-
-
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
@@ -172,10 +168,13 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--logdir', type=str, default='logs',
                         help='Tensorboard logdir.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
-    config_module = import_module(args.config.replace('/', '.'))
+    config = import_module(args.config.replace('/', '.'))
 
-    main(args, config_module)
+    train(args.dataset, args.checkpoint_dir, args.logdir, config, args.mode)
+
+
+if __name__ == '__main__':

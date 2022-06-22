@@ -1,7 +1,9 @@
 import logging
 import os
+import sys
 from argparse import ArgumentParser
 from os import path
+from typing import List
 
 from .._utils import get_latest
 from ._config import Config
@@ -26,7 +28,7 @@ def export_model(config: Config, checkpoint_dir: str, output_dir: str):
     log.info('Done!')
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
@@ -39,7 +41,7 @@ if __name__ == '__main__':
                         default='exported_models',
                         help='Directory to save exported model to.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     setup_logger()
 
     if args.config.endswith('.py'):
@@ -47,3 +49,7 @@ if __name__ == '__main__':
     conf = Config(args.config.replace('/', '.'))
 
     export_model(conf, args.checkpoint_dir, args.output_dir)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

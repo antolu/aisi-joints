@@ -92,7 +92,7 @@ def model_builder_optimizer(hp: HyperParameters, base_model: Model,
     return model
 
 
-def main(dataset_csv: str, config: Config, mode: str = 'both'):
+def tune_hyperparams(dataset_csv: str, config: Config, mode: str = 'both'):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout, config.fc_num_layers)
     input_size = base_model.input_shape[1:3]
@@ -246,7 +246,7 @@ def main(dataset_csv: str, config: Config, mode: str = 'both'):
                   callbacks=[model_checkpoint_callback, tb_callback])
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
@@ -264,7 +264,7 @@ if __name__ == '__main__':
                         help='Perform full transfer learning, or just the'
                              'fully connected layers, or finetuning the cnn.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
@@ -281,6 +281,10 @@ if __name__ == '__main__':
         tensorboard.run()
 
     try:
-        main(args.dataset, config, args.mode)
+        tune_hyperparams(args.dataset, config, args.mode)
     except KeyboardInterrupt:
         pass
+
+
+if __name__ == '__main__':
+    main(sys.argv)

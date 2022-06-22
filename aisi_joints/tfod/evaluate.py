@@ -3,7 +3,9 @@ This script serves as a helper to evaluate an exported tensorflow object detecti
 model on a custom formatted dataset (used in this package).
 """
 import logging
+import sys
 from argparse import ArgumentParser, Namespace
+from typing import List
 
 import pandas as pd
 import tensorflow as tf
@@ -67,18 +69,7 @@ def evaluate(df: pd.DataFrame, model: tf.keras.Model,
     evaluate_and_print(coco_gt, coco_pred)
 
 
-def main(args: Namespace):
-    df = pd.read_csv(args.input)
-
-    model = tf.saved_model.load(args.model_dir)
-
-    if args.split is not None and 'split' in df.columns:
-        df = df[df['split'] == args.split]
-
-    evaluate(df, model, args.score_threshold)
-
-
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
 
     parser.add_argument('-i', '--input', required=True,
@@ -97,6 +88,17 @@ if __name__ == '__main__':
                         help='Detection score threshold. All detections under '
                              'this confidence score are discarded.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    main(args)
+    df = pd.read_csv(args.input)
+
+    model = tf.saved_model.load(args.model_dir)
+
+    if args.split is not None and 'split' in df.columns:
+        df = df[df['split'] == args.split]
+
+    evaluate(df, model, args.score_threshold)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

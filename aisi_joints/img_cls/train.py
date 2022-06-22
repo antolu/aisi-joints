@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from argparse import ArgumentParser
 from os import path
 from typing import Optional, List, Union
@@ -54,7 +55,7 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
               callbacks=callbacks, class_weight=config.class_weights)
 
 
-def main(config: Config):
+def train(config: Config):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout, config.fc_num_layers)
     input_size = base_model.input_shape[1:3]
@@ -108,7 +109,7 @@ def main(config: Config):
         raise
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-l', '--logdir', type=str, default='logs',
@@ -121,7 +122,7 @@ if __name__ == '__main__':
                         dest='checkpoint_dir',
                         help='Directory to save checkpoint files.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     setup_logger()
     if args.config.endswith('.py'):
@@ -141,6 +142,10 @@ if __name__ == '__main__':
         tensorboard.run()
 
     try:
-        main(config)
+        train(config)
     except KeyboardInterrupt:
         pass
+
+
+if __name__ == '__main__':
+    main(sys.argv)

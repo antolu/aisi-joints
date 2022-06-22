@@ -1,5 +1,7 @@
+import sys
 from argparse import ArgumentParser
 from functools import partial
+from typing import List
 
 import torch
 import yaml
@@ -61,7 +63,7 @@ def train(config: dict, img_folder: str):
         evaluate_and_print(val_dataset.coco, detected)
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
 
     parser.add_argument('-d', '--data', dest='data_dir',
@@ -69,9 +71,13 @@ if __name__ == '__main__':
     parser.add_argument('config',
                         help='Path to config.yml')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     with open(args.config) as f:
         conf = yaml.full_load(f)
 
     train(conf, args.data_dir)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

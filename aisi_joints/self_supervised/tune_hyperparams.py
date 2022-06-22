@@ -1,11 +1,12 @@
 import datetime
 import logging
 import os
+import sys
 from argparse import ArgumentParser, Namespace
 from copy import copy
 from importlib import import_module
 from pprint import pformat
-from typing import Union
+from typing import Union, List
 
 from pytorch_lightning.callbacks import ModelCheckpoint
 from ray import tune
@@ -50,7 +51,7 @@ def tune_classifier(config: dict, params: LinearClassifierMethodParams,
     return train_classifier(params, log_dir=log_dir, **kwargs)
 
 
-def main(args: Namespace, config):
+def tune_hyperparams(args: Namespace, config):
     os.environ['DATA_PATH'] = os.path.abspath(args.dataset)
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -190,7 +191,7 @@ def main(args: Namespace, config):
                                      timestamp=timestamp)
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = ArgumentParser()
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
@@ -206,7 +207,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--logdir', type=str, default='logs',
                         help='Tensorboard logdir.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
@@ -217,4 +218,9 @@ if __name__ == '__main__':
         tensorboard.run()
 
     setup_logger(file_logger=f'{args.logdir}/log.log')
-    main(args, config_module)
+
+    tune_hyperparams(args, config_module)
+
+
+if __name__ == '__main__':
+    main(sys.argv)
