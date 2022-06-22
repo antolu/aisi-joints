@@ -52,16 +52,18 @@ def get_od_repo(clone_to: str) -> str:
 
 
 def compile_protobuf(protobuf_exec: str):
+    cmd_prefix = './'
     if not os.path.isfile(protobuf_exec):
         if os.path.isfile(protobuf_exec + '.exe'):  # Windows check
             protobuf_exec += '.exe'
+            cmd_prefix = '.\\'
         else:
             raise ValueError
 
     st = os.stat(protobuf_exec)
     os.chmod(protobuf_exec, st.st_mode | stat.S_IEXEC)
     print(f'Compiling protobuf messages using binary at {protobuf_exec}.')
-    command = f'.\\{protobuf_exec} ' \
+    command = f'{cmd_prefix}{protobuf_exec} ' \
               f'object_detection/protos/*.proto --python_out=.'
 
     print(f'Running command {command}')
