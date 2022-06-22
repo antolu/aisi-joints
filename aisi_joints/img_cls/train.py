@@ -8,7 +8,7 @@ from typing import Optional, List, Union
 import tensorflow as tf
 from keras import Model
 
-from .._utils.utils import TensorBoardTool
+from .._utils.utils import TensorBoardTool, get_latest
 from ._config import Config
 from ._dataloader import prepare_dataset, JointsSequence
 from ._log_images import EvaluateImages
@@ -55,7 +55,7 @@ def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
               callbacks=callbacks, class_weight=config.class_weights)
 
 
-def train(config: Config):
+def train(config: Config, mode: str):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
                                      config.fc_dropout, config.fc_num_layers)
     input_size = base_model.input_shape[1:3]
@@ -76,8 +76,8 @@ def train(config: Config):
     # Pre-training steps
     # =========================================================================
 
-    if not path.isdir(args.checkpoint_dir):
-        os.makedirs(args.checkpoint_dir, exist_ok=True)
+    if not path.isdir(config.checkpoint_dir):
+        os.makedirs(config.checkpoint_dir, exist_ok=True)
 
     def save_model(name: str):
         model.trainable = False
@@ -90,23 +90,31 @@ def train(config: Config):
 
     base_model.trainable = False
 
-    try:
-        fit_model(model, config.transfer_config.optimizer, train_data,
-                  val_data, config, config.transfer_config.epochs, 'transfer',
-                  metrics=metrics)
-    except KeyboardInterrupt:
-        save_model('transfer')
-        raise
+    if mode in ('both', 'transfer'):
+        try:
+            fit_model(model, config.transfer_config.optimizer, train_data,
+                      val_data, config, config.transfer_config.epochs,
+                      'transfer', metrics=metrics)
+        except KeyboardInterrupt:
+            save_model('transfer')
+            raise
 
     base_model.trainable = True
 
-    try:
-        fit_model(model, config.finetune_config.optimizer, train_data,
-                  val_data, config, config.finetune_config.epochs, 'finetune',
-                  metrics=metrics)
-    except KeyboardInterrupt:
-        save_model('finetune')
-        raise
+    if mode in ('both', 'finetune'):
+        if mode == 'finetune':
+            # load model from checkpoint
+            checkpoint_path = get_latest(config.checkpoint_dir,
+                                         lambda o: o.endswith('.h5'))
+            log.info(f'Loading checkpoint from {checkpoint_path}.')
+            model.load_weights(checkpoint_path)
+        try:
+            fit_model(model, config.finetune_config.optimizer, train_data,
+                      val_data, config, config.finetune_config.epochs,
+                      'finetune', metrics=metrics)
+        except KeyboardInterrupt:
+            save_model('finetune')
+            raise
 
 
 def main(argv: List[str]):
@@ -121,6 +129,10 @@ def main(argv: List[str]):
     parser.add_argument('-c', '--checkpoint-dir', default='checkpoints',
                         dest='checkpoint_dir',
                         help='Directory to save checkpoint files.')
+    parser.add_argument('-m', '--mode',
+                        choices=['transfer', 'finetune', 'both'],
+                        default='both',
+                        help='Train classification layers, full CNN or both')
 
     args = parser.parse_args(argv)
 
@@ -142,7 +154,7 @@ def main(argv: List[str]):
         tensorboard.run()
 
     try:
-        train(config)
+        train(config, args.mode)
     except KeyboardInterrupt:
         pass
 
