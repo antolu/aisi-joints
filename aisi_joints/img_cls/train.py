@@ -82,13 +82,14 @@ def train(config: Config, mode: str):
     def save_model(name: str):
         model.trainable = False
         model.save_weights(
-            path.join(config.checkpoint_dir, f'{name}_last_model.h5'))
+            path.join(config.checkpoint_dir, f'model-{name}_last_model.h5'))
 
     # =========================================================================
     # Do training \o/
     # =========================================================================
 
     base_model.trainable = False
+    interrupted = False
 
     if mode in ('both', 'transfer'):
         try:
@@ -96,8 +97,12 @@ def train(config: Config, mode: str):
                       val_data, config, config.transfer_config.epochs,
                       'transfer', metrics=metrics)
         except KeyboardInterrupt:
+            interrupted = True
+        finally:
             save_model('transfer')
-            raise
+
+            if interrupted:
+                raise
 
     base_model.trainable = True
 
@@ -113,8 +118,12 @@ def train(config: Config, mode: str):
                       val_data, config, config.finetune_config.epochs,
                       'finetune', metrics=metrics)
         except KeyboardInterrupt:
+            interrupted = True
+        finally:
             save_model('finetune')
-            raise
+
+            if interrupted:
+                raise
 
 
 def main(argv: List[str]):
