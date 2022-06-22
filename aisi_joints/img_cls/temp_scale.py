@@ -1,7 +1,9 @@
 import argparse
 import logging
 import os
+import sys
 from os import path
+from typing import List
 
 import tensorflow as tf
 
@@ -37,7 +39,7 @@ class TempScale(tf.keras.layers.Layer):
         return self._temperature.value()
 
 
-def main(config: Config, save_dir: str, model_dir: str):
+def temp_scale(config: Config, save_dir: str, model_dir: str):
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
     input_size = model.input_shape[1:3]
 
@@ -77,7 +79,7 @@ def main(config: Config, save_dir: str, model_dir: str):
     model_to_export.save(save_dir)
 
 
-if __name__ == '__main__':
+def main(argv: List[str]):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
@@ -89,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--model-dir', dest='model_dir', type=str,
                         help='Where to find exported model.')
 
-    args, unparsed = parser.parse_known_args()
+    args, unparsed = parser.parse_known_args(argv)
 
     if len(unparsed) != 0:
         raise SystemExit("Unknown argument: {}".format(unparsed))
@@ -106,4 +108,8 @@ if __name__ == '__main__':
                              'dataset command line argument.')
 
     setup_logger()
-    main(conf, args.save_dir, args.model_dir)
+    temp_scale(conf, args.save_dir, args.model_dir)
+
+
+if __name__ == '__main__':
+    main(sys.argv)
