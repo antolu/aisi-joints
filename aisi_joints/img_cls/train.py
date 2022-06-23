@@ -102,15 +102,16 @@ def train(config: Config, mode: str):
             if interrupted:
                 raise
 
-    base_model.trainable = True
-
     if mode in ('both', 'finetune'):
         if mode == 'finetune':
             # load model from checkpoint
             checkpoint_path = get_latest(config.checkpoint_dir,
                                          lambda o: o.endswith('.h5'))
             log.info(f'Loading checkpoint from {checkpoint_path}.')
+            base_model.trainable = False
             model.load_weights(checkpoint_path)
+
+        base_model.trainable = True
         try:
             fit_model(model, config.finetune_config.optimizer, train_data,
                       val_data, config, config.finetune_config.epochs,
