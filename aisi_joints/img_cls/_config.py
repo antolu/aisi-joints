@@ -51,6 +51,7 @@ class Config:
     fc_hidden_dim: int
     fc_dropout: float
     fc_num_layers: int
+    fc_activation: str
 
     workers: int
 
@@ -75,6 +76,7 @@ class Config:
         self.fc_hidden_dim = if_hasattr_else(module, 'fc_hidden_dim', 2048)
         self.fc_dropout = if_hasattr_else(module, 'fc_dropout', 0.8)
         self.fc_num_layers = if_hasattr_else(module, 'fc_num_layers', 1)
+        self.fc_activation = if_hasattr_else(module, 'fc_activation', 'relu')
 
         self.workers = if_hasattr_else(module, 'workers', 4)
 

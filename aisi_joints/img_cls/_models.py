@@ -72,7 +72,8 @@ class MLP(tf.keras.layers.Layer):
 
 
 def get_model(model_name: str, fc_hidden_dim: int = 2048,
-              fc_dropout: float = 0.8, fc_num_layers: int = 1) \
+              fc_dropout: float = 0.8, fc_num_layers: int = 1,
+              fc_activation: str = 'relu') \
         -> Tuple[Model, Model, Callable]:
     if model_name == 'inception_resnet_v2':
         base_model: Model = tf.keras.applications.InceptionResNetV2(
@@ -115,6 +116,7 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     # add fully connected layer
 
     mlp = MLP(([fc_hidden_dim] * fc_num_layers) + [2],
+              activation=fc_activation,
               dropout=fc_dropout, final_activation='softmax')
     # x = Dense(fc_hidden_dim, activation='relu')(x)
     # x = Dropout(1.0 - fc_dropout)(x)

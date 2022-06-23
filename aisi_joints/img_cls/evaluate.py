@@ -101,7 +101,8 @@ def main(argv: Optional[List[str]] = None):
         base_model, model, _ = get_model(config.base_model,
                                          config.fc_hidden_dim,
                                          config.fc_dropout,
-                                         config.fc_num_layers)
+                                         config.fc_num_layers,
+                                         config.fc_activation)
 
         checkpoint_path = get_latest(args.model_dir,
                                      lambda o: o.endswith('.h5'))
