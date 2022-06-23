@@ -79,7 +79,6 @@ def train(config: Config, mode: str):
         os.makedirs(config.checkpoint_dir, exist_ok=True)
 
     def save_model(name: str):
-        model.trainable = False
         model.save_weights(
             path.join(config.checkpoint_dir, f'model-{name}_last_model.h5'))
 
