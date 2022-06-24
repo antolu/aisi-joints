@@ -1,13 +1,11 @@
 import logging
 import os
-import sys
 from argparse import ArgumentParser
-from os import path
-from typing import List
+from typing import List, Optional
 
-from .._utils import get_latest
 from ._config import Config
 from ._models import get_model
+from .._utils import get_latest
 from .._utils.logging import setup_logger
 
 log = logging.getLogger(__name__)
@@ -15,7 +13,8 @@ log = logging.getLogger(__name__)
 
 def export_model(config: Config, checkpoint_dir: str, output_dir: str):
     base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
-                                     config.fc_dropout, config.fc_num_layers)
+                                     config.fc_dropout, config.fc_num_layers,
+                                     config.fc_activation)
 
     checkpoint_path = get_latest(checkpoint_dir, lambda o: o.endswith('.h5'))
     log.info(f'Reading checkpoint from {checkpoint_path}.')
@@ -28,7 +27,7 @@ def export_model(config: Config, checkpoint_dir: str, output_dir: str):
     log.info('Done!')
 
 
-def main(argv: List[str]):
+def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
@@ -52,4 +51,4 @@ def main(argv: List[str]):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
