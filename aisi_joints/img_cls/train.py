@@ -123,9 +123,7 @@ def train(config: Config, mode: str):
             if interrupted:
                 raise KeyboardInterrupt
 
-    mw.freeze_mode = 'partial'
     model.trainable = True
-    mw.freeze()
     if mode in ('both', 'finetune'):
         if mode == 'finetune':
             # load model from checkpoint
@@ -133,6 +131,9 @@ def train(config: Config, mode: str):
                                          lambda o: o.endswith('.h5'))
             log.info(f'Loading checkpoint from {checkpoint_path}.')
             model.load_weights(checkpoint_path)
+
+        mw.freeze_mode = 'partial'
+        mw.freeze()
         try:
             fit_model(mw, config.finetune_config.optimizer, train_data,
                       val_data, config.finetune_config.epochs,
