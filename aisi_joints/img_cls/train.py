@@ -34,8 +34,7 @@ def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
               train_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               val_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               epochs: int, name: str,
-              metrics: Optional[List[tf.keras.metrics.Metric]] = None,
-              use_model_freeze_checkpoint: bool = False):
+              metrics: Optional[List[tf.keras.metrics.Metric]] = None):
     img_writer = tf.summary.create_file_writer(
         path.join(mw.config.log_dir, mw.config.timestamp, f'{name}/images'))
     image_eval = EvaluateImages(mw.model, val_data, img_writer,
@@ -43,10 +42,7 @@ def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
     tensorboard_img_cb = tf.keras.callbacks.LambdaCallback(
         on_epoch_end=lambda epoch, logs: image_eval.evaluate(epoch))
 
-    if use_model_freeze_checkpoint:
-        checkpoint_class = partial(ModelCheckpointWithFreeze, mw=mw)
-    else:
-        checkpoint_class = tf.keras.callbacks.ModelCheckpoint
+    checkpoint_class = partial(ModelCheckpointWithFreeze, mw=mw)
 
     model_checkpoint_callback = checkpoint_class(
         filepath=path.join(mw.config.checkpoint_dir,
