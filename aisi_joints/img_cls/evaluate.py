@@ -1,5 +1,5 @@
 import logging
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pprint import pformat
 from typing import List, Optional
 
@@ -7,12 +7,12 @@ import pandas as pd
 import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 
-from ._dataloader import load_df
-from ..constants import CLASS_OK, CLASS_DEFECT
-from .._utils.logging import setup_logger
-from .._utils import time_execution, get_latest
 from ._config import Config
+from ._dataloader import load_df
 from ._models import get_model
+from .._utils import time_execution, get_latest
+from .._utils.logging import setup_logger
+from ..constants import CLASS_OK, CLASS_DEFECT
 
 log = logging.getLogger(__name__)
 
@@ -98,11 +98,11 @@ def main(argv: Optional[List[str]] = None):
         if args.config.endswith('.py'):
             args.config = args.config[:-3]
         config = Config(args.config.replace('/', '.'))
-        base_model, model, _ = get_model(config.base_model,
-                                         config.fc_hidden_dim,
-                                         config.fc_dropout,
-                                         config.fc_num_layers,
-                                         config.fc_activation)
+        model = get_model(config.base_model,
+                          config.fc_hidden_dim,
+                          config.fc_dropout,
+                          config.fc_num_layers,
+                          config.fc_activation)
 
         checkpoint_path = get_latest(args.model_dir,
                                      lambda o: o.endswith('.h5'))

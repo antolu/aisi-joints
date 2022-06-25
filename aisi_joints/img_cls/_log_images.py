@@ -30,7 +30,7 @@ class EvaluateImages:
             return
         for i, (images, labels) in enumerate(self._data):
             batch_size = tf.shape(images)[0]
-            predictions = self._model(images)
+            predictions = self._model(images, training=False)
 
             pred_labels = tf.expand_dims(
                 tf.math.argmax(predictions, axis=1), 1)

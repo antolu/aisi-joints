@@ -1,3 +1,5 @@
+from typing import List
+
 import tensorflow as tf
 
 base_model: str = 'inception_resnet_v2'
@@ -8,6 +10,8 @@ fc_hidden_dim: int = 2048
 fc_dropout: float = 0.8
 fc_num_layers: int = 1
 fc_activation: str = 'relu'
+
+layers_to_freeze: List[int] = list(range(618))
 
 train_data: str = 'dataset/train.tfrecord'
 validation_data: str = 'dataset/validation.tfrecord'

@@ -10,12 +10,11 @@ from keras import Model
 from keras.losses import CategoricalCrossentropy
 from keras.metrics import Metric
 from keras_tuner import HyperParameters, Hyperband, Objective
-from tensorflow_addons.optimizers import AdamW
 
 from ._config import Config
 from ._dataloader import JointsSequence
-from ._models import get_model
-from .train import TensorBoardTool
+from ._models import get_model, ModelWrapper
+from .train import TensorBoardTool, ModelCheckpointWithFreeze
 from .._utils.logging import setup_logger
 from .._utils.utils import get_latest
 
@@ -41,11 +40,10 @@ def model_builder_full(hp: HyperParameters, config: Config,
     # weight_decay = hp.Float('weight_decay', 1.e-5, 1.e-1, sampling='log')
     momentum = hp.Float('momentum', 0.9, 1.0)
 
-    base_model, model, _ = get_model(config.base_model, fc_hidden_dim,
-                                     fc_dropout, fc_num_layers)
+    mw = ModelWrapper(config)
+    model = mw.model
 
-    if not train_base_model:
-        base_model.trainable = False
+    mw.freeze()
 
     lr_scheduler = tf.keras.optimizers.schedules.ExponentialDecay(
         base_lr, decay_steps=50, decay_rate=0.94
@@ -59,8 +57,7 @@ def model_builder_full(hp: HyperParameters, config: Config,
     return model
 
 
-def model_builder_optimizer(hp: HyperParameters, base_model: Model,
-                            model: Model,
+def model_builder_optimizer(hp: HyperParameters, mw: ModelWrapper,
                             checkpoint_path: Optional[str] = None,
                             metrics: List[Metric] = None) -> Model:
     """
@@ -76,9 +73,7 @@ def model_builder_optimizer(hp: HyperParameters, base_model: Model,
     momentum = hp.Float('momentum', 0.9, 1.0)
 
     if checkpoint_path is not None:
-        base_model.trainable = False
-        model.load_weights(checkpoint_path)
-    model.trainable = True
+        mw.model.load_weights(checkpoint_path)
 
     lr_scheduler = tf.keras.optimizers.schedules.CosineDecay(
         base_lr, decay_steps=30000, alpha=1.e-6
@@ -86,16 +81,15 @@ def model_builder_optimizer(hp: HyperParameters, base_model: Model,
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr_scheduler,
                                         momentum=momentum)
     # optimizer = AdamW(weight_decay, lr_scheduler)
-    model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(),
-                  metrics=metrics)
+    mw.model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(),
+                     metrics=metrics)
 
-    return model
+    return mw.model
 
 
 def tune_hyperparams(dataset_csv: str, config: Config, mode: str = 'both'):
-    base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
-                                     config.fc_dropout, config.fc_num_layers)
-    input_size = base_model.input_shape[1:3]
+    mw = ModelWrapper(config)
+    input_size = mw.model.input_shape[1:3]
 
     train_data = JointsSequence(dataset_csv, 'train', *input_size,
                                 batch_size=config.batch_size)
@@ -162,7 +156,8 @@ def tune_hyperparams(dataset_csv: str, config: Config, mode: str = 'both'):
         if not path.isdir(config.checkpoint_dir):
             os.makedirs(config.checkpoint_dir)
 
-        model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        model_checkpoint_callback = ModelCheckpointWithFreeze(
+            mw=mw,
             filepath=path.join(config.checkpoint_dir,
                                'model.{epoch:02d}-{val_loss:.2f}.h5'),
             save_weights_only=True,
@@ -183,6 +178,7 @@ def tune_hyperparams(dataset_csv: str, config: Config, mode: str = 'both'):
     # Fine tuning
     # =========================================================================
     if mode in ('both', 'finetune'):
+        mw.freeze_mode = 'partial'
         checkpoint_path = get_latest(config.checkpoint_dir,
                                      lambda o: o.endswith('.h5'))
 
@@ -191,8 +187,7 @@ def tune_hyperparams(dataset_csv: str, config: Config, mode: str = 'both'):
                             separator]))
 
         tuner = Hyperband(hypermodel=partial(model_builder_optimizer,
-                                             base_model=base_model,
-                                             model=model,
+                                             mw=mw,
                                              checkpoint_path=checkpoint_path,
                                              metrics=metrics),
                           objective=[

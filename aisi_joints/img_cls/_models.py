@@ -1,9 +1,11 @@
 import logging
-from typing import Tuple, Callable, List, Optional
+from typing import List, Optional, Union
 
 import tensorflow as tf
 from keras import Model, Input
-from keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from keras.layers import Dense, Dropout
+
+from ._config import Config
 
 log = logging.getLogger(__name__)
 
@@ -71,34 +73,65 @@ class MLP(tf.keras.layers.Layer):
         return x
 
 
+class ModelWrapper:
+    def __init__(self, config: Config):
+        self._config = config
+
+        self._model = None
+
+        self.freeze_mode = 'base'
+
+    @property
+    def model(self) -> Model:
+        c = self._config
+
+        if self._model is None:
+            self._model = get_model(c.base_model,
+                                    c.fc_hidden_dim,
+                                    c.fc_dropout,
+                                    c.fc_num_layers,
+                                    c.fc_activation)
+
+        return self._model
+
+    @property
+    def config(self):
+        return self._config
+
+    def freeze(self):
+        if self.freeze_mode == 'base':
+            self.model.layers[-2].trainable = False
+        elif self.freeze_mode == 'partial':
+            freeze_layers(self.model.layers[-2], self._config.layers_to_freeze)
+
+
 def get_model(model_name: str, fc_hidden_dim: int = 2048,
               fc_dropout: float = 0.8, fc_num_layers: int = 1,
-              fc_activation: str = 'relu') \
-        -> Tuple[Model, Model, Callable]:
+              fc_activation: str = 'relu') -> Model:
     if model_name == 'inception_resnet_v2':
         base_model: Model = tf.keras.applications.InceptionResNetV2(
-            include_top=False, weights='imagenet',
+            include_top=False, weights='imagenet', pooling='avg',
             input_tensor=Input(shape=(299, 299, 3)))
         preprocess_fn = tf.keras.applications.inception_resnet_v2 \
             .preprocess_input
     elif model_name == 'vgg19':
         base_model: Model = tf.keras.applications.VGG19(
-            include_top=False, weights='imagenet',
+            include_top=False, weights='imagenet', pooling='avg',
             input_tensor=Input(shape=(299, 299, 32)))
         preprocess_fn = tf.keras.applications.vgg19.preprocess_input
     elif model_name == 'resnet101v2':
         base_model: Model = tf.keras.applications.ResNet101V2(
-            include_top=False, weights='imagenet',
+            include_top=False, weights='imagenet', pooling='avg',
             input_tensor=Input(shape=(299, 299, 32)))
         preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
     elif model_name == 'resnet152v2':
         base_model: Model = tf.keras.applications.ResNet152V2(
-            include_top=False, weights='imagenet',
+            include_top=False, weights='imagenet', pooling='avg',
             input_tensor=Input(shape=(299, 299, 32)))
         preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
     elif model_name == 'efficientnetv2l':
         base_model: Model = tf.keras.applications.EfficientNetV2L(
-            include_top=False, weights='imagenet',
+            include_top=False, weights='imagenet', pooling='avg',
             input_tensor=Input(shape=(299, 299, 3)))
         preprocess_fn = tf.keras.applications.efficientnet_v2.preprocess_input
     else:
@@ -106,24 +139,25 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
 
     input_ = base_model.input
     preprocessed_input = preprocess_fn(input_)
-    base_model = Model(inputs=input_,
-                       outputs=base_model(preprocessed_input))
-
-    # add a global spatial average pooling layer
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
+    base_model = Model(inputs=input_,  # add training=False for BN layers
+                       outputs=base_model(preprocessed_input, training=False))
 
     # add fully connected layer
-
     mlp = MLP(([fc_hidden_dim] * fc_num_layers) + [2],
               activation=fc_activation,
               dropout=fc_dropout, final_activation='softmax')
-    # x = Dense(fc_hidden_dim, activation='relu')(x)
-    # x = Dropout(1.0 - fc_dropout)(x)
-    # predictions = Dense(2, activation='softmax')(x)
-    predictions = mlp(x)
+    predictions = mlp(base_model.output)
 
     # this is the model we will train
     model = Model(inputs=base_model.input, outputs=predictions)
 
-    return base_model, model, preprocess_fn
+    return model
+
+
+def freeze_layers(model: Model,
+                  layers_to_freeze: Union[List[int], str] = 'all'):
+    if layers_to_freeze == 'all':
+        model.trainable = False
+    else:
+        for i in layers_to_freeze:
+            model.layers[i].trainable = False

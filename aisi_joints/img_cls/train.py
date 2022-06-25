@@ -1,64 +1,83 @@
 import logging
 import os
 from argparse import ArgumentParser
+from functools import partial
 from os import path
 from typing import Optional, List, Union
 
 import tensorflow as tf
-from keras import Model
 
 from ._config import Config
 from ._dataloader import JointsSequence
 from ._log_images import EvaluateImages
-from ._models import get_model
+from ._models import ModelWrapper
 from .._utils.logging import setup_logger
 from .._utils.utils import TensorBoardTool, get_latest
 
 log = logging.getLogger(__name__)
 
 
-def fit_model(model: Model, optimizer: tf.keras.optimizers.Optimizer,
+class ModelCheckpointWithFreeze(tf.keras.callbacks.ModelCheckpoint):
+    def __init__(self, mw: ModelWrapper, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._mw = mw
+
+    def _save_model(self, epoch, batch, logs):
+        self._mw.model.trainable = True
+        super()._save_model(epoch, batch, logs)  # noqa
+
+        self._mw.freeze()
+
+
+def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
               train_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               val_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
-              config: Config, epochs: int, name: str,
-              metrics: Optional[List[tf.keras.metrics.Metric]] = None):
+              epochs: int, name: str,
+              metrics: Optional[List[tf.keras.metrics.Metric]] = None,
+              use_model_freeze_checkpoint: bool = False):
     img_writer = tf.summary.create_file_writer(
-        path.join(config.log_dir, config.timestamp, f'{name}/images'))
-    image_eval = EvaluateImages(model, val_data, img_writer,
+        path.join(mw.config.log_dir, mw.config.timestamp, f'{name}/images'))
+    image_eval = EvaluateImages(mw.model, val_data, img_writer,
                                 10)
     tensorboard_img_cb = tf.keras.callbacks.LambdaCallback(
         on_epoch_end=lambda epoch, logs: image_eval.evaluate(epoch))
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=path.join(config.checkpoint_dir,
+
+    if use_model_freeze_checkpoint:
+        checkpoint_class = partial(ModelCheckpointWithFreeze, mw=mw)
+    else:
+        checkpoint_class = tf.keras.callbacks.ModelCheckpoint
+
+    model_checkpoint_callback = checkpoint_class(
+        filepath=path.join(mw.config.checkpoint_dir,
                            'model-' + name + '.{epoch}-{val_loss:.2f}.h5'),
         save_weights_only=True,
         monitor='val_accuracy',
         mode='max',
         save_best_only=True)
 
-    model.compile(optimizer=optimizer,
-                  loss=tf.keras.losses.CategoricalCrossentropy(),
-                  metrics=metrics)
+    mw.model.compile(optimizer=optimizer,
+                     loss=tf.keras.losses.CategoricalCrossentropy(),
+                     metrics=metrics)
 
     callbacks = [
         tf.keras.callbacks.TensorBoard(
-            log_dir=path.join(config.log_dir, config.timestamp, name)),
+            log_dir=path.join(mw.config.log_dir, mw.config.timestamp, name)),
         tensorboard_img_cb,
         model_checkpoint_callback,
     ]
 
     # train the model on the new data for a few epochs
-    model.fit(train_data, batch_size=config.batch_size,
-              validation_data=val_data, use_multiprocessing=False,
-              workers=config.workers, epochs=epochs,
-              callbacks=callbacks, class_weight=config.class_weights)
+    mw.model.fit(train_data, batch_size=mw.config.batch_size,
+                 validation_data=val_data, use_multiprocessing=False,
+                 workers=mw.config.workers, epochs=epochs,
+                 callbacks=callbacks, class_weight=mw.config.class_weights)
 
 
 def train(config: Config, mode: str):
-    base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
-                                     config.fc_dropout, config.fc_num_layers,
-                                     config.fc_activation)
-    input_size = base_model.input_shape[1:3]
+    mw = ModelWrapper(config)
+    model = mw.model
+    input_size = model.input_shape[1:3]
 
     train_data = JointsSequence(config.dataset, 'train', *input_size,
                                 batch_size=config.batch_size)
@@ -80,20 +99,21 @@ def train(config: Config, mode: str):
         os.makedirs(config.checkpoint_dir, exist_ok=True)
 
     def save_model(name: str):
+        model.trainable = True
         model.save_weights(
-            path.join(config.checkpoint_dir, f'model-{name}_last_model.h5'))
+            path.join(config.checkpoint_dir, f'model-{name}-last-model.h5'))
 
     # =========================================================================
     # Do training \o/
     # =========================================================================
 
-    base_model.trainable = False
+    mw.freeze()
     interrupted = False
 
     if mode in ('both', 'transfer'):
         try:
-            fit_model(model, config.transfer_config.optimizer, train_data,
-                      val_data, config, config.transfer_config.epochs,
+            fit_model(mw, config.transfer_config.optimizer, train_data,
+                      val_data, config.transfer_config.epochs,
                       'transfer', metrics=metrics)
         except KeyboardInterrupt:
             interrupted = True
@@ -101,21 +121,21 @@ def train(config: Config, mode: str):
             save_model('transfer')
 
             if interrupted:
-                raise
+                raise KeyboardInterrupt
 
+    mw.freeze_mode = 'partial'
+    model.trainable = True
+    mw.freeze()
     if mode in ('both', 'finetune'):
         if mode == 'finetune':
             # load model from checkpoint
             checkpoint_path = get_latest(config.checkpoint_dir,
                                          lambda o: o.endswith('.h5'))
             log.info(f'Loading checkpoint from {checkpoint_path}.')
-            base_model.trainable = False
             model.load_weights(checkpoint_path)
-
-        base_model.trainable = True
         try:
-            fit_model(model, config.finetune_config.optimizer, train_data,
-                      val_data, config, config.finetune_config.epochs,
+            fit_model(mw, config.finetune_config.optimizer, train_data,
+                      val_data, config.finetune_config.epochs,
                       'finetune', metrics=metrics)
         except KeyboardInterrupt:
             interrupted = True
@@ -123,7 +143,7 @@ def train(config: Config, mode: str):
             save_model('finetune')
 
             if interrupted:
-                raise
+                raise KeyboardInterrupt
 
 
 def main(argv: Optional[List[str]] = None):

@@ -5,6 +5,8 @@ from typing import Union, List, Dict
 
 import tensorflow as tf
 
+from aisi_joints.img_cls.config import layers_to_freeze
+
 log = logging.getLogger(__name__)
 
 
@@ -56,6 +58,7 @@ class Config:
     workers: int
 
     base_model: str
+    layers_to_freeze: List[int]
 
     transfer_config: FitConfig
     finetune_config: FitConfig

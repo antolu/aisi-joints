@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from typing import List, Optional
 
 from ._config import Config
-from ._models import get_model
+from ._models import get_model, ModelWrapper
 from .._utils import get_latest
 from .._utils.logging import setup_logger
 
@@ -12,9 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def export_model(config: Config, checkpoint_dir: str, output_dir: str):
-    base_model, model, _ = get_model(config.base_model, config.fc_hidden_dim,
-                                     config.fc_dropout, config.fc_num_layers,
-                                     config.fc_activation)
+    model = ModelWrapper(config).model
 
     checkpoint_path = get_latest(checkpoint_dir, lambda o: o.endswith('.h5'))
     log.info(f'Reading checkpoint from {checkpoint_path}.')
