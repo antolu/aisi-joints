@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple, Callable, Union
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import cv2 as cv
 
 from ..constants import LABEL_MAP
 from ..data.common import Sample
@@ -18,7 +19,7 @@ class JointsSequence(tf.keras.utils.Sequence):
                  split: Optional[str] = None,
                  crop_width: int = 299, crop_height: int = 299,
                  batch_size: int = 32, random_crop: bool = True,
-                 augment_data: bool = True):
+                 augment_data: bool = True, adaptive_threshold: bool = False):
 
         if isinstance(csv_path_or_df, str):
             with open(csv_path_or_df, 'r') as f:
@@ -38,6 +39,7 @@ class JointsSequence(tf.keras.utils.Sequence):
         self._batch_size = batch_size
         self._random_crop = random_crop
         self._augment_data = augment_data
+        self._adaptive_threshold = adaptive_threshold
 
     def __len__(self) -> int:
         return math.ceil(len(self._df) / self._batch_size)
@@ -62,7 +64,7 @@ class JointsSequence(tf.keras.utils.Sequence):
         pass
 
     def _load_sample(self, sample: Sample) -> Tuple[tf.Tensor, tf.Tensor]:
-        image = read_image(sample.filepath, 'png')
+        image = read_image(sample.filepath, 'png', self._adaptive_threshold)
 
         image = preprocess(image,
                            sample.bbox.to_pascal_voc(),
@@ -302,7 +304,8 @@ def crop_and_pad(image: tf.Tensor, bndbox: List[int],
     return image
 
 
-def read_image(image_path: str, fmt: Optional[str] = None) -> tf.Tensor:
+def read_image(image_path: str, fmt: Optional[str] = None,
+               adaptive_threshold: bool = False) -> tf.Tensor:
     image = tf.io.read_file(image_path)
 
     if fmt == 'png':
@@ -312,7 +315,13 @@ def read_image(image_path: str, fmt: Optional[str] = None) -> tf.Tensor:
     else:
         image = tf.image.decode_image(image, channels=3)
 
-    image = tf.cast(image, tf.float32)
+    # does only work in eager mode
+    image = image.numpy().astype(np.uint8)
+    image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    image = cv.adaptiveThreshold(image, 255., cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 15, 3)
+    image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+    image = tf.convert_to_tensor(image, tf.float32)
+
     return image
 
 
