@@ -8,7 +8,7 @@ import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 
 from ._config import Config
-from ._dataloader import load_df
+from ._dataloader import load_df, JointsSequence
 from ._models import get_model
 from .._utils import time_execution, get_latest
 from .._utils.logging import setup_logger
@@ -22,13 +22,14 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     Calculate predictions based on raw data and run COCO tfod on it.
     Print results to terminal.
     """
-    dataset = load_df(df, random_crop=False, augment_data=False)
+    input_size = model.input_shape[1:3]
+    dataset = JointsSequence(df, None, *input_size, random_crop=False,
+                             augment_data=False, batch_size=32)
     class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
     labels = df['cls'].map(class_map).to_numpy()
     total = len(labels)
 
     log.info('Running inference...')
-    dataset = dataset.batch(32)
 
     with time_execution() as t:
         predictions = model.predict(dataset, batch_size=32)

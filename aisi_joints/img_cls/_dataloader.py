@@ -1,6 +1,6 @@
 import logging
 import math
-from typing import List, Optional, Tuple, Callable
+from typing import List, Optional, Tuple, Callable, Union
 
 import numpy as np
 import pandas as pd
@@ -14,16 +14,22 @@ log = logging.getLogger(__name__)
 
 
 class JointsSequence(tf.keras.utils.Sequence):
-    def __init__(self, csv_path: str, split: Optional[str] = None,
+    def __init__(self, csv_path_or_df: Union[str, pd.DataFrame],
+                 split: Optional[str] = None,
                  crop_width: int = 299, crop_height: int = 299,
                  batch_size: int = 32, random_crop: bool = True,
                  augment_data: bool = True):
 
-        with open(csv_path, 'r') as f:
-            df = pd.read_csv(f)
+        if isinstance(csv_path_or_df, str):
+            with open(csv_path_or_df, 'r') as f:
+                df = pd.read_csv(f)
 
-        if split is not None:
-            df = df[df['split'] == split]
+            if split is not None:
+                df = df[df['split'] == split]
+        elif isinstance(csv_path_or_df, pd.DataFrame):
+            df = csv_path_or_df
+        else:
+            raise ValueError
 
         self._df = df
 
@@ -68,23 +74,6 @@ class JointsSequence(tf.keras.utils.Sequence):
         label = tf.one_hot(LABEL_MAP[sample.bbox.cls] - 1, 2)
 
         return image, label
-
-
-def prepare_dataset(dataset: tf.data.Dataset,
-                    crop_width: int = 299,
-                    crop_height: int = 299,
-                    batch_size: int = 32,
-                    random_crop: bool = True,
-                    shuffle: bool = True,
-                    augment_data: bool = True) -> tf.data.Dataset:
-    if shuffle:
-        dataset = dataset.shuffle(2048, reshuffle_each_iteration=True)
-    dataset = dataset.map(lambda smpl: process_example(
-        smpl, crop_width, crop_height, random_crop,
-        augment_data=augment_data))
-    dataset = dataset.batch(batch_size)
-
-    return dataset
 
 
 def load_df(df: pd.DataFrame, crop_width: int = 299, crop_height: int = 299,
