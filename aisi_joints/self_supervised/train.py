@@ -10,7 +10,8 @@ import attr
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Callback
-from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar, \
+    LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities import AttributeDict
 
@@ -59,6 +60,7 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
         callbacks.append(checkpoint_callback_loss)
     else:
         checkpoint_callback = None
+        checkpoint_callback_loss = None
 
     if log_dir is not None:
         logger = TensorBoardLogger(
@@ -66,8 +68,8 @@ def train_encoder(params: ModelParams, checkpoint_dir: str,
     else:
         logger = True
 
-    progress_bar = TQDMProgressBar()
-    callbacks.append(progress_bar)
+    callbacks.append(
+        LearningRateMonitor(logging_interval='step', log_momentum=True))
     trainer = pl.Trainer(logger=logger, accelerator='auto',
                          callbacks=callbacks,
                          max_epochs=params.max_epochs,
