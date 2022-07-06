@@ -84,10 +84,10 @@ def main(argv: Optional[List[str]] = None):
     parser.add_argument('config', help='Path to config.py')
     parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
                         required=True)
-    parser.add_argument('--save-dir', type=str, dest='save_dir',
+    parser.add_argument('-s', '--save-dir', type=str, dest='save_dir',
                         default='models',
                         help="Where to save the models.")
-    parser.add_argument('--model-dir', dest='model_dir', type=str,
+    parser.add_argument('-m', '--model-dir', dest='model_dir', type=str,
                         help='Where to find exported model.')
 
     args, unparsed = parser.parse_known_args(argv)
