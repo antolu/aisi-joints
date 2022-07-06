@@ -17,14 +17,14 @@
    <item>
     <widget class="QTableView" name="sampleTable">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="maximumSize">
       <size>
-       <width>600</width>
+       <width>1200</width>
        <height>16777215</height>
       </size>
      </property>
@@ -40,7 +40,14 @@
     </widget>
    </item>
    <item>
-    <widget class="ImageWidget" name="widget" native="true"/>
+    <widget class="ImageWidget" name="widget" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

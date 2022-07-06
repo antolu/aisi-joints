@@ -175,6 +175,7 @@ def main(argv: Optional[List[str]] = None):
     if args.config.endswith('.py'):
         args.config = args.config[:-3]
     config = import_module(args.config.replace('/', '.'))
+    os.makedirs(args.logdir, exist_ok=True)
 
     train(args.dataset, args.checkpoint_dir, args.logdir, config, args.mode)
 
