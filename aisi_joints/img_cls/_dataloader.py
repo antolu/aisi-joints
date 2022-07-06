@@ -316,11 +316,12 @@ def read_image(image_path: str, fmt: Optional[str] = None,
         image = tf.image.decode_image(image, channels=3)
 
     # does only work in eager mode
-    image = image.numpy().astype(np.uint8)
-    image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    image = cv.adaptiveThreshold(image, 255., cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 15, 3)
-    image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
-    image = tf.convert_to_tensor(image, tf.float32)
+    if adaptive_threshold:
+        image = image.numpy().astype(np.uint8)
+        image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        image = cv.adaptiveThreshold(image, 255., cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 15, 3)
+        image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+        image = tf.convert_to_tensor(image, tf.float32)
 
     return image
 
