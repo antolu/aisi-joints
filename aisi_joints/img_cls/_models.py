@@ -155,9 +155,11 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
 
 
 def freeze_layers(model: Model,
-                  layers_to_freeze: Union[List[int], str] = 'all'):
+                  layers_to_freeze: Union[List[int], str] = 'none'):
     if layers_to_freeze == 'all':
         model.trainable = False
+    elif layers_to_freeze == 'none':
+        pass
     else:
         for i in layers_to_freeze:
             model.layers[i].trainable = False

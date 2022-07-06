@@ -86,7 +86,7 @@ class Config:
         self.base_model = if_hasattr_else(module, 'base_model',
                                           'inception_resnet_v2')
         self.layers_to_freeze = if_hasattr_else(module, 'layers_to_freeze',
-                                                'all')
+                                                'none')
 
         self.transfer_config = FitConfig(
             if_hasattr_else(module, 'transfer_config'))
