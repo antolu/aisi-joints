@@ -47,8 +47,6 @@ class ExportDialog(Ui_ExportDialog, QDialog):
         df = self._df.copy()
         if not self.checkFlagged.isChecked():
             df = df[~df['flagged']]
-        if not self.checkValidate.isChecked():
-            df = df[~df['flagged']]
 
         log.info(f'Exporting .csv to {self.textBrowse.text()}.')
 

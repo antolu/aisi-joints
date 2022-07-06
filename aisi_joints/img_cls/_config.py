@@ -5,7 +5,7 @@ from typing import Union, List, Dict
 
 import tensorflow as tf
 
-from aisi_joints.img_cls.config import layers_to_freeze
+from .config import layers_to_freeze
 
 log = logging.getLogger(__name__)
 

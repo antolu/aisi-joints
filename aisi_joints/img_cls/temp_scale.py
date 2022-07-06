@@ -47,12 +47,17 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
                              batch_size=config.batch_size)
 
     input_ = model.input
-    classification_layer = model.layers[-1]
+    if model.layers[-1].name == 'model':
+        classification_layer = model.layers[-1].layers[-1]
+    else:
+        classification_layer = model.layers[-1]
+
     classification_layer.activation = tf.keras.activations.linear
     model.trainable = False  # freeze all layers
 
+    x = model.output
     temp_scale = TempScale()
-    x = temp_scale(classification_layer.output)
+    x = temp_scale(x)
     model = tf.keras.models.Model(input_, x)
 
     optimizer = tf.keras.optimizers.SGD(learning_rate=1)
