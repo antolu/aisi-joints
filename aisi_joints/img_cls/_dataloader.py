@@ -322,6 +322,8 @@ def read_image(image_path: str, fmt: Optional[str] = None,
         image = cv.adaptiveThreshold(image, 255., cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 15, 3)
         image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
         image = tf.convert_to_tensor(image, tf.float32)
+    else:
+        image = tf.cast(image, tf.float32)
 
     return image
 
