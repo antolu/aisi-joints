@@ -1,12 +1,14 @@
 """
 Script to install latest Tensorflow Object Detection API
 """
+import glob
 import re
 import os
 import platform
 import shutil
 import stat
 import sys
+import sysconfig
 import zipfile
 import urllib.request
 
@@ -55,29 +57,37 @@ def compile_protobuf(protobuf_exec: str):
     if not os.path.isfile(protobuf_exec):
         if os.path.isfile(protobuf_exec + '.exe'):  # Windows check
             protobuf_exec += '.exe'
+            prefix = '.\\'
         else:
             raise ValueError
+    else:
+        prefix = './'
 
     st = os.stat(protobuf_exec)
     os.chmod(protobuf_exec, st.st_mode | stat.S_IEXEC)
     print(f'Compiling protobuf messages using binary at {protobuf_exec}.')
-    command = f'.\\{protobuf_exec} ' \
-              f'object_detection/protos/*.proto --python_out=.'
+    command = f'{prefix}{protobuf_exec} ' \
+              f'{" ".join(glob.glob("object_detection/protos/*.proto"))} --python_out=.'
 
-    print(f'Running command {command}')
+    print(f'Running command {command} in {os.getcwd()}')
     result = subprocess.run(command.split(' '))
     if result.returncode != 0:
         sys.exit(result.returncode)
 
 
 def install_object_detection():
-    command = 'python object_detection/packages/tf2/setup.py install'
+    cwd = os.getcwd()
 
-    print(f'Running command {command}')
+    os.chdir('object_detection/packages/tf2')
+    command = 'python -m pip install .'
+
+    print(f'Running command {command} in {os.getcwd()}')
     result = subprocess.run(command.split(' '))
 
     if result.returncode != 0:
         sys.exit(result.returncode)
+
+    os.chdir(cwd)
 
 
 def main(cleanup: bool = True):
@@ -86,13 +96,23 @@ def main(cleanup: bool = True):
     get_od_repo('models')
     os.chdir('models/research')
 
-    if platform.system() == 'Windows':
+    system = platform.system()
+    machine = sysconfig.get_platform().split("-")[-1].lower()
+
+    if system == 'Windows':
         platform_id = 'win64'
-    elif platform.system() == 'Linux':
+    elif system == 'Linux':
         platform_id = 'linux-x86_64'
+    elif system == 'Darwin':
+        if machine == 'x86_64':
+            platform_id = 'osx-x86_64'
+        elif machine == 'arm64':
+            platform_id = 'osx-universal_binary'
+        else:
+            raise NotImplementedError
     else:
         raise NotImplementedError(f'Script does not support '
-                                  f'OS {platform.system()}.')
+                                  f'OS {system}.')
 
     protobuf_url = get_latest_protobuf(platform_id)
 
