@@ -6,6 +6,7 @@ from typing import List, Optional
 
 import tensorflow as tf
 
+from ._models import MLP
 from ._config import Config
 from ._dataloader import JointsSequence
 from .._utils import setup_logger
@@ -50,9 +51,17 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     if model.layers[-1].name == 'model':
         classification_layer = model.layers[-1].layers[-1]
     else:
-        classification_layer = model.layers[-1]
+        if isinstance(model.layers[-1], MLP):
+            classification_layer = model.layers[-1]
+        else:
+            raise ValueError('Don\'t know what to do.')
 
-    classification_layer.activation = tf.keras.activations.linear
+    if isinstance(classification_layer, MLP):
+        last_dense = classification_layer._sublayers[-1]
+    else:
+        last_dense = classification_layer
+
+    last_dense.activation = tf.keras.activations.linear
     model.trainable = False  # freeze all layers
 
     x = model.output
