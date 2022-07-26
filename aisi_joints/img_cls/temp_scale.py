@@ -50,16 +50,13 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     input_ = model.input
     if model.layers[-1].name == 'model':
         classification_layer = model.layers[-1].layers[-1]
+        last_dense = classification_layer
     else:
-        if isinstance(model.layers[-1], MLP):
+        if model.layers[-1].name == 'mlp':
             classification_layer = model.layers[-1]
+            last_dense = classification_layer._sublayers[-1]
         else:
             raise ValueError('Don\'t know what to do.')
-
-    if isinstance(classification_layer, MLP):
-        last_dense = classification_layer._sublayers[-1]
-    else:
-        last_dense = classification_layer
 
     last_dense.activation = tf.keras.activations.linear
     model.trainable = False  # freeze all layers
