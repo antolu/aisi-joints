@@ -16,6 +16,18 @@ from ..tfod.evaluate import evaluate_and_print
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 
+class EvalCallback(Callback):
+    def __init__(self, model: Detr, dataset: CocoDetection):
+        self._model = model
+        self._dataset = dataset
+
+    def on_validation_end(self, trainer: Trainer, pl_module):
+        if trainer.current_epoch % 10 == 0:
+            detected = detect(self._model, self._dataset, 0.0)
+
+            evaluate_and_print(self._dataset.coco, detected)
+
+
 def train(config: dict, img_folder: str):
     model = Detr(lr=config['lr'], lr_backbone=config['lr_backbone'],
                  weight_decay=config['weight_decay'],
@@ -41,15 +53,8 @@ def train(config: dict, img_folder: str):
         monitor='validation_loss',
         save_top_k=5)
 
-    class EvalCallback(Callback):
-        def on_validation_end(self, trainer: Trainer, pl_module):
-            if trainer.current_epoch % 10 == 0:
-                detected = detect(model, val_dataset, 0.0)
-
-                evaluate_and_print(val_dataset.coco, detected)
-
     trainer = Trainer(max_epochs=config['epochs'], gradient_clip_val=1.0,
-                      callbacks=[checkpoint_callback, EvalCallback()],
+                      callbacks=[checkpoint_callback, EvalCallback(model, val_dataset)],
                       accelerator='auto')
 
     try:
