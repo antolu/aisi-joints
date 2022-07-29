@@ -29,7 +29,7 @@ def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
-    parser.add_argument('--checkpoint-dir', dest='checkpoint_dir',
+    parser.add_argument('-m', '--checkpoint-dir', dest='checkpoint_dir',
                         default='checkpoints', type=str,
                         help='Path to directory with trained checkpoints. '
                              'Will use latest checkpoint from the directory '

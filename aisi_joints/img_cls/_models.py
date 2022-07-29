@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 import tensorflow as tf
 from keras import Model, Input
 from keras.layers import Dense, Dropout
+from keras import activations
 
 from ._config import Config
 
@@ -50,7 +51,10 @@ class MLP(tf.keras.layers.Layer):
                 self._sublayers.append(Dropout(1.0 - dropout))
         self._sublayers.append(
             Dense(
-                units[-1], activation=final_activation, use_bias=use_bias))
+                units[-1], activation=None, use_bias=use_bias))
+
+        # separate final activation from FCs to simplify temp scaling
+        self._sublayers.append(activations.get(final_activation))
 
     def get_config(self):
         config = super().get_config()

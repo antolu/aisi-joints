@@ -15,8 +15,10 @@ log = logging.getLogger(__name__)
 
 
 class TempScale(tf.keras.layers.Layer):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        if 'name' not in kwargs:
+            kwargs.update({'name': 'temp_scale'})
+        super().__init__(**kwargs)
 
         self._temperature = tf.Variable(1.5, dtype="float32", trainable=True)
 
@@ -48,17 +50,11 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
                              batch_size=config.batch_size)
 
     input_ = model.input
-    if model.layers[-1].name == 'model':
-        classification_layer = model.layers[-1].layers[-1]
-        last_dense = classification_layer
+    if model.layers[-1].name == 'mlp':
+        model = tf.keras.Model(inputs=input_, outputs=model.layers[-1]._sublayers[-2].output)
     else:
-        if model.layers[-1].name == 'mlp':
-            classification_layer = model.layers[-1]
-            last_dense = classification_layer._sublayers[-1]
-        else:
-            raise ValueError('Don\'t know what to do.')
+        raise ValueError('Don\'t know what to do.')
 
-    last_dense.activation = tf.keras.activations.linear
     model.trainable = False  # freeze all layers
 
     x = model.output

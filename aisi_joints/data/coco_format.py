@@ -75,7 +75,7 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
             bnd_id = bnd_id + 1
 
             output_json_dict['annotations'].append(ann)
-        else:
+        elif sample.num_detections > 0:
             x0 = list(map(int, sample.detected_x0.split(';')))
             x1 = list(map(int, sample.detected_x1.split(';')))
             y0 = list(map(int, sample.detected_y0.split(';')))
