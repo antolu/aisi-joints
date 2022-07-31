@@ -40,10 +40,13 @@ def if_hasattr_else(data: ..., key: str, default_value: ... = None):
 class FitConfig:
     optimizer: tf.keras.optimizers.Optimizer
     epochs: int
+    callbacks: List[tf.keras.callbacks.Callback]
 
     def __init__(self, data: dict):
         self.optimizer = if_in_else(data, 'optimizer')
         self.epochs = if_in_else(data, 'epochs', 1000)
+
+        self.callbacks = if_hasattr_else(data, 'callbacks')
 
 
 class Config:

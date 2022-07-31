@@ -61,7 +61,7 @@ def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
             log_dir=path.join(mw.config.log_dir, mw.config.timestamp, name)),
         tensorboard_img_cb,
         model_checkpoint_callback,
-    ]
+    ] + mw.config.callbacks
 
     # train the model on the new data for a few epochs
     mw.model.fit(train_data, batch_size=mw.config.batch_size,

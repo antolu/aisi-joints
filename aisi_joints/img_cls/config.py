@@ -23,7 +23,10 @@ transfer_config: dict = {
             25, 0.94, staircase=True
         )
     ),
-    'epochs': 1000
+    'epochs': 1000,
+    'callbacks': [tf.keras.callbacks.EarlyStopping(monitor='loss',
+                                                   patience=5,
+                                                   restore_best_weights=True)]
 }
 
 finetune_config: dict = {
@@ -32,7 +35,10 @@ finetune_config: dict = {
             0.0001,
             decay_steps=20000, alpha=1e-6
         )),
-    'epochs': 10000
+    'epochs': 10000,
+    'callbacks': [tf.keras.callbacks.EarlyStopping(monitor='loss',
+                                                   patience=5,
+                                                   restore_best_weights=True)]
 }
 
 class_weights: dict = {
