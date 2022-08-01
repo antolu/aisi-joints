@@ -1,3 +1,7 @@
+"""
+This module provides logic relating to creation and freezing of the
+image classification CNNs used.
+"""
 import logging
 from typing import List, Optional, Union
 
@@ -13,7 +17,6 @@ log = logging.getLogger(__name__)
 
 class MLP(tf.keras.layers.Layer):
     """Sequential multi-layer perceptron (MLP) block."""
-
     def __init__(
             self,
             units: List[int],
@@ -78,6 +81,10 @@ class MLP(tf.keras.layers.Layer):
 
 
 class ModelWrapper:
+    """
+    A wrapper class that contains the model and its config, as well as
+    providing an easy way to freeze some layers specified in the config.
+    """
     def __init__(self, config: Config):
         self._config = config
 
@@ -112,6 +119,41 @@ class ModelWrapper:
 def get_model(model_name: str, fc_hidden_dim: int = 2048,
               fc_dropout: float = 0.8, fc_num_layers: int = 1,
               fc_activation: str = 'relu') -> Model:
+    """
+    Constructs and returns a pretrained image classification CNN,
+    with global average pooling on the last conv layer, and then appends
+    an SLP/MLP at the end.
+
+    The model is pre-pended with the appropriate preprocessing function
+    for the architecture, e.g. normalization for inception_resnet_v2.
+
+    Parameters
+    ----------
+    model_name: str
+        The name of the model to construct. Supported CNN names are:
+        * inception_resnet_v2
+        * vgg19
+        * resnet101v2
+        * resnet152v2
+        * efficientnetv2l
+        The input tensor is set to 299x299x3 for all architectures.
+    fc_hidden_dim: int
+        Dimension of the hidden layers of the MLPs, only allows a single value
+        for all layers. Not used if `fc_num_layers` is set to 0.
+    fc_dropout: float
+        Dropout rate to use between the hidden layers (post-activation).
+        E.g. 0.8 will set 20% of the activations to 0.
+    fc_num_layers: int
+        Number of layers in the fully connected network. Set to 0 for only 1
+        fully connected layer with no hidden units.
+    fc_activation: str
+        Name of activation function to use in the hidden layers. Eg. 'relu'.
+
+    Returns
+    -------
+    Model
+        Fully constructed CNN, from preprocessing layer to FC layers with softmax.
+    """
     if model_name == 'inception_resnet_v2':
         base_model: Model = tf.keras.applications.InceptionResNetV2(
             include_top=False, weights='imagenet', pooling='avg',
@@ -121,17 +163,17 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     elif model_name == 'vgg19':
         base_model: Model = tf.keras.applications.VGG19(
             include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 32)))
+            input_tensor=Input(shape=(299, 299, 3)))
         preprocess_fn = tf.keras.applications.vgg19.preprocess_input
     elif model_name == 'resnet101v2':
         base_model: Model = tf.keras.applications.ResNet101V2(
             include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 32)))
+            input_tensor=Input(shape=(299, 299, 3)))
         preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
     elif model_name == 'resnet152v2':
         base_model: Model = tf.keras.applications.ResNet152V2(
             include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 32)))
+            input_tensor=Input(shape=(299, 299, 3)))
         preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
     elif model_name == 'efficientnetv2l':
         base_model: Model = tf.keras.applications.EfficientNetV2L(
@@ -160,6 +202,17 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
 
 def freeze_layers(model: Model,
                   layers_to_freeze: Union[List[int], str] = 'none'):
+    """
+    Freeze some layers in the passed model, i.e. setting the .trainable
+    attribute to False.
+
+    Parameters
+    ----------
+    model: Model
+    layers_to_freeze: list or str
+        'all', 'none', or a list of integers specifying which layers to
+        freeze.
+    """
     if layers_to_freeze == 'all':
         model.trainable = False
     elif layers_to_freeze == 'none':

@@ -1,16 +1,31 @@
+"""
+This module provides an abstraction of the configuration options for fine-
+tuning image classification CNNs.
+"""
 import datetime
 import logging
 from importlib import import_module
-from typing import Union, List, Dict
+from typing import List, Dict
 
 import tensorflow as tf
-
-from .config import layers_to_freeze
 
 log = logging.getLogger(__name__)
 
 
 def if_in_else(data: dict, key: str, default_value: ... = None):
+    """
+    If key is in data, return data[key], else a default value.
+
+    Parameters
+    ----------
+    data: dict
+    key: str
+    default_value: Any
+
+    Returns
+    -------
+    Any
+    """
     if key in data:
         return data[key]
     else:
@@ -24,6 +39,20 @@ def if_in_else(data: dict, key: str, default_value: ... = None):
 
 
 def if_hasattr_else(data: ..., key: str, default_value: ... = None):
+    """
+    If data has attribute key, return the attribute, otherwise return
+    a default value.
+
+    Parameters
+    ----------
+    data: module
+    key: str
+    default_value: Any
+
+    Returns
+    -------
+    Any
+    """
     if hasattr(data, key):
         return getattr(data, key)
     else:
@@ -38,6 +67,9 @@ def if_hasattr_else(data: ..., key: str, default_value: ... = None):
 
 
 class FitConfig:
+    """
+    Wraps some objects used for the Keras Fit API model.fit() method.
+    """
     optimizer: tf.keras.optimizers.Optimizer
     epochs: int
     callbacks: List[tf.keras.callbacks.Callback]

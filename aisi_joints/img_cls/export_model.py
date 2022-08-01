@@ -1,10 +1,15 @@
+"""
+This module provides everything necessary to export a trained model.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 import os
 from argparse import ArgumentParser
 from typing import List, Optional
 
 from ._config import Config
-from ._models import get_model, ModelWrapper
+from ._models import ModelWrapper
 from .._utils import get_latest
 from .._utils.logging import setup_logger
 
@@ -12,6 +17,16 @@ log = logging.getLogger(__name__)
 
 
 def export_model(config: Config, checkpoint_dir: str, output_dir: str):
+    """
+    Construct model from config and load checkpoint weights onto it, then
+    export it.
+
+    Parameters
+    ----------
+    config: Config
+    checkpoint_dir: str
+    output_dir: str
+    """
     model = ModelWrapper(config).model
 
     checkpoint_path = get_latest(checkpoint_dir, lambda o: o.endswith('.h5'))

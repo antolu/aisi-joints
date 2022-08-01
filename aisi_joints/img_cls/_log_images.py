@@ -9,7 +9,7 @@ from typing import Union
 import tensorflow as tf
 from object_detection.utils import visualization_utils as viz_utils
 
-from ._dataloader import process_example, JointsSequence
+from ._dataloader import JointsSequence
 from ..constants import INV_LABEL_MAP
 
 log = logging.getLogger(__name__)

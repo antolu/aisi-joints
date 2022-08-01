@@ -1,3 +1,9 @@
+"""
+This module provides an implementation of temperature scaling for a trained image
+classification CNN.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import argparse
 import logging
 import os
@@ -6,7 +12,6 @@ from typing import List, Optional
 
 import tensorflow as tf
 
-from ._models import MLP
 from ._config import Config
 from ._dataloader import JointsSequence
 from .._utils import setup_logger
@@ -15,6 +20,10 @@ log = logging.getLogger(__name__)
 
 
 class TempScale(tf.keras.layers.Layer):
+    """
+    A Keras Layer implementation that simply divides the inputs by a float
+    "temperature" that is trainable.
+    """
     def __init__(self, **kwargs):
         if 'name' not in kwargs:
             kwargs.update({'name': 'temp_scale'})
@@ -42,6 +51,22 @@ class TempScale(tf.keras.layers.Layer):
 
 
 def temp_scale(config: Config, save_dir: str, model_dir: str):
+    """
+    Performs the temperature scaling optimization.
+
+    This is done by
+    1. Loading a previously exported model.
+    2. Slicing off the last softmax layer.
+    3. Appending a TempScale layer and optimizing on the validation set.
+    4. Re-appending the softmax layer.
+    5. Exporting the model.
+
+    Parameters
+    ----------
+    config: Config
+    save_dir: str
+    model_dir: str
+    """
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
     input_size = model.input_shape[1:3]
 
@@ -49,6 +74,7 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
                              random_crop=False, augment_data=False,
                              batch_size=config.batch_size)
 
+    # remove last softmax layer
     input_ = model.input
     if model.layers[-1].name == 'mlp':
         model = tf.keras.Model(inputs=input_, outputs=model.layers[-1]._sublayers[-2].output)
@@ -57,17 +83,19 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
 
     model.trainable = False  # freeze all layers
 
+    # append TempScale layer
     x = model.output
     temp_scale = TempScale()
     x = temp_scale(x)
     model = tf.keras.models.Model(input_, x)
 
+    # optimize temperature
     optimizer = tf.keras.optimizers.SGD(learning_rate=1)
     nll_criterion = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
 
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor='loss',
-        patience=20,
+        patience=10,
         restore_best_weights=True
     )
 
@@ -76,10 +104,12 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
 
     log.info(f'Trained model temperature to {temp_scale.temperature}.')
 
+    # re-append softmax layer
     predictions = tf.keras.activations.softmax(x)
     model_to_export = tf.keras.models.Model(input_, predictions)
     model_to_export.trainable = True
 
+    # export model
     if not path.exists(save_dir):
         os.makedirs(save_dir, exist_ok=True)
     model_to_export.save(save_dir)

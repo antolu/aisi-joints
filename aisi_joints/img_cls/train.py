@@ -1,3 +1,9 @@
+"""
+This module provides everything needed to train (fine-tune) an image
+classification model on the JointsSequence dataset type.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 import os
 from argparse import ArgumentParser
@@ -18,6 +24,12 @@ log = logging.getLogger(__name__)
 
 
 class ModelCheckpointWithFreeze(tf.keras.callbacks.ModelCheckpoint):
+    """
+    A class wrapping the Keras ModelCheckpoint class, setting all layers
+    to trainable=True before saving, and then re-setting.
+
+    This prevents loading checkpoint errors.
+    """
     def __init__(self, mw: ModelWrapper, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -35,6 +47,7 @@ def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
               val_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               epochs: int, name: str,
               metrics: Optional[List[tf.keras.metrics.Metric]] = None):
+    # create all callback functions
     img_writer = tf.summary.create_file_writer(
         path.join(mw.config.log_dir, mw.config.timestamp, f'{name}/images'))
     image_eval = EvaluateImages(mw.model, val_data, img_writer,

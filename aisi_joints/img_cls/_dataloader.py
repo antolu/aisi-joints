@@ -1,3 +1,7 @@
+"""
+This module provides everything needed for data loading and pre-processing
+for the image classification approach.
+"""
 import logging
 import math
 from typing import List, Optional, Tuple, Callable, Union
@@ -15,6 +19,10 @@ log = logging.getLogger(__name__)
 
 
 class JointsSequence(tf.keras.utils.Sequence):
+    """
+    Implements a Keras Sequence dataset, which will allow the fit API to load
+    multiple batches in parallel.
+    """
     def __init__(self, csv_path_or_df: Union[str, pd.DataFrame],
                  split: Optional[str] = None,
                  crop_width: int = 299, crop_height: int = 299,
@@ -64,6 +72,19 @@ class JointsSequence(tf.keras.utils.Sequence):
         pass
 
     def _load_sample(self, sample: Sample) -> Tuple[tf.Tensor, tf.Tensor]:
+        """
+        Loads a single sample from disk.
+
+        Parameters
+        ----------
+        sample: Sample
+            Data required to load the sample.
+
+        Returns
+        -------
+        tf.Tensor, tf.Tensor
+            image and label
+        """
         image = read_image(sample.filepath, 'png', self._adaptive_threshold)
 
         image = preprocess(image,
@@ -76,47 +97,6 @@ class JointsSequence(tf.keras.utils.Sequence):
         label = tf.one_hot(LABEL_MAP[sample.bbox.cls] - 1, 2)
 
         return image, label
-
-
-def load_df(df: pd.DataFrame, crop_width: int = 299, crop_height: int = 299,
-            random_crop: bool = False,
-            augment_data: bool = True,
-            preprocess_fn: Callable = None) -> tf.data.Dataset:
-    labels_df = df[['cls']].copy()
-    labels_df.loc[labels_df['cls'] == 'OK', 'cls'] = 0
-    labels_df.loc[labels_df['cls'] == 'DEFECT', 'cls'] = 1
-
-    dataset = tf.data.Dataset.from_tensor_slices(
-        (df['filepath'].to_numpy(), labels_df.to_numpy(dtype=int),
-         df['x0'].to_numpy(), df['x1'].to_numpy(),
-         df['y0'].to_numpy(), df['y1'].to_numpy()))
-
-    def preprocess_(image_path: tf.Tensor, label: tf.Tensor,
-                    x0: tf.Tensor, x1: tf.Tensor, y0: tf.Tensor,
-                    y1: tf.Tensor) \
-            -> Tuple[tf.Tensor, tf.Tensor]:
-        image = read_image(image_path)
-        bbox = [x0, x1, y0, y1]
-
-        preprocess(image, bbox, crop_width, crop_height, random_crop,
-                   augment_data, preprocess_fn)
-
-        if random_crop:
-            image = random_crop_bbox(image, bbox, crop_width, crop_height)
-        else:
-            image = center_crop_bbox(image, bbox, crop_width, crop_height)
-
-        if augment_data:
-            image = augment(image)
-
-        if preprocess_fn is not None:
-            image = preprocess_fn(image)
-
-        labels = tf.one_hot(label, 2)
-
-        return image, labels
-
-    return dataset.map(preprocess_)
 
 
 def shift_lower(bndbox: List[int]) -> List[int]:
@@ -329,6 +309,17 @@ def read_image(image_path: str, fmt: Optional[str] = None,
 
 
 def augment(image: tf.Tensor) -> tf.Tensor:
+    """
+    Augments 3-channel image tensors.
+
+    Parameters
+    ----------
+    image: tf.Tensor
+
+    Returns
+    -------
+    tf.Tensor
+    """
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
     image = tf.image.random_contrast(image, 0.0, 0.8)
@@ -350,47 +341,5 @@ def preprocess(image: tf.Tensor, bbox: List[tf.Tensor],
         image = augment(image)
     if preprocess_fn is not None:
         image = preprocess_fn(image)
-
-    return image
-
-
-@tf.function
-def process_example(data: tf.train.Example,
-                    crop_width: int = 299, crop_height: int = 299,
-                    random_crop: bool = True,
-                    get_metadata: bool = False, augment_data: bool = True):
-    sample = read_tfrecord(data)
-
-    image_path = sample['image/filename']
-    label = sample['image/object/class/label']
-
-    height = tf.cast(sample['image/height'], tf.float32)
-    width = tf.cast(sample['image/width'], tf.float32)
-    bbox = [
-        sample['image/object/bbox/xmin'] * width,
-        sample['image/object/bbox/xmax'] * width,
-        sample['image/object/bbox/ymin'] * height,
-        sample['image/object/bbox/ymax'] * height,
-    ]
-    bbox = list(map(lambda x: tf.squeeze(tf.cast(x, tf.int64)), bbox))
-
-    fmt = sample['image/format']
-
-    image = read_image(image_path, fmt)
-
-    image = preprocess(image, bbox, crop_width, crop_height, random_crop,
-                       augment_data)
-
-    labels = tf.one_hot(label - 1, 2)
-
-    if not get_metadata:
-        return image, labels
-    else:
-        return image, labels, bbox, sample['image/source_id']
-
-
-def undo_preprocess(image: tf.Tensor) -> tf.Tensor:
-    image += 1
-    image *= 127.5
 
     return image

@@ -1,3 +1,9 @@
+"""
+This module provides everything needed to evaluate a trained model, either
+a checkpoint + config, or exported model (with or without temperature scaling).
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 from argparse import ArgumentParser
 from pprint import pformat
@@ -8,7 +14,7 @@ import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 
 from ._config import Config
-from ._dataloader import load_df, JointsSequence
+from ._dataloader import JointsSequence
 from ._models import get_model
 from .._utils import time_execution, get_latest
 from .._utils.logging import setup_logger
