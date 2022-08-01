@@ -1,57 +1,45 @@
+"""
+This module provides functions related to detection in an tfod exported model.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
-import os
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from os import path
 from typing import Dict, Union, Optional
 
 import pandas as pd
 import tensorflow as tf
-from tqdm import tqdm
 
 from .utils import load_model, load_labelmap, load_image, run_inference, \
-    plot_and_save, format_detections
+    format_detections
 from .._utils.logging import setup_logger
 from .._utils.utils import time_execution
 
 log = logging.getLogger(__name__)
 
 
-def detect(args: Namespace):
-    model = load_model(args.model_dir)
-    label_map = load_labelmap(args.labelmap)
-
-    if path.isdir(args.input):
-        files = os.listdir(args.input)
-        files = [f for f in files if (f.endswith('jpg' or f.endswith('png')))]
-
-        ground_truth = None
-    else:
-        df = pd.read_csv(args.input)
-        files = df['filepath']
-
-        ground_truth = df['cls']
-
-    if not path.isdir(args.output):
-        os.makedirs(args.output, exist_ok=True)
-
-    for i, file in tqdm(enumerate(files)):
-        image = load_image(file)
-        detections = run_inference(image, model)
-
-        boxes = format_detections(detections)
-
-        boxes_filtered = boxes[
-            boxes['detection_scores'] >= args.score_threshold]
-
-        if args.save_plot:
-            plot_and_save(image, label_map, detections, args.score_threshold,
-                          path.join(args.output, path.split(file)[-1]))
-
-
 def csv_detect(csv_path: str, model_path: str,
                label_map: Union[Dict[str, int], str],
                score_threshold: float = 0.5,
                output: Optional[str] = None):
+    """
+    Loads dataset from .csv file and model from exported model, and label map.
+
+    Runs detection on samples in csv file. Writes results back to dataframe
+    in columns 'detected_class', 'detection_score', 'detected_{x0,x1,y0,y1}',
+    'num_detections'. Multiple detections are separated by a ';' character.
+
+    Writes .csv with detections to output if specified.
+
+    Parameters
+    ----------
+    csv_path: str
+    model_path: str
+    label_map: dict or str
+    score_threshold: float
+    output: str
+    """
     df = pd.read_csv(csv_path)
 
     if isinstance(label_map, str) and path.isfile(label_map):
@@ -70,6 +58,22 @@ def csv_detect(csv_path: str, model_path: str,
 def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
                      label_map: Dict[int, dict], score_threshold: float = 0.5) \
         -> pd.DataFrame:
+    """
+    Runs detection on samples in passed dataframe. Writes results back to dataframe
+    in columns 'detected_class', 'detection_score', 'detected_{x0,x1,y0,y1}',
+    'num_detections'. Multiple detections are separated by a ';' character.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+    model: tf.keras.Model
+    label_map: dict
+    score_threshold: float
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     results = []
     with time_execution() as t:
         for sample in df.itertuples():
@@ -143,4 +147,3 @@ if __name__ == '__main__':
     setup_logger()
     csv_detect(args.input, args.model_dir, args.labelmap, args.score_threshold,
                args.output)
-    # detect(args)

@@ -1,6 +1,8 @@
 """
 Script to remove rows of a dataset .csv based on eventIds, where the eventIds
 to remove are in a second .csv.
+
+This module is runnable. Use the `-h` option to view usage.
 """
 from argparse import ArgumentParser, Namespace
 from typing import List, Tuple

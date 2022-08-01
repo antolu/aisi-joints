@@ -1,6 +1,8 @@
 """
 Script to update the file paths in a dataset .csv, useful if the .csv
 is generated on one computer and needs to be ported to another.
+
+This module is runnable. Use the `-h` option to view usage.
 """
 import logging
 import os

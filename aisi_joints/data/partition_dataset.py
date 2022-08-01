@@ -1,3 +1,12 @@
+"""
+This module provides functions to partition a dataset into train/validation(/test)
+splits.
+
+The partitioning aims to have equal numbers of samples from each platform
+in each split.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 import re
 from argparse import ArgumentParser, Namespace

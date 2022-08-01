@@ -1,6 +1,8 @@
-""""
+"""
 This script serves as a helper to evaluate an exported tensorflow object detection
 model on a custom formatted dataset (used in this package).
+
+This module is runnable. Use the `-h` option to view usage.
 """
 import logging
 from argparse import ArgumentParser

@@ -1,3 +1,6 @@
+"""
+This module provides common functions for data processing.
+"""
 import logging
 import os
 import re
@@ -35,8 +38,26 @@ def find_labels(labels_pth: List[str]) -> pd.DataFrame:
 
 def find_images(images_pth: List[str], find_dims: bool = True) \
         -> pd.DataFrame:
-    # iterate over all image files to construct index
+    """
+    Walks through one or more directories (recursively) to find images,
+    extracts eventId from the filename and maps the eventId to the image
+    path using a Pandas DataFrame.
+
+    By specifying `find_dims=True`, the function will also find the height
+    and width of the images and put them into the dataframe.
+
+    Parameters
+    ----------
+    images_pth: list
+    find_dims: bool
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     images_idx = list()
+
+    # find images with a specific regex pattern only.
     regex = re.compile(r'.*_(?P<uuid>.+)\.(png|jpg)')
     for image_pth in images_pth:
         if not path.isdir(image_pth):

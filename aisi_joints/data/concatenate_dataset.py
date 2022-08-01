@@ -1,3 +1,7 @@
+"""
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 from argparse import ArgumentParser, Namespace
 from typing import List

@@ -1,3 +1,9 @@
+"""
+This module provides a means ot compute the mean and standard deviation of
+all images in a .csv dataset.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 from argparse import Namespace, ArgumentParser
 
