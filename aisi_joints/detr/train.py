@@ -1,3 +1,11 @@
+"""
+This module provides the script for training DE:TR on a COCO formatted dataset.
+
+Use the `aisi_joints.data.coco_format` module to convert a .csv dataset to
+COCO format.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 from argparse import ArgumentParser
 from functools import partial
 from typing import List, Optional
@@ -8,7 +16,8 @@ from pytorch_lightning import Trainer, Callback
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 
-from ._data import CocoDetection, collate_fn
+from ._data import CocoDetection
+from ._data import collate_fn
 from ._detr import Detr
 from .evaluate import detect
 from ..tfod.evaluate import evaluate_and_print
@@ -17,12 +26,20 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 
 class EvalCallback(Callback):
-    def __init__(self, model: Detr, dataset: CocoDetection):
+    """
+    Callback that performs detection and calculates COCO metrics
+    for a given dataset (usually validation) on the end of the
+    validation step, and prints the results to console.
+    """
+    def __init__(self, model: Detr, dataset: CocoDetection,
+                 evaluate_every: int = 10):
         self._model = model
         self._dataset = dataset
 
+        self._evaluate_every = evaluate_every
+
     def on_validation_end(self, trainer: Trainer, pl_module):
-        if trainer.current_epoch % 10 == 0:
+        if trainer.current_epoch % self._evaluate_every == 0:
             detected = detect(self._model, self._dataset, 0.0)
 
             evaluate_and_print(self._dataset.coco, detected)

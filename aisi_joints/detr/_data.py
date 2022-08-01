@@ -1,3 +1,7 @@
+"""
+This module provides everything needed to load data for the DE:TR object
+detection implementation.
+"""
 import os
 from typing import Dict
 
@@ -13,12 +17,14 @@ def collate_fn(feature_extractor, batch: dict):
     encoding = feature_extractor.pad_and_create_pixel_mask(
         pixel_values, return_tensors="pt")
     labels = [item[1] for item in batch]
+
     batch = dict()
     batch['pixel_values'] = encoding['pixel_values']
     batch['pixel_mask'] = encoding['pixel_mask']
     batch['labels'] = labels
     for lbl in batch['labels']:
         lbl['class_labels'] -= 1
+
     return batch
 
 

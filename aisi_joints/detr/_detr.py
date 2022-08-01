@@ -1,3 +1,7 @@
+"""
+This module provides the Detr class, a pytorch lightning module
+implementation for the DE:TR object detection architecture.
+"""
 import pytorch_lightning as pl
 import torch
 from transformers import DetrForObjectDetection, \

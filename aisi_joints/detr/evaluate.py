@@ -1,3 +1,10 @@
+"""
+This module provides a script to evaluate a trained DE:TR model.
+
+The evaluation uses TFOD functions to calculate evaluation metrics.
+
+This module is runnable. Use the `-h` option to view usage.
+"""
 import logging
 from argparse import ArgumentParser, Namespace
 from functools import partial
@@ -8,7 +15,9 @@ from object_detection.metrics.coco_tools import COCOWrapper
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ._data import CocoDetection, collate_fn, results_to_coco
+from ._data import CocoDetection
+from ._data import collate_fn
+from ._data import results_to_coco
 from .._utils.logging import setup_logger
 from .._utils.utils import time_execution
 from ..detr._detr import Detr
