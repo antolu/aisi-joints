@@ -2,12 +2,13 @@ import logging
 from typing import Optional
 
 from PyQt5.QtCore import QModelIndex
-from PyQt5.QtWidgets import QWidget, QMessageBox
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QWidget
 
-from .display_widget import DisplayWidget
-from .metrics_widget import MetricsWidget
 from ...elements.copy_action import CopySelectedCellsAction
 from ...generated.eval_widget_ui import Ui_EvalWidget
+from .display_widget import DisplayWidget
+from .metrics_widget import MetricsWidget
 
 log = logging.getLogger(__name__)
 
@@ -35,9 +36,8 @@ class EvalWidget(DisplayWidget, Ui_EvalWidget):
             self.widgetGt.show_image(sample)
             self.widgetPred.show_image(sample, evaluation=True)
         except ValueError as e:
-            log.exception('An exception occurred while showing image.')
-            QMessageBox.critical(self, 'Error', 'An exception occurred: '
-                                 + str(e))
+            log.exception("An exception occurred while showing image.")
+            QMessageBox.critical(self, "Error", "An exception occurred: " + str(e))
             return
 
     def show_metrics(self):

@@ -3,10 +3,11 @@ from typing import Optional
 
 import pandas as pd
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QDialog, QWidget
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QWidget
 
-from ...generated.partition_dialog_ui import Ui_PartitionDialog
 from ....data.partition_dataset import partition_dataset
+from ...generated.partition_dialog_ui import Ui_PartitionDialog
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class PartitionDialog(QDialog, Ui_PartitionDialog):
 
         self._data = data.copy()
 
-        self.labelInfo.setText(f'Partition data with {len(data)} samples.')
+        self.labelInfo.setText(f"Partition data with {len(data)} samples.")
 
         self.train_changed(self.spinBoxTrain.value())
         self.val_changed(self.spinBoxVal.value())
@@ -34,26 +35,28 @@ class PartitionDialog(QDialog, Ui_PartitionDialog):
 
     def train_changed(self, value: int):
         total = value + self.spinBoxVal.value() + self.spinBoxTest.value()
-        label = 'Train: {} samples'.format(round(value / total * len(self._data)))
+        label = "Train: {} samples".format(round(value / total * len(self._data)))
 
         self.labelTrain.setText(label)
 
     def val_changed(self, value: int):
         total = value + self.spinBoxTrain.value() + self.spinBoxTest.value()
-        label = 'Validation: {} samples'.format(round(value / total * len(self._data)))
+        label = "Validation: {} samples".format(round(value / total * len(self._data)))
 
         self.labelVal.setText(label)
 
     def test_changed(self, value: int):
         total = value + self.spinBoxTrain.value() + self.spinBoxVal.value()
-        label = 'Test: {} samples'.format(round(value / total * len(self._data)))
+        label = "Test: {} samples".format(round(value / total * len(self._data)))
 
         self.labelTest.setText(label)
 
     def on_ok(self):
-        ratio = '{}/{}/{}'.format(self.spinBoxTrain.value(),
-                                  self.spinBoxVal.value(),
-                                  self.spinBoxTest.value())
+        ratio = "{}/{}/{}".format(
+            self.spinBoxTrain.value(),
+            self.spinBoxVal.value(),
+            self.spinBoxTest.value(),
+        )
 
         df = partition_dataset(self._data, ratio)
 

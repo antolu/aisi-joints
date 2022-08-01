@@ -1,7 +1,5 @@
-"""
-This module contains code for the joints viewer graphical application
-written with for PyQt5.
-"""
+"""This module contains code for the joints viewer graphical application
+written with for PyQt5."""
 
 
 class Flags(object):
@@ -10,14 +8,13 @@ class Flags(object):
             setattr(self, key, val)
 
 
-flags = Flags('DEBUG', False)
+flags = Flags("DEBUG", False)
 
 
 install_requires = [
-    'PyQt5',
-    'pyqtgraph',
-    'pyqt5ac',
-    'opencv-python'
-    'pandas',
-    'numpy'
+    "PyQt5",
+    "pyqtgraph",
+    "pyqt5ac",
+    "opencv-python" "pandas",
+    "numpy",
 ]

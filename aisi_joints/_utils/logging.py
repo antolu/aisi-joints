@@ -1,6 +1,6 @@
 import logging
 
-__all__ = ['setup_logger']
+__all__ = ["setup_logger"]
 
 
 def setup_logger(debug: bool = False, file_logger: str = None):
@@ -15,8 +15,9 @@ def setup_logger(debug: bool = False, file_logger: str = None):
         ch.setLevel(logging.INFO)
 
     formatter = logging.Formatter(
-        '%(asctime)s - [%(levelname)s] - %(name)s - %(message)s',
-        "%Y-%m-%d %H:%M:%S")
+        "%(asctime)s - [%(levelname)s] - %(name)s - %(message)s",
+        "%Y-%m-%d %H:%M:%S",
+    )
     ch.setFormatter(formatter)
     log.addHandler(ch)
 

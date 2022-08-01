@@ -4,7 +4,7 @@ from self_supervised.model_params import VICRegParams
 
 model_params = VICRegParams(
     dataset_name="aisi",
-    encoder_arch='resnet101',
+    encoder_arch="resnet101",
     shuffle_batch_norm=True,
     gather_keys_for_queue=True,
     # transform_apply_blur=False,
@@ -16,7 +16,7 @@ model_params = VICRegParams(
     final_lr_schedule_value=0,
     weight_decay=1e-4,
     lars_warmup_epochs=10,
-    lars_eta=0.02
+    lars_eta=0.02,
 )
 
 classifier_params = LinearClassifierMethodParams(
@@ -26,5 +26,5 @@ classifier_params = LinearClassifierMethodParams(
     batch_size=32,
     lr=10,
     weight_decay=1e-4,
-    drop_last_batch=False
+    drop_last_batch=False,
 )

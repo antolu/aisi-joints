@@ -1,6 +1,8 @@
 import logging
 
-from PyQt5.QtWidgets import QAction, QTableView, QApplication
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QTableView
 
 log = logging.getLogger(__name__)
 
@@ -9,9 +11,10 @@ class CopySelectedCellsAction(QAction):
     def __init__(self, table_widget):
         if not isinstance(table_widget, QTableView):
             raise ValueError(
-                f'CopySelectedCellsAction must be initialised with a QTableView. A {type(table_widget)} was given.')
+                f"CopySelectedCellsAction must be initialised with a QTableView. A {type(table_widget)} was given."
+            )
         super().__init__("Copy", table_widget)
-        self.setShortcut('Ctrl+C')
+        self.setShortcut("Ctrl+C")
         self.triggered.connect(self.copy_cells_to_clipboard)
         self.table = table_widget
 
@@ -37,11 +40,11 @@ class CopySelectedCellsAction(QAction):
                 for c in range(ncols):
                     clipboard += columns[c][r]
                     if c != (ncols - 1):
-                        clipboard += '\t'
-                clipboard += '\n'
+                        clipboard += "\t"
+                clipboard += "\n"
 
             # copy to the system clipboard
             sys_clip = QApplication.clipboard()
             sys_clip.setText(clipboard)
 
-            log.debug(f'Copied to clipboard: {clipboard}')
+            log.debug(f"Copied to clipboard: {clipboard}")

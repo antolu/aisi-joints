@@ -1,8 +1,7 @@
-"""
-Main application. Intended to be launched by __main__ entrypoint with
-arguments.
-"""
+"""Main application.
 
+Intended to be launched by __main__ entrypoint with arguments.
+"""
 import logging
 import sys
 from argparse import Namespace
@@ -10,9 +9,9 @@ from argparse import Namespace
 from PyQt5.QtWidgets import QApplication
 
 from . import flags
-from .ui.main_window import MainWindow
-from .settings import app
 from .. import __version__
+from .settings import app
+from .ui.main_window import MainWindow
 
 
 def main(args: Namespace):
@@ -27,21 +26,22 @@ def main(args: Namespace):
         ch.setLevel(logging.INFO)
 
     formatter = logging.Formatter(
-        '%(asctime)s - [%(levelname)s] - %(name)s - %(message)s',
-        "%Y-%m-%d %H:%M:%S")
+        "%(asctime)s - [%(levelname)s] - %(name)s - %(message)s",
+        "%Y-%m-%d %H:%M:%S",
+    )
     ch.setFormatter(formatter)
     log.addHandler(ch)
 
     # second, initialize Qt application
     application = QApplication([])
     application.setApplicationVersion(__version__)
-    application.setOrganizationName('SBB')
-    application.setOrganizationDomain('sbb.ch')
-    application.setApplicationName('AISI rail joints')
+    application.setOrganizationName("SBB")
+    application.setOrganizationDomain("sbb.ch")
+    application.setApplicationName("AISI rail joints")
 
     # mute certain modules
-    logging.getLogger('matplotlib').setLevel(logging.WARNING)
-    logging.getLogger('PyQt5.uic').setLevel(logging.WARNING)
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("PyQt5.uic").setLevel(logging.WARNING)
 
     main_window = MainWindow()
     app.init()

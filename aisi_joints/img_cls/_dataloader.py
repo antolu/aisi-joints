@@ -1,15 +1,17 @@
-"""
-This module provides everything needed for data loading and pre-processing
-for the image classification approach.
-"""
+"""This module provides everything needed for data loading and pre-processing
+for the image classification approach."""
 import logging
 import math
-from typing import List, Optional, Tuple, Callable, Union
+from typing import Callable
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
+import cv2 as cv
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import cv2 as cv
 
 from ..constants import LABEL_MAP
 from ..data.common import Sample
@@ -19,22 +21,27 @@ log = logging.getLogger(__name__)
 
 
 class JointsSequence(tf.keras.utils.Sequence):
-    """
-    Implements a Keras Sequence dataset, which will allow the fit API to load
-    multiple batches in parallel.
-    """
-    def __init__(self, csv_path_or_df: Union[str, pd.DataFrame],
-                 split: Optional[str] = None,
-                 crop_width: int = 299, crop_height: int = 299,
-                 batch_size: int = 32, random_crop: bool = True,
-                 augment_data: bool = True, adaptive_threshold: bool = False):
+    """Implements a Keras Sequence dataset, which will allow the fit API to
+    load multiple batches in parallel."""
+
+    def __init__(
+        self,
+        csv_path_or_df: Union[str, pd.DataFrame],
+        split: Optional[str] = None,
+        crop_width: int = 299,
+        crop_height: int = 299,
+        batch_size: int = 32,
+        random_crop: bool = True,
+        augment_data: bool = True,
+        adaptive_threshold: bool = False,
+    ):
 
         if isinstance(csv_path_or_df, str):
-            with open(csv_path_or_df, 'r') as f:
+            with open(csv_path_or_df, "r") as f:
                 df = pd.read_csv(f)
 
             if split is not None:
-                df = df[df['split'] == split]
+                df = df[df["split"] == split]
         elif isinstance(csv_path_or_df, pd.DataFrame):
             df = csv_path_or_df
         else:
@@ -72,8 +79,7 @@ class JointsSequence(tf.keras.utils.Sequence):
         pass
 
     def _load_sample(self, sample: Sample) -> Tuple[tf.Tensor, tf.Tensor]:
-        """
-        Loads a single sample from disk.
+        """Loads a single sample from disk.
 
         Parameters
         ----------
@@ -85,14 +91,16 @@ class JointsSequence(tf.keras.utils.Sequence):
         tf.Tensor, tf.Tensor
             image and label
         """
-        image = read_image(sample.filepath, 'png', self._adaptive_threshold)
+        image = read_image(sample.filepath, "png", self._adaptive_threshold)
 
-        image = preprocess(image,
-                           sample.bbox.to_pascal_voc(),
-                           self._crop_width,
-                           self._crop_height,
-                           self._random_crop,
-                           self._augment_data)
+        image = preprocess(
+            image,
+            sample.bbox.to_pascal_voc(),
+            self._crop_width,
+            self._crop_height,
+            self._random_crop,
+            self._augment_data,
+        )
 
         label = tf.one_hot(LABEL_MAP[sample.bbox.cls] - 1, 2)
 
@@ -100,9 +108,7 @@ class JointsSequence(tf.keras.utils.Sequence):
 
 
 def shift_lower(bndbox: List[int]) -> List[int]:
-    """
-    Shift bounding box upwards, if lower bounds are negative
-    (out of bounds)
+    """Shift bounding box upwards, if lower bounds are negative (out of bounds)
 
     Parameters
     ----------
@@ -127,9 +133,8 @@ def shift_lower(bndbox: List[int]) -> List[int]:
 
 
 def shift_upper(bndbox: List[int], max_x: int, max_y: int) -> List[int]:
-    """
-    Shift bounding box downwards, if upper bounds are beyond image edge
-    (out of bounds)
+    """Shift bounding box downwards, if upper bounds are beyond image edge (out
+    of bounds)
 
     Parameters
     ----------
@@ -147,7 +152,7 @@ def shift_upper(bndbox: List[int], max_x: int, max_y: int) -> List[int]:
 
     x0, x1, y0, y1 = bndbox
     # shift box in case of OOB values
-    log.debug(f'max x: {max_x}, x1: {x1}')
+    log.debug(f"max x: {max_x}, x1: {x1}")
     x_offset_up = tf.math.maximum(max_x, x1) - max_x
     y_offset_up = tf.math.maximum(max_y, y1) - max_y
 
@@ -159,12 +164,14 @@ def shift_upper(bndbox: List[int], max_x: int, max_y: int) -> List[int]:
     return [x0, x1, y0, y1]
 
 
-def random_crop_bbox(image: tf.Tensor, bndbox: List[tf.Tensor],
-                     width: int = 299, height: int = 299) -> tf.Tensor:
-    """
-    Random crop an area around a bounding box to a fixed size.
-    If output size is greater than maximum crop size the image will
-    be zero-padded.
+def random_crop_bbox(
+    image: tf.Tensor,
+    bndbox: List[tf.Tensor],
+    width: int = 299,
+    height: int = 299,
+) -> tf.Tensor:
+    """Random crop an area around a bounding box to a fixed size. If output
+    size is greater than maximum crop size the image will be zero-padded.
 
     Parameters
     ----------
@@ -186,18 +193,19 @@ def random_crop_bbox(image: tf.Tensor, bndbox: List[tf.Tensor],
     crop_width = bndbox[1] - bndbox[0]
     crop_height = bndbox[3] - bndbox[2]
 
-    offset_x = tf.random.uniform([1], 0, tf.reshape(width - crop_width, []),
-                                 dtype=tf.int64)
-    offset_y = tf.random.uniform([1], 0, tf.reshape(height - crop_height, []),
-                                 dtype=tf.int64)
+    offset_x = tf.random.uniform(
+        [1], 0, tf.reshape(width - crop_width, []), dtype=tf.int64
+    )
+    offset_y = tf.random.uniform(
+        [1], 0, tf.reshape(height - crop_height, []), dtype=tf.int64
+    )
 
-    log.debug(f'Sampled offsets: x: {offset_x}, y: {offset_y}')
+    log.debug(f"Sampled offsets: x: {offset_x}, y: {offset_y}")
 
-    log.debug(f'Original bounding box: {bndbox}')
+    log.debug(f"Original bounding box: {bndbox}")
 
     x0, x1 = bndbox[0] - offset_x, bndbox[1] + (width - crop_width - offset_x)
-    y0, y1 = bndbox[2] - offset_y, bndbox[3] + (
-                height - crop_height - offset_y)
+    y0, y1 = bndbox[2] - offset_y, bndbox[3] + (height - crop_height - offset_y)
 
     box = [x0, x1, y0, y1]
 
@@ -205,17 +213,16 @@ def random_crop_bbox(image: tf.Tensor, bndbox: List[tf.Tensor],
     box = shift_upper(box, max_x, max_y)
     box = list(map(lambda x: tf.squeeze(tf.cast(x, tf.int32)), box))
     box = shift_lower(box)
-    log.debug(f'Updated bounding box: {box}')
+    log.debug(f"Updated bounding box: {box}")
 
     return crop_and_pad(image, box, width, height)
 
 
-def center_crop_bbox(image: tf.Tensor, bndbox: list, width: int = 299,
-                     height: int = 299) -> tf.Tensor:
-    """
-    Center crop an area around a bounding box to a fixed size.
-    If output size is greater than maximum crop size the image will
-    be zero-padded.
+def center_crop_bbox(
+    image: tf.Tensor, bndbox: list, width: int = 299, height: int = 299
+) -> tf.Tensor:
+    """Center crop an area around a bounding box to a fixed size. If output
+    size is greater than maximum crop size the image will be zero-padded.
 
     Parameters
     ----------
@@ -253,11 +260,11 @@ def center_crop_bbox(image: tf.Tensor, bndbox: list, width: int = 299,
     return crop_and_pad(image, box, width, height)
 
 
-def crop_and_pad(image: tf.Tensor, bndbox: List[int],
-                 width: int = 299, height: int = 299) -> tf.Tensor:
-    """
-    Crop image to specific size using bounding box,
-    zero-pad if crop is too large.
+def crop_and_pad(
+    image: tf.Tensor, bndbox: List[int], width: int = 299, height: int = 299
+) -> tf.Tensor:
+    """Crop image to specific size using bounding box, zero-pad if crop is too
+    large.
 
     Parameters
     ----------
@@ -284,13 +291,16 @@ def crop_and_pad(image: tf.Tensor, bndbox: List[int],
     return image
 
 
-def read_image(image_path: str, fmt: Optional[str] = None,
-               adaptive_threshold: bool = False) -> tf.Tensor:
+def read_image(
+    image_path: str,
+    fmt: Optional[str] = None,
+    adaptive_threshold: bool = False,
+) -> tf.Tensor:
     image = tf.io.read_file(image_path)
 
-    if fmt == 'png':
+    if fmt == "png":
         image = tf.image.decode_png(image, channels=3)
-    elif fmt == 'jpeg':
+    elif fmt == "jpeg":
         image = tf.image.decode_jpeg(image, channels=3)
     else:
         image = tf.image.decode_image(image, channels=3)
@@ -299,7 +309,14 @@ def read_image(image_path: str, fmt: Optional[str] = None,
     if adaptive_threshold:
         image = image.numpy().astype(np.uint8)
         image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        image = cv.adaptiveThreshold(image, 255., cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 15, 3)
+        image = cv.adaptiveThreshold(
+            image,
+            255.0,
+            cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv.THRESH_BINARY_INV,
+            15,
+            3,
+        )
         image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
         image = tf.convert_to_tensor(image, tf.float32)
     else:
@@ -309,8 +326,7 @@ def read_image(image_path: str, fmt: Optional[str] = None,
 
 
 def augment(image: tf.Tensor) -> tf.Tensor:
-    """
-    Augments 3-channel image tensors.
+    """Augments 3-channel image tensors.
 
     Parameters
     ----------
@@ -328,10 +344,15 @@ def augment(image: tf.Tensor) -> tf.Tensor:
     return image
 
 
-def preprocess(image: tf.Tensor, bbox: List[tf.Tensor],
-               width: int = 299, height: int = 299,
-               random_crop: bool = True,
-               augment_data: bool = True, preprocess_fn: Callable = None):
+def preprocess(
+    image: tf.Tensor,
+    bbox: List[tf.Tensor],
+    width: int = 299,
+    height: int = 299,
+    random_crop: bool = True,
+    augment_data: bool = True,
+    preprocess_fn: Callable = None,
+):
     if random_crop:
         image = random_crop_bbox(image, bbox, width, height)
     else:

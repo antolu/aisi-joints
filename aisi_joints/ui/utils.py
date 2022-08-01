@@ -1,22 +1,29 @@
+"""A powerful, synchronous implementation of run_in_main_thread(...). It allows
+you to receive results from the function invocation:
+
+@run_in_main_thread
+def return_2():
+    return 2
+
+# Runs the above function in the main thread and prints '2':
+print(return_2())
 """
-A powerful, synchronous implementation of run_in_main_thread(...).
-It allows you to receive results from the function invocation:
-
-    @run_in_main_thread
-    def return_2():
-        return 2
-
-    # Runs the above function in the main thread and prints '2':
-    print(return_2())
-"""
-
 import typing as t
 from functools import wraps
-from threading import Event, get_ident, Thread
+from threading import Event
+from threading import get_ident
+from threading import Thread
 
-from PyQt5.QtCore import pyqtSignal, QObject, QThread
-from PyQt5.QtWidgets import QApplication, QFileDialog, QListView, QTreeView, QFileSystemModel, QAbstractItemView, \
-    QDialog
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QThread
+from PyQt5.QtWidgets import QAbstractItemView
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileSystemModel
+from PyQt5.QtWidgets import QListView
+from PyQt5.QtWidgets import QTreeView
 
 
 def thread(function: t.Callable, *args, **kwargs):
@@ -45,7 +52,7 @@ def _main_thread():
     # We reach here in tests that don't (want to) create a QApplication.
     if int(QThread.currentThreadId()) == get_ident():
         return QThread.currentThread()
-    raise RuntimeError('Could not determine main thread')
+    raise RuntimeError("Could not determine main thread")
 
 
 run_in_main_thread = run_in_thread(_main_thread)
@@ -76,8 +83,9 @@ class Executor:
             task.set_exception(SystemExit())
             task.has_run.set()
 
-    def run_in_thread(self, qthread: QThread, f: t.Callable, args: t.Tuple,
-                      kwargs: t.Dict):
+    def run_in_thread(
+        self, qthread: QThread, f: t.Callable, args: t.Tuple, kwargs: t.Dict
+    ):
         if QThread.currentThread() == qthread:
             return f(*args, **kwargs)
         elif self._app_is_about_to_quit:
@@ -131,14 +139,12 @@ class Task:
 
 def choose_directories(parent: QObject) -> t.List[str]:
     dialog = QFileDialog(parent)
-    dialog.setWindowTitle('Select directories with images')
+    dialog.setWindowTitle("Select directories with images")
     dialog.setOption(QFileDialog.DontUseNativeDialog, True)
     dialog.setFileMode(QFileDialog.DirectoryOnly)
-    for view in dialog.findChildren(
-            (QListView, QTreeView)):
+    for view in dialog.findChildren((QListView, QTreeView)):
         if isinstance(view.model(), QFileSystemModel):
-            view.setSelectionMode(
-                QAbstractItemView.ExtendedSelection)
+            view.setSelectionMode(QAbstractItemView.ExtendedSelection)
     dialog.deleteLater()
 
     if dialog.exec() == QDialog.Accepted:

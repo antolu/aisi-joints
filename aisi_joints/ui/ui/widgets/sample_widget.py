@@ -3,12 +3,14 @@ from os import path
 from typing import Optional
 
 from PyQt5.QtCore import QModelIndex
-from PyQt5.QtWidgets import QWidget, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QWidget
 
-from .display_widget import DisplayWidget
 from ...elements.copy_action import CopySelectedCellsAction
 from ...generated.sample_widget_ui import Ui_SampleWidget
 from ...settings import app
+from .display_widget import DisplayWidget
 
 log = logging.getLogger(__name__)
 
@@ -33,24 +35,25 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
 
     def export_flagged(self):
         df = self.table_model.dataframe
-        file, ok = QFileDialog.getSaveFileName(self, 'Export flagged samples',
-                                               app.current_dir, '*.csv')
+        file, ok = QFileDialog.getSaveFileName(
+            self, "Export flagged samples", app.current_dir, "*.csv"
+        )
 
-        if not ok or file is None or file == '':
-            if not ok or file is None or file == '':
-                log.warning(f'Invalid path selected: {file}.')
+        if not ok or file is None or file == "":
+            if not ok or file is None or file == "":
+                log.warning(f"Invalid path selected: {file}.")
                 return
 
             app.current_dir = path.split(file)[0]
 
-        log.info(f'Exporting flagged samples to {file}.')
+        log.info(f"Exporting flagged samples to {file}.")
 
-        df = df[df['flaged']]
+        df = df[df["flaged"]]
 
         try:
             df.to_csv(file, index=False)
         except OSError as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            QMessageBox.critical(self, "Error", str(e))
 
     def flag_clicked(self):
         index = self.sampleTable.currentIndex()
@@ -60,7 +63,8 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
         self.table_model.toggle_flagged(index.row())
         self.sampleTable.dataChanged(
             self.table_model.index(index.row(), 0),
-            self.table_model.index(0, self.table_model.columnCount()))
+            self.table_model.index(0, self.table_model.columnCount()),
+        )
 
     def validate_clicked(self):
         index = self.sampleTable.currentIndex()
@@ -70,4 +74,5 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
         self.table_model.toggle_validate(index.row())
         self.sampleTable.dataChanged(
             self.table_model.index(index.row(), 0),
-            self.table_model.index(0, self.table_model.columnCount()))
+            self.table_model.index(0, self.table_model.columnCount()),
+        )

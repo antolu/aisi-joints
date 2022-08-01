@@ -3,11 +3,13 @@ from typing import Optional
 
 import pandas as pd
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QDialog, QWidget, QFileDialog
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QWidget
 
+from ....data.filter_csv import filter_dataframe
 from ...generated.filter_dialog_ui import Ui_FilterDialog
 from ...settings import app
-from ....data.filter_csv import filter_dataframe
 
 log = logging.getLogger(__name__)
 
@@ -26,15 +28,16 @@ class FilterDialog(QDialog, Ui_FilterDialog):
 
     def on_browse(self):
         files, ok = QFileDialog.getOpenFileNames(
-            self, 'Select filters', app.current_dir, '*.csv')
+            self, "Select filters", app.current_dir, "*.csv"
+        )
 
         if not ok or len(files) == 0:
-            log.debug('No files selected.')
+            log.debug("No files selected.")
             return
 
         app.current_dir = files[-1]
 
-        self.textFiles.setText('\n'.join(files))
+        self.textFiles.setText("\n".join(files))
 
     def on_ok(self):
         files = self.textFiles.toPlainText().splitlines()

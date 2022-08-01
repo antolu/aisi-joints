@@ -1,9 +1,10 @@
-"""
+"""This module is runnable.
 
-This module is runnable. Use the `-h` option to view usage.
+Use the `-h` option to view usage.
 """
 import logging
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
+from argparse import Namespace
 from typing import List
 
 import pandas as pd
@@ -19,7 +20,7 @@ def concatenate_dataset(dfs: List[pd.DataFrame]) -> pd.DataFrame:
     for df in dfs:
         df = df.copy()
 
-        unnamed = [o for o in df.columns if o.startswith('Unnamed')]
+        unnamed = [o for o in df.columns if o.startswith("Unnamed")]
         if len(unnamed) > 0:
             df.drop(columns=unnamed, inplace=True)
 
@@ -38,16 +39,17 @@ def main(args: Namespace):
     concatenated.to_csv(args.output, index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = ArgumentParser()
 
-    parser.add_argument('input', nargs='+',
-                        help='Input .csv datasets to concatenate.')
-    parser.add_argument('-o', '--output', default='concatenated.csv',
-                        help='Path to output concatenated .csv')
+    parser.add_argument("input", nargs="+", help="Input .csv datasets to concatenate.")
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="concatenated.csv",
+        help="Path to output concatenated .csv",
+    )
 
     args = parser.parse_args()
 
     main(args)
-
-

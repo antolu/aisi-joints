@@ -1,9 +1,10 @@
 import logging
 
-from PyQt5.QtWidgets import QMainWindow, QActionGroup
+from PyQt5.QtWidgets import QActionGroup
+from PyQt5.QtWidgets import QMainWindow
 
-from .tools_menu import ToolsMenu
 from ..generated.main_window_ui import Ui_MainWindow
+from .tools_menu import ToolsMenu
 
 log = logging.getLogger(__name__)
 
@@ -16,33 +17,27 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.tools_menu = ToolsMenu(self.sampleWidget.table_model, self)
 
         self.actionShow_Image.triggered.connect(
-            lambda: self.dispatch_action('show_current_img'))
-        self.actionImport.triggered.connect(
-            lambda: self.dispatch_action('import_'))
-        self.actionLoad_csv.triggered.connect(
-            lambda: self.dispatch_action('load'))
-        self.actionSave_csv.triggered.connect(
-            lambda: self.dispatch_action('save'))
+            lambda: self.dispatch_action("show_current_img")
+        )
+        self.actionImport.triggered.connect(lambda: self.dispatch_action("import_"))
+        self.actionLoad_csv.triggered.connect(lambda: self.dispatch_action("load"))
+        self.actionSave_csv.triggered.connect(lambda: self.dispatch_action("save"))
         self.actionExport_csv.triggered.connect(
-            lambda: self.dispatch_action('export_csv'))
+            lambda: self.dispatch_action("export_csv")
+        )
 
         # sample widget actions
-        self.actionFlag.triggered.connect(
-            self.sampleWidget.flag_clicked)
-        self.actionExportFlagged.triggered.connect(
-            self.sampleWidget.export_flagged)
+        self.actionFlag.triggered.connect(self.sampleWidget.flag_clicked)
+        self.actionExportFlagged.triggered.connect(self.sampleWidget.export_flagged)
 
         # manipulate training data actions
-        self.action_Partition_Dataset.triggered.connect(
-            self.tools_menu.on_partition)
-        self.action_Filter_Dataset.triggered.connect(
-            self.tools_menu.on_filter)
-        self.action_Update_Filepaths.triggered.connect(
-            self.tools_menu.on_update_paths)
+        self.action_Partition_Dataset.triggered.connect(self.tools_menu.on_partition)
+        self.action_Filter_Dataset.triggered.connect(self.tools_menu.on_filter)
+        self.action_Update_Filepaths.triggered.connect(self.tools_menu.on_update_paths)
         self.action_Generate_tfrecord.triggered.connect(
-            self.tools_menu.on_generate_tfrecord)
-        self.actionExport_Labelmap.triggered.connect(
-            self.tools_menu.on_export_labelmap)
+            self.tools_menu.on_generate_tfrecord
+        )
+        self.actionExport_Labelmap.triggered.connect(self.tools_menu.on_export_labelmap)
 
         self.actionExit.triggered.connect(self.close)
 
@@ -53,8 +48,7 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionTrain.changed.connect(self.change_mode)
         self.actionEvaluation.changed.connect(self.change_mode)
 
-        self.actionEvaluation_Metrics.triggered.connect(
-            self.evalWidget.show_metrics)
+        self.actionEvaluation_Metrics.triggered.connect(self.evalWidget.show_metrics)
 
         self.sampleWidget.data_loaded.connect(self.update_action_state)
         self.evalWidget.data_loaded.connect(self.update_action_state)

@@ -1,24 +1,34 @@
-from typing import List, Tuple, Callable, Any, Optional
-
-import pandas as pd
 import logging
-import torch
+from typing import Any
+from typing import Callable
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 import numpy as np
+import pandas as pd
+import torch
 import torch.nn.functional as F
 from PIL import Image
-from ..data.common import Sample
+
 from ..constants import LABEL_MAP
+from ..data.common import Sample
 
 log = logging.getLogger(__name__)
 
 
 class JointDataset(torch.utils.data.dataset.Dataset):
-    def __init__(self, df: pd.DataFrame, random_crop: bool = False,
-                 crop_width: int = 256, crop_height: int = 256,
-                 transform: Callable[[Any], torch.Tensor] = None):
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        random_crop: bool = False,
+        crop_width: int = 256,
+        crop_height: int = 256,
+        transform: Callable[[Any], torch.Tensor] = None,
+    ):
         super().__init__()
 
-        self.classes = list(pd.unique(df['cls']))
+        self.classes = list(pd.unique(df["cls"]))
 
         self._data = df
         self._random_crop = random_crop
@@ -39,11 +49,9 @@ class JointDataset(torch.utils.data.dataset.Dataset):
         bbox = sample.bbox.to_pascal_voc()
 
         if self._random_crop:
-            image = random_crop_bbox(image, bbox, self._crop_width,
-                                     self._crop_height)
+            image = random_crop_bbox(image, bbox, self._crop_width, self._crop_height)
         else:
-            image = center_crop_bbox(image, bbox, self._crop_width,
-                                     self._crop_height)
+            image = center_crop_bbox(image, bbox, self._crop_width, self._crop_height)
 
         label = LABEL_MAP[sample.bbox.cls] - 1
 
@@ -54,32 +62,38 @@ class JointDataset(torch.utils.data.dataset.Dataset):
         return image, label
 
     @classmethod
-    def from_csv(cls, csv_path: str, split: str = None,
-                 random_crop: bool = False,
-                 crop_width: int = 256, crop_height: int = 256,
-                 transform: Optional[Callable[[Any], torch.Tensor]] = None) \
-            -> 'JointDataset':
+    def from_csv(
+        cls,
+        csv_path: str,
+        split: str = None,
+        random_crop: bool = False,
+        crop_width: int = 256,
+        crop_height: int = 256,
+        transform: Optional[Callable[[Any], torch.Tensor]] = None,
+    ) -> "JointDataset":
         df = pd.read_csv(csv_path)
 
-        return cls.from_df(df, split, random_crop, crop_width, crop_height,
-                           transform)
+        return cls.from_df(df, split, random_crop, crop_width, crop_height, transform)
 
     @classmethod
-    def from_df(cls, df: pd.DataFrame, split: str = None,
-                 random_crop: bool = False,
-                 crop_width: int = 256, crop_height: int = 256,
-                 transform: Optional[Callable[[Any], torch.Tensor]] = None):
+    def from_df(
+        cls,
+        df: pd.DataFrame,
+        split: str = None,
+        random_crop: bool = False,
+        crop_width: int = 256,
+        crop_height: int = 256,
+        transform: Optional[Callable[[Any], torch.Tensor]] = None,
+    ):
 
         if split is not None:
-            df = df[df['split'] == split]
+            df = df[df["split"] == split]
 
         return cls(df, random_crop, crop_width, crop_height, transform)
 
 
 def shift_lower(bndbox: List[int]) -> List[int]:
-    """
-    Shift bounding box upwards, if lower bounds are negative
-    (out of bounds)
+    """Shift bounding box upwards, if lower bounds are negative (out of bounds)
 
     Parameters
     ----------
@@ -104,9 +118,8 @@ def shift_lower(bndbox: List[int]) -> List[int]:
 
 
 def shift_upper(bndbox: List[int], max_x: int, max_y: int) -> List[int]:
-    """
-    Shift bounding box downwards, if upper bounds are beyond image edge
-    (out of bounds)
+    """Shift bounding box downwards, if upper bounds are beyond image edge (out
+    of bounds)
 
     Parameters
     ----------
@@ -136,12 +149,11 @@ def shift_upper(bndbox: List[int], max_x: int, max_y: int) -> List[int]:
     return [x0, x1, y0, y1]
 
 
-def random_crop_bbox(image: np.ndarray, bndbox: List[int],
-                     width: int = 299, height: int = 299) -> torch.Tensor:
-    """
-    Random crop an area around a bounding box to a fixed size.
-    If output size is greater than maximum crop size the image will
-    be zero-padded.
+def random_crop_bbox(
+    image: np.ndarray, bndbox: List[int], width: int = 299, height: int = 299
+) -> torch.Tensor:
+    """Random crop an area around a bounding box to a fixed size. If output
+    size is greater than maximum crop size the image will be zero-padded.
 
     Parameters
     ----------
@@ -166,29 +178,27 @@ def random_crop_bbox(image: np.ndarray, bndbox: List[int],
     offset_x = torch.randint(0, width - crop_width, (1,)).item()
     offset_y = torch.randint(0, height - crop_height, (1,)).item()
 
-    log.debug(f'Sampled offsets: x: {offset_x}, y: {offset_y}')
+    log.debug(f"Sampled offsets: x: {offset_x}, y: {offset_y}")
 
-    log.debug(f'Original bounding box: {bndbox}')
+    log.debug(f"Original bounding box: {bndbox}")
 
     x0, x1 = bndbox[0] - offset_x, bndbox[1] + (width - crop_width - offset_x)
-    y0, y1 = bndbox[2] - offset_y, bndbox[3] + (
-            height - crop_height - offset_y)
+    y0, y1 = bndbox[2] - offset_y, bndbox[3] + (height - crop_height - offset_y)
 
     box = [x0, x1, y0, y1]
 
     box = shift_upper(box, max_x, max_y)
     box = shift_lower(box)
-    log.debug(f'Updated bounding box: {box}')
+    log.debug(f"Updated bounding box: {box}")
 
     return crop_and_pad(image, box, width, height)
 
 
-def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299,
-                     height: int = 299) -> torch.Tensor:
-    """
-    Center crop an area around a bounding box to a fixed size.
-    If output size is greater than maximum crop size the image will
-    be zero-padded.
+def center_crop_bbox(
+    image: np.ndarray, bndbox: list, width: int = 299, height: int = 299
+) -> torch.Tensor:
+    """Center crop an area around a bounding box to a fixed size. If output
+    size is greater than maximum crop size the image will be zero-padded.
 
     Parameters
     ----------
@@ -222,11 +232,11 @@ def center_crop_bbox(image: np.ndarray, bndbox: list, width: int = 299,
     return crop_and_pad(image, box, width, height)
 
 
-def crop_and_pad(image: np.ndarray, bndbox: List[int],
-                 width: int = 299, height: int = 299) -> np.ndarray:
-    """
-    Crop image to specific size using bounding box,
-    zero-pad if crop is too large.
+def crop_and_pad(
+    image: np.ndarray, bndbox: List[int], width: int = 299, height: int = 299
+) -> np.ndarray:
+    """Crop image to specific size using bounding box, zero-pad if crop is too
+    large.
 
     Parameters
     ----------
@@ -248,9 +258,9 @@ def crop_and_pad(image: np.ndarray, bndbox: List[int],
 
     image = image[y0:y1, x0:x1, :]
 
-    image = np.pad(image,
-                   ((0, height - image.shape[0]),
-                    (0, width - image.shape[1]),
-                    (0, 0)))
+    image = np.pad(
+        image,
+        ((0, height - image.shape[0]), (0, width - image.shape[1]), (0, 0)),
+    )
 
     return image

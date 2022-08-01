@@ -2,13 +2,17 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from PyQt5.QtCore import QSortFilterProxyModel, QModelIndex, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QFileDialog, QMessageBox
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QModelIndex
+from PyQt5.QtCore import QSortFilterProxyModel
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QWidget
 
-from ..dialogs.export_dialog import ExportDialog
-from ..dialogs.import_dialog import ImportDialog
 from ...elements.table_model import TableModel
 from ...settings import app
+from ..dialogs.export_dialog import ExportDialog
+from ..dialogs.import_dialog import ImportDialog
 
 log = logging.getLogger(__name__)
 
@@ -40,27 +44,29 @@ class DisplayWidget(QWidget):
     def save(self):
         if self._csv_path is None:
             file, ok = QFileDialog.getSaveFileName(
-                self, 'Select save file', app.current_dir, '*.csv')
+                self, "Select save file", app.current_dir, "*.csv"
+            )
 
             if not ok or file is None:
-                log.debug('No file selected.')
+                log.debug("No file selected.")
                 return
 
             app.current_dir = file
             self._csv_path = file
 
         try:
-            log.info(f'Saving .csv to {self._csv_path}')
+            log.info(f"Saving .csv to {self._csv_path}")
             self.table_model.dataframe.to_csv(self._csv_path, index=False)
         except OSError as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            QMessageBox.critical(self, "Error", str(e))
 
     def load(self):
         file, ok = QFileDialog.getOpenFileName(
-            self, 'Open .csv', app.current_dir, '*.csv')
+            self, "Open .csv", app.current_dir, "*.csv"
+        )
 
-        if not ok or file is None or file == '':
-            log.debug('No file selected.')
+        if not ok or file is None or file == "":
+            log.debug("No file selected.")
             return
 
         app.current_dir = file
@@ -81,8 +87,10 @@ class DisplayWidget(QWidget):
             self._csv_path = None
 
             QMessageBox.information(
-                self, 'Import Success',
-                f'Successfully imported {len(df)} samples')
+                self,
+                "Import Success",
+                f"Successfully imported {len(df)} samples",
+            )
 
             self.data_loaded.emit()
 

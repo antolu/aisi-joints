@@ -1,22 +1,20 @@
-"""
-This module contains the AppSettings class, an abstraction of the
-QSettings class.
-"""
-import typing as t
+"""This module contains the AppSettings class, an abstraction of the QSettings
+class."""
 import logging
+import typing as t
 from os import path
 
 from PyQt5.QtCore import QSettings
 
 
 class AppSettings:
-    """
-    The AppSettings class wraps an instance of QSettings and provides easy
+    """The AppSettings class wraps an instance of QSettings and provides easy
     access to some data that can be saved to the users computer.
 
-    The settings must be loaded using the init method before accessing any
-    other attribute.
+    The settings must be loaded using the init method before accessing
+    any other attribute.
     """
+
     def __init__(self):
         self.settings: QSettings = None
 
@@ -32,16 +30,16 @@ class AppSettings:
             self.is_init = True
 
     def save_window_state(self, geometry, window_state):
-        """ Currently not used """
+        """Currently not used."""
         if not self.is_init:
             self.init()
 
-        self.settings.setValue('geometry', geometry)
-        self.settings.setValue('windowState', window_state)
+        self.settings.setValue("geometry", geometry)
+        self.settings.setValue("windowState", window_state)
         self.settings.sync()
 
     def geometry(self):
-        """ Currently not used """
+        """Currently not used."""
         if not self.is_init:
             self.init()
 
@@ -55,25 +53,25 @@ class AppSettings:
 
     @property
     def current_dir(self) -> str:
-        """ Accesses the last used directory in a file browser. """
+        """Accesses the last used directory in a file browser."""
         if not self.is_init:
             self.init()
 
-        return self.settings.value('current_directory', '.', str)
+        return self.settings.value("current_directory", ".", str)
 
     @current_dir.setter
     def current_dir(self, pth: str):
-        """ Accesses the last used directory in a file browser. """
+        """Accesses the last used directory in a file browser."""
         if not self.is_init:
             self.init()
 
         if not isinstance(pth, str):
-            raise ValueError(f'Path {pth} should be of type string.')
+            raise ValueError(f"Path {pth} should be of type string.")
 
         if path.isfile(pth) and not path.isdir(pth):
             pth = path.split(pth)[0]
 
-        self.settings.setValue('current_directory', pth)
+        self.settings.setValue("current_directory", pth)
 
 
 app = AppSettings()

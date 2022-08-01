@@ -3,9 +3,16 @@ from typing import Optional
 
 import cv2 as cv
 import numpy as np
-from PyQt5.QtGui import QPen, QColorConstants as QColor, QBrush
-from PyQt5.QtWidgets import QWidget, QMessageBox
-from pyqtgraph import ImageItem, GraphicsView, ViewBox, PlotDataItem, TextItem
+from PyQt5.QtGui import QBrush
+from PyQt5.QtGui import QColorConstants as QColor
+from PyQt5.QtGui import QPen
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QWidget
+from pyqtgraph import GraphicsView
+from pyqtgraph import ImageItem
+from pyqtgraph import PlotDataItem
+from pyqtgraph import TextItem
+from pyqtgraph import ViewBox
 
 from ....data.common import Sample
 from ...utils import run_in_main_thread
@@ -22,8 +29,11 @@ class ImageWidget(GraphicsView):
         self.vb.invertY()
         self.setCentralItem(self.vb)
 
-        self.item: ImageItem = ImageItem(axisOrder='row-major')
-        self.box = PlotDataItem(pen=QPen(QColor.Black, 4), connect='all', )
+        self.item: ImageItem = ImageItem(axisOrder="row-major")
+        self.box = PlotDataItem(
+            pen=QPen(QColor.Black, 4),
+            connect="all",
+        )
         self.text = TextItem(color=QColor.Black, fill=QColor.White)
 
         self.pen_green = QPen(QColor.Green, 4)
@@ -39,8 +49,10 @@ class ImageWidget(GraphicsView):
             image = cv.imread(sample.filepath)
         except OSError as e:
             QMessageBox.critical(
-                self, 'Error',
-                f'Error in loading image from {sample.filepath}\n{e}')
+                self,
+                "Error",
+                f"Error in loading image from {sample.filepath}\n{e}",
+            )
             return
 
         if not evaluation:
@@ -49,25 +61,27 @@ class ImageWidget(GraphicsView):
             text = label
         else:
             if not sample.has_detection:
-                raise ValueError(f'Sample {sample.eventId} has no detections.')
+                raise ValueError(f"Sample {sample.eventId} has no detections.")
 
             if sample.num_detections > 1:
-                log.warning(f'Sample {sample.eventId} has more than one '
-                            f'detection. Don\'t know what to do.')
+                log.warning(
+                    f"Sample {sample.eventId} has more than one "
+                    f"detection. Don't know what to do."
+                )
                 return
 
             box = np.array(sample.detected_bbox[0].to_coords())
             label = sample.detected_bbox[0].cls
             score = sample.detected_bbox[0].score
 
-            text = f'{label}: {score:.3f}'
+            text = f"{label}: {score:.3f}"
 
         self.item.setImage(image)
         self.box.setData(box)
         self.text.setText(text)
         self.text.setPos(sample.bbox.x0, sample.bbox.y1)
 
-        if label == 'DEFECT':
+        if label == "DEFECT":
             self.box.setPen(self.pen_red)
             self.text.fill = QBrush(QColor.Red)
         else:

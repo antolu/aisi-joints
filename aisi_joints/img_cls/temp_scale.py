@@ -1,6 +1,5 @@
-"""
-This module provides an implementation of temperature scaling for a trained image
-classification CNN.
+"""This module provides an implementation of temperature scaling for a trained
+image classification CNN.
 
 This module is runnable. Use the `-h` option to view usage.
 """
@@ -8,32 +7,31 @@ import argparse
 import logging
 import os
 from os import path
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
 import tensorflow as tf
 
+from .._utils import setup_logger
 from ._config import Config
 from ._dataloader import JointsSequence
-from .._utils import setup_logger
 
 log = logging.getLogger(__name__)
 
 
 class TempScale(tf.keras.layers.Layer):
-    """
-    A Keras Layer implementation that simply divides the inputs by a float
-    "temperature" that is trainable.
-    """
+    """A Keras Layer implementation that simply divides the inputs by a float
+    "temperature" that is trainable."""
+
     def __init__(self, **kwargs):
-        if 'name' not in kwargs:
-            kwargs.update({'name': 'temp_scale'})
+        if "name" not in kwargs:
+            kwargs.update({"name": "temp_scale"})
         super().__init__(**kwargs)
 
         self._temperature = tf.Variable(1.5, dtype="float32", trainable=True)
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        """
-        Input logits (pre softmax), output temperature scaled logits.
+        """Input logits (pre softmax), output temperature scaled logits.
 
         Parameters
         ----------
@@ -51,8 +49,7 @@ class TempScale(tf.keras.layers.Layer):
 
 
 def temp_scale(config: Config, save_dir: str, model_dir: str):
-    """
-    Performs the temperature scaling optimization.
+    """Performs the temperature scaling optimization.
 
     This is done by
     1. Loading a previously exported model.
@@ -70,16 +67,23 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
     input_size = model.input_shape[1:3]
 
-    dataset = JointsSequence(config.dataset, 'validation', *input_size,
-                             random_crop=False, augment_data=False,
-                             batch_size=config.batch_size)
+    dataset = JointsSequence(
+        config.dataset,
+        "validation",
+        *input_size,
+        random_crop=False,
+        augment_data=False,
+        batch_size=config.batch_size,
+    )
 
     # remove last softmax layer
     input_ = model.input
-    if model.layers[-1].name == 'mlp':
-        model = tf.keras.Model(inputs=input_, outputs=model.layers[-1]._sublayers[-2].output)
+    if model.layers[-1].name == "mlp":
+        model = tf.keras.Model(
+            inputs=input_, outputs=model.layers[-1]._sublayers[-2].output
+        )
     else:
-        raise ValueError('Don\'t know what to do.')
+        raise ValueError("Don't know what to do.")
 
     model.trainable = False  # freeze all layers
 
@@ -94,15 +98,13 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     nll_criterion = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
 
     early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor='loss',
-        patience=10,
-        restore_best_weights=True
+        monitor="loss", patience=10, restore_best_weights=True
     )
 
     model.compile(optimizer=optimizer, loss=nll_criterion)
     model.fit(dataset, epochs=250, callbacks=[early_stop])
 
-    log.info(f'Trained model temperature to {temp_scale.temperature}.')
+    log.info(f"Trained model temperature to {temp_scale.temperature}.")
 
     # re-append softmax layer
     predictions = tf.keras.activations.softmax(x)
@@ -118,34 +120,44 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
 def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('config', help='Path to config.py')
-    parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
-                        required=True)
-    parser.add_argument('-s', '--save-dir', type=str, dest='save_dir',
-                        default='models',
-                        help="Where to save the models.")
-    parser.add_argument('-m', '--model-dir', dest='model_dir', type=str,
-                        help='Where to find exported model.')
+    parser.add_argument("config", help="Path to config.py")
+    parser.add_argument("-d", "--dataset", help="Path to dataset .csv", required=True)
+    parser.add_argument(
+        "-s",
+        "--save-dir",
+        type=str,
+        dest="save_dir",
+        default="models",
+        help="Where to save the models.",
+    )
+    parser.add_argument(
+        "-m",
+        "--model-dir",
+        dest="model_dir",
+        type=str,
+        help="Where to find exported model.",
+    )
 
     args, unparsed = parser.parse_known_args(argv)
 
     if len(unparsed) != 0:
         raise SystemExit("Unknown argument: {}".format(unparsed))
 
-    if args.config.endswith('.py'):
+    if args.config.endswith(".py"):
         args.config = args.config[:-3]
-    conf = Config(args.config.replace('/', '.'))
+    conf = Config(args.config.replace("/", "."))
 
     if args.dataset is not None:
         conf.dataset = args.dataset
     else:
         if conf.dataset is None:
-            raise ValueError('Must supply either config.dataset or '
-                             'dataset command line argument.')
+            raise ValueError(
+                "Must supply either config.dataset or " "dataset command line argument."
+            )
 
     setup_logger()
     temp_scale(conf, args.save_dir, args.model_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

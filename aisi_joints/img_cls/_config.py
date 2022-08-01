@@ -1,11 +1,10 @@
-"""
-This module provides an abstraction of the configuration options for fine-
-tuning image classification CNNs.
-"""
+"""This module provides an abstraction of the configuration options for fine-
+tuning image classification CNNs."""
 import datetime
 import logging
 from importlib import import_module
-from typing import List, Dict
+from typing import Dict
+from typing import List
 
 import tensorflow as tf
 
@@ -13,8 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def if_in_else(data: dict, key: str, default_value: ... = None):
-    """
-    If key is in data, return data[key], else a default value.
+    """If key is in data, return data[key], else a default value.
 
     Parameters
     ----------
@@ -30,18 +28,19 @@ def if_in_else(data: dict, key: str, default_value: ... = None):
         return data[key]
     else:
         if default_value is None:
-            msg = f'Could not find required key {key}.'
+            msg = f"Could not find required key {key}."
             raise AttributeError(msg)
         else:
-            log.debug(f'Could not find key {key}, replacing with default '
-                      f'value: {default_value}')
+            log.debug(
+                f"Could not find key {key}, replacing with default "
+                f"value: {default_value}"
+            )
             return default_value
 
 
 def if_hasattr_else(data: ..., key: str, default_value: ... = None):
-    """
-    If data has attribute key, return the attribute, otherwise return
-    a default value.
+    """If data has attribute key, return the attribute, otherwise return a
+    default value.
 
     Parameters
     ----------
@@ -57,28 +56,28 @@ def if_hasattr_else(data: ..., key: str, default_value: ... = None):
         return getattr(data, key)
     else:
         if default_value is None:
-            msg = f'Could not find required attribute {key}.'
+            msg = f"Could not find required attribute {key}."
             raise AttributeError(msg)
         else:
             log.debug(
-                f'Could not find attribute {key}, replacing with default '
-                f'value: {default_value}')
+                f"Could not find attribute {key}, replacing with default "
+                f"value: {default_value}"
+            )
             return default_value
 
 
 class FitConfig:
-    """
-    Wraps some objects used for the Keras Fit API model.fit() method.
-    """
+    """Wraps some objects used for the Keras Fit API model.fit() method."""
+
     optimizer: tf.keras.optimizers.Optimizer
     epochs: int
     callbacks: List[tf.keras.callbacks.Callback]
 
     def __init__(self, data: dict):
-        self.optimizer = if_in_else(data, 'optimizer')
-        self.epochs = if_in_else(data, 'epochs', 1000)
+        self.optimizer = if_in_else(data, "optimizer")
+        self.epochs = if_in_else(data, "epochs", 1000)
 
-        self.callbacks = if_hasattr_else(data, 'callbacks')
+        self.callbacks = if_hasattr_else(data, "callbacks")
 
 
 class Config:
@@ -108,29 +107,25 @@ class Config:
     def __init__(self, config_path: str):
         module = import_module(config_path)
 
-        self.batch_size = if_hasattr_else(module, 'batch_size', 32)
+        self.batch_size = if_hasattr_else(module, "batch_size", 32)
         self.bs = self.batch_size
 
-        self.fc_hidden_dim = if_hasattr_else(module, 'fc_hidden_dim', 2048)
-        self.fc_dropout = if_hasattr_else(module, 'fc_dropout', 0.8)
-        self.fc_num_layers = if_hasattr_else(module, 'fc_num_layers', 1)
-        self.fc_activation = if_hasattr_else(module, 'fc_activation', 'relu')
+        self.fc_hidden_dim = if_hasattr_else(module, "fc_hidden_dim", 2048)
+        self.fc_dropout = if_hasattr_else(module, "fc_dropout", 0.8)
+        self.fc_num_layers = if_hasattr_else(module, "fc_num_layers", 1)
+        self.fc_activation = if_hasattr_else(module, "fc_activation", "relu")
 
-        self.workers = if_hasattr_else(module, 'workers', 4)
+        self.workers = if_hasattr_else(module, "workers", 4)
 
-        self.base_model = if_hasattr_else(module, 'base_model',
-                                          'inception_resnet_v2')
-        self.layers_to_freeze = if_hasattr_else(module, 'layers_to_freeze',
-                                                'none')
+        self.base_model = if_hasattr_else(module, "base_model", "inception_resnet_v2")
+        self.layers_to_freeze = if_hasattr_else(module, "layers_to_freeze", "none")
 
-        self.transfer_config = FitConfig(
-            if_hasattr_else(module, 'transfer_config'))
-        self.finetune_config = FitConfig(
-            if_hasattr_else(module, 'finetune_config'))
+        self.transfer_config = FitConfig(if_hasattr_else(module, "transfer_config"))
+        self.finetune_config = FitConfig(if_hasattr_else(module, "finetune_config"))
 
-        self.class_weights = if_hasattr_else(module, 'class_weights', {})
+        self.class_weights = if_hasattr_else(module, "class_weights", {})
 
-        self.log_dir = 'logs'
-        self.checkpoint_dir = 'checkpoints'
+        self.log_dir = "logs"
+        self.checkpoint_dir = "checkpoints"
         self.dataset = None
         self.timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

@@ -1,11 +1,11 @@
-"""
-This module provides a means ot compute the mean and standard deviation of
+"""This module provides a means ot compute the mean and standard deviation of
 all images in a .csv dataset.
 
 This module is runnable. Use the `-h` option to view usage.
 """
 import logging
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
+from argparse import Namespace
 
 import numpy as np
 import pandas as pd
@@ -17,8 +17,8 @@ log = logging.getLogger(__name__)
 
 
 def compute_mean_std(df: pd.DataFrame):
-    if 'filepath' not in df.columns:
-        msg = 'Could not find filepath column in dataframe'
+    if "filepath" not in df.columns:
+        msg = "Could not find filepath column in dataframe"
         raise ValueError(msg)
 
     partial_mean = np.zeros(3)
@@ -26,7 +26,7 @@ def compute_mean_std(df: pd.DataFrame):
 
     pixel_count = 0
 
-    for file in df['filepath']:
+    for file in df["filepath"]:
         image = Image.open(file)
         arr = np.asarray(image) / 255
         pixel_count += image.width * image.height
@@ -35,12 +35,13 @@ def compute_mean_std(df: pd.DataFrame):
 
     mean = partial_mean / len(df)
 
-    for file in df['filepath']:
+    for file in df["filepath"]:
         image = Image.open(file)
         arr = np.asarray(image) / 255
 
         partial_sq += np.sum((arr - mean) ** 2, axis=(0, 1)) / (
-                    image.width * image.height)
+            image.width * image.height
+        )
 
     std = np.sqrt(partial_sq / len(df))
 
@@ -52,13 +53,12 @@ def main(args: Namespace):
 
     mean, std = compute_mean_std(df)
 
-    log.info(f'Computed mean :{mean} and std: {std}')
+    log.info(f"Computed mean :{mean} and std: {std}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument('csv_path',
-                        help='Path to dataset .csv.')
+    parser.add_argument("csv_path", help="Path to dataset .csv.")
 
     args = parser.parse_args()
 
