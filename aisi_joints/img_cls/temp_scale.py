@@ -76,10 +76,7 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
 
     # remove last softmax layer
     input_ = model.input
-    if model.layers[-1].name == 'mlp':
-        model = tf.keras.Model(inputs=input_, outputs=model.layers[-1]._sublayers[-2].output)
-    else:
-        raise ValueError('Don\'t know what to do.')
+    model = tf.keras.Model(inputs=input_, outputs=model.layers[-2].output)
 
     model.trainable = False  # freeze all layers
 

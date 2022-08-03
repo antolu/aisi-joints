@@ -78,7 +78,7 @@ class FitConfig:
         self.optimizer = if_in_else(data, 'optimizer')
         self.epochs = if_in_else(data, 'epochs', 1000)
 
-        self.callbacks = if_hasattr_else(data, 'callbacks')
+        self.callbacks = if_hasattr_else(data, 'callbacks', [])
 
 
 class Config:

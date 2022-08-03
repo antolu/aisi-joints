@@ -31,7 +31,7 @@ def export_model(config: Config, checkpoint_dir: str, output_dir: str):
 
     checkpoint_path = get_latest(checkpoint_dir, lambda o: o.endswith('.h5'))
     log.info(f'Reading checkpoint from {checkpoint_path}.')
-    model.load_weights(checkpoint_path)
+    model.load_weights(checkpoint_path, by_name=True)
 
     log.info(f'Writing model to {output_dir}.')
     os.makedirs(output_dir, exist_ok=True)

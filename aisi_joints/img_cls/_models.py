@@ -15,7 +15,7 @@ from ._config import Config
 log = logging.getLogger(__name__)
 
 
-class MLP(tf.keras.layers.Layer):
+class MLP:
     """Sequential multi-layer perceptron (MLP) block."""
     def __init__(
             self,
@@ -33,8 +33,10 @@ class MLP(tf.keras.layers.Layer):
           final_activation: Type of activation to use on last layer.
           **kwargs: Extra args passed to the Keras Layer base class.
         """
-
-        super().__init__(**kwargs)
+        # if 'name' not in kwargs:
+        #     kwargs.update({'name': 'mlp'})
+        #
+        # super().__init__(**kwargs)
 
         self._sublayers = []
         self._units = units
@@ -57,23 +59,14 @@ class MLP(tf.keras.layers.Layer):
                 units[-1], activation=None, use_bias=use_bias))
 
         # separate final activation from FCs to simplify temp scaling
-        self._sublayers.append(activations.get(final_activation))
+        if final_activation is not None:
+            if final_activation == 'softmax':
+                self._sublayers.append(tf.keras.layers.Softmax())
+            else:
+                raise NotImplementedError
 
-    def get_config(self):
-        config = super().get_config()
-
-        config.update({
-            'units': self._units,
-            'use_bias': self._use_bias,
-            'activation': self._activation,
-            'dropout': self._dropout,
-            'final_activation': self._final_activation,
-        })
-
-        return config
-
-    def call(self, x: tf.Tensor) -> tf.Tensor:
-        """Performs the forward computation of the block."""
+    def __call__(self, inputs):
+        x = inputs
         for layer in self._sublayers:
             x = layer(x)
 
@@ -185,17 +178,16 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
 
     input_ = base_model.input
     preprocessed_input = preprocess_fn(input_)
-    base_model = Model(inputs=input_,  # add training=False for BN layers
-                       outputs=base_model(preprocessed_input, training=False))
+    base_model_output = base_model(preprocessed_input, training=False)
 
     # add fully connected layer
     mlp = MLP(([fc_hidden_dim] * fc_num_layers) + [2],
               activation=fc_activation,
               dropout=fc_dropout, final_activation='softmax')
-    predictions = mlp(base_model.output)
+    predictions = mlp(base_model_output)
 
     # this is the model we will train
-    model = Model(inputs=base_model.input, outputs=predictions)
+    model = Model(inputs=input_, outputs=predictions)
 
     return model
 
