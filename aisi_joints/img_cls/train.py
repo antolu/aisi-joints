@@ -46,7 +46,8 @@ def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
               train_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               val_data: Union[tf.data.Dataset, tf.keras.utils.Sequence],
               epochs: int, name: str,
-              metrics: Optional[List[tf.keras.metrics.Metric]] = None):
+              metrics: Optional[List[tf.keras.metrics.Metric]] = None,
+              callbacks: Optional[List[tf.keras.callbacks.Callback]] = None):
     # create all callback functions
     img_writer = tf.summary.create_file_writer(
         path.join(mw.config.log_dir, mw.config.timestamp, f'{name}/images'))
@@ -74,7 +75,7 @@ def fit_model(mw: ModelWrapper, optimizer: tf.keras.optimizers.Optimizer,
             log_dir=path.join(mw.config.log_dir, mw.config.timestamp, name)),
         tensorboard_img_cb,
         model_checkpoint_callback,
-    ] + mw.config.callbacks
+    ] + callbacks if callbacks is not None else []
 
     # train the model on the new data for a few epochs
     mw.model.fit(train_data, batch_size=mw.config.batch_size,
@@ -123,7 +124,8 @@ def train(config: Config, mode: str):
         try:
             fit_model(mw, config.transfer_config.optimizer, train_data,
                       val_data, config.transfer_config.epochs,
-                      'transfer', metrics=metrics)
+                      'transfer', metrics=metrics,
+                      callbacks=mw.config.transfer_config.callbacks)
         except KeyboardInterrupt:
             interrupted = True
         finally:
@@ -146,7 +148,8 @@ def train(config: Config, mode: str):
         try:
             fit_model(mw, config.finetune_config.optimizer, train_data,
                       val_data, config.finetune_config.epochs,
-                      'finetune', metrics=metrics)
+                      'finetune', metrics=metrics,
+                      callbacks=mw.config.finetune_config.callbacks)
         except KeyboardInterrupt:
             interrupted = True
         finally:
