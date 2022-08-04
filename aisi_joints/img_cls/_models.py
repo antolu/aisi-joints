@@ -61,7 +61,7 @@ class MLP:
         # separate final activation from FCs to simplify temp scaling
         if final_activation is not None:
             if final_activation == 'softmax':
-                self._sublayers.append(tf.keras.layers.Softmax())
+                self._sublayers.append(tf.keras.layers.Softmax(axis=1))
             else:
                 raise NotImplementedError
 
