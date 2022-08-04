@@ -61,7 +61,9 @@ class MLP:
         # separate final activation from FCs to simplify temp scaling
         if final_activation is not None:
             if final_activation == 'softmax':
-                self._sublayers.append(tf.keras.layers.Softmax(axis=1))
+                self._sublayers.append(tf.keras.layers.Softmax())
+            elif final_activation == 'sigmoid':
+                self._sublayers.append(tf.keras.layers.Sigmoid())
             else:
                 raise NotImplementedError
 
@@ -103,10 +105,11 @@ class ModelWrapper:
         return self._config
 
     def freeze(self):
+        base_model = self.model.get_layer(name=self.config.base_model)
         if self.freeze_mode == 'base':
-            self.model.layers[-2].trainable = False
+            base_model.trainable = False
         elif self.freeze_mode == 'partial':
-            freeze_layers(self.model.layers[-2], self._config.layers_to_freeze)
+            freeze_layers(base_model, self._config.layers_to_freeze)
 
 
 def get_model(model_name: str, fc_hidden_dim: int = 2048,
