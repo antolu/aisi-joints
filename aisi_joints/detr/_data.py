@@ -3,16 +3,14 @@ This module provides everything needed to load data for the DE:TR object
 detection implementation.
 """
 import os
-from typing import Dict
 
 import torch
 import torchvision
 from pycocotools.coco import COCO
+from transformers import DetrFeatureExtractor
 
-from ..constants import LABEL_MAP
 
-
-def collate_fn(feature_extractor, batch: dict):
+def collate_fn(feature_extractor: DetrFeatureExtractor, batch: dict):
     pixel_values = [item[0] for item in batch]
     encoding = feature_extractor.pad_and_create_pixel_mask(
         pixel_values, return_tensors="pt")
@@ -29,8 +27,13 @@ def collate_fn(feature_extractor, batch: dict):
 
 
 class CocoDetection(torchvision.datasets.CocoDetection):
+    """
+    Utility class to load data for DETR.
+
+    Mostly copied from https://www.kaggle.com/code/nouamane/fine-tuning-detr-for-license-plates-detection
+    """
     def __init__(self, dataset_folder: str, split_name: str,
-                 feature_extractor):
+                 feature_extractor: DetrFeatureExtractor):
         ann_file = os.path.join(dataset_folder, 'annotations',
                                 f'{split_name}.json')
         img_folder = os.path.join(dataset_folder, split_name)
@@ -42,7 +45,8 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # read in PIL image and target in COCO format
         img, target = super().__getitem__(idx)
 
-        # preprocess image and target (converting target to DETR format, resizing + normalization of both image and target)
+        # preprocess image and target (converting target to DETR format,
+        # resizing + normalization of both image and target)
         image_id = self.ids[idx]
         target = {'image_id': image_id, 'annotations': target}
         encoding = self.feature_extractor(images=img, annotations=target,
@@ -54,10 +58,26 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         return pixel_values, target
 
 
-def results_to_coco(coco_gt: COCO, results: list,
-                    labelmap: Dict[int, str] = None) -> dict:
-    if labelmap is None:
-        labelmap = LABEL_MAP
+def results_to_coco(coco_gt: COCO, results: list) -> dict:
+    """
+    Converts a list of raw results from DETR predictions, to a COCO formatted
+    annotation.
+
+    Parameters
+    ----------
+    coco_gt: COCO
+        COCO object for ground truth annotations.
+        Used to extract image and category IDs.
+    results: list
+        List of outputs from DETR. Each output is the prediction of an input
+        image.
+
+    Returns
+    -------
+    dict
+        A dictionary in COCO format ready to be used to create an in-memory
+        COCO object.
+    """
 
     output_json_dict = {
         "images": list(coco_gt.imgs.values()),

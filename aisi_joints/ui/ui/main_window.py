@@ -125,4 +125,5 @@ class MainWindow(Ui_MainWindow, QMainWindow):
         self.actionEvaluation_Metrics.setEnabled(True)
 
     def disable_eval_actions(self):
+        self.action_Update_Filepaths.setDisabled(True)
         self.actionEvaluation_Metrics.setDisabled(True)

@@ -9,6 +9,14 @@ from transformers import DetrForObjectDetection, \
 
 
 class Detr(pl.LightningModule):
+    """
+    An implementation of DE:TR with the use of HuggingFace transformers package.
+
+    Uses normalization during preprocessing using means and stds computed on AISI joints
+    dataset (3 channel B/W)
+
+    Mostly copied from https://www.kaggle.com/code/nouamane/fine-tuning-detr-for-license-plates-detection.
+    """
     def __init__(self, lr: float, lr_backbone: float, weight_decay: float,
                  momentum: float, num_classes: int):
         super().__init__()
@@ -16,10 +24,10 @@ class Detr(pl.LightningModule):
         normalize_means = [0.28513786, 0.28513786, 0.28513786]
         normalize_stds = [0.21466085, 0.21466085, 0.21466085]
         # replace COCO classification head with custom head
-        self.feature_extractor = DetrFeatureExtractor.from_pretrained(
+        self.feature_extractor: DetrFeatureExtractor = DetrFeatureExtractor.from_pretrained(
             "facebook/detr-resnet-101",
             mean=normalize_means, std=normalize_stds)
-        self.model = DetrForObjectDetection.from_pretrained(
+        self.model: DetrForObjectDetection = DetrForObjectDetection.from_pretrained(
             "facebook/detr-resnet-101",
             num_labels=num_classes,
             ignore_mismatched_sizes=True)
@@ -76,7 +84,7 @@ class Detr(pl.LightningModule):
                 "lr": self.lr_backbone,
             },
         ]
-        optimizer = torch.optim.SGD(param_dicts, lr=self.lr,
+        optimizer = torch.optim.AdamW(param_dicts, lr=self.lr,
                                       weight_decay=self.weight_decay)
 
         return optimizer

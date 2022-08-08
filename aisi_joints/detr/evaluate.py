@@ -28,6 +28,22 @@ log = logging.getLogger(__name__)
 
 def filter_results(results: Dict[int, dict], score_threshold: float = 0.7) \
         -> Dict[int, dict]:
+    """
+    Filter out results from a batch prediction output that is below the score
+    threshold.
+
+    Parameters
+    ----------
+    results: Dict[int, dict]
+        Mapping from img id (COCO) to dictionary with results.
+    score_threshold: float
+        Score threshold for filtering results.
+
+    Returns
+    -------
+    Dict[int, dict]
+        Same dictionary as input, with results under score_threshold removed.
+    """
     for img_id, res in results.items():
         mask = res['scores'] >= score_threshold
         res['labels'] = res['labels'][mask]
@@ -37,7 +53,27 @@ def filter_results(results: Dict[int, dict], score_threshold: float = 0.7) \
     return results
 
 
-def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7):
+def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7)\
+        -> COCOWrapper:
+    """
+    Runs detection using a DE:TR model and filters detections using a
+    threshold.
+
+    Parameters
+    ----------
+    model: Detr
+        Trained, or loaded from checkpoint, DE:TR model.
+    dataset: CocoDetection
+        A dataset to run detections on. N.B. this should be a subclass of
+        torchvision CocoDetection
+    score_threshold: float
+        Threshold to filter detections with.
+
+    Returns
+    -------
+    COCOWrapper
+        A COCOWrapper ready to be evaluated using pycocotools metrics.
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model.to(device)
@@ -111,7 +147,7 @@ def main(argv: Optional[List[str]] = None):
                         default='test',
                         help='Specific split to evaluate on.')
     parser.add_argument('-t', '--score-threshold', dest='score_threshold',
-                        default=0.5, type=float,
+                        default=0.7, type=float,
                         help='Detection score threshold. All detections under '
                              'this confidence score are discarded.')
 
