@@ -78,8 +78,7 @@ def compile_protobuf(protobuf_exec: str):
 def install_object_detection():
     cwd = os.getcwd()
 
-    os.chdir('object_detection/packages/tf2')
-    command = 'python -m pip install .'
+    command = 'python object_detection/packages/tf2/setup.py install'
 
     print(f'Running command {command} in {os.getcwd()}')
     result = subprocess.run(command.split(' '))

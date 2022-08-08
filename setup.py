@@ -8,6 +8,9 @@ import os
 from os import path
 
 from pathlib import Path
+import logging
+
+log = logging.getLogger('aisi_joints.setup')
 
 try:
     import pyqt5ac
@@ -99,6 +102,13 @@ EXTRA_REQUIRES["linting"] = [
     "flake8-blind-except>=0.1.1&&<2",
     "flake8-bugbear>=19.8.0&&<20",
 ]
+
+# object_detection requires manual installation
+if 'object_detection' in EXTRA_REQUIRES:
+    EXTRA_REQUIRES.pop('object_detection')
+    log.warning('object_detection is required, but cannot be installed '
+                'automatically. Please install it manually, or use the '
+                'script in the scripts directory.')
 
 curr_dir: Path = Path(__file__).parent.absolute()
 
