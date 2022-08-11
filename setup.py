@@ -43,7 +43,7 @@ DEV_DEPS_MAP_KEY = "testing"
 CURRENT_FILE_LOCATION = path.abspath(path.dirname(__file__))
 
 PACKAGES = ["aisi_joints"]
-INSTALL_REQUIRES: List[str] = []
+INSTALL_REQUIRES: List[str] = ['pyyaml']
 EXTRA_REQUIRES: Dict[str, List[str]] = {DEV_DEPS_MAP_KEY: [], 'all': []}
 
 print(f"Search for files {USR_DEPS_FILENAME} and {DEV_DEPS_FILENAME} recursively, "
@@ -75,7 +75,7 @@ for usr_dep_file in FOUND_USER_DEPS_FILES:
     with open(path.join(usr_dep_file), "r") as f:
         deps = f.read().strip().split("\n")
         print(f"Collecting user dependencies:      {deps}")
-        # INSTALL_REQUIRES += deps
+        INSTALL_REQUIRES += deps
 
         EXTRA_REQUIRES[submodule] = deps
         EXTRA_REQUIRES['all'] += deps
@@ -104,8 +104,8 @@ EXTRA_REQUIRES["linting"] = [
 ]
 
 # object_detection requires manual installation
-if 'object_detection' in EXTRA_REQUIRES:
-    EXTRA_REQUIRES.pop('object_detection')
+if 'object_detection' in INSTALL_REQUIRES:
+    INSTALL_REQUIRES.remove('object_detection')
     log.warning('object_detection is required, but cannot be installed '
                 'automatically. Please install it manually, or use the '
                 'script in the scripts directory.')
