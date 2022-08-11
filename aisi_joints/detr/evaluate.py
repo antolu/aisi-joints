@@ -26,8 +26,9 @@ from ..tfod.evaluate import evaluate_and_print
 log = logging.getLogger(__name__)
 
 
-def filter_results(results: Dict[int, dict], score_threshold: float = 0.7) \
-        -> Dict[int, dict]:
+def filter_results(
+    results: Dict[int, dict], score_threshold: float = 0.7
+) -> Dict[int, dict]:
     """
     Filter out results from a batch prediction output that is below the score
     threshold.
@@ -53,8 +54,9 @@ def filter_results(results: Dict[int, dict], score_threshold: float = 0.7) \
     return results
 
 
-def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7)\
-        -> COCOWrapper:
+def detect(
+    model: Detr, dataset: CocoDetection, score_threshold: float = 0.7
+) -> COCOWrapper:
     """
     Runs detection using a DE:TR model and filters detections using a
     threshold.
@@ -82,8 +84,12 @@ def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7)\
 
     log.info('Running evaluation...')
 
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=1,
-                            collate_fn=partial(collate_fn, feature_extractor))
+    dataloader = DataLoader(
+        dataset,
+        shuffle=False,
+        batch_size=1,
+        collate_fn=partial(collate_fn, feature_extractor),
+    )
 
     all_results = []
 
@@ -91,21 +97,25 @@ def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7)\
         # get the inputs
         pixel_values = batch['pixel_values'].to(device)
         pixel_mask = batch['pixel_mask'].to(device)
-        labels = [{k: v.to(device)
-                   for k, v in t.items()}
-                  for t in batch[
-                      'labels']]  # these are in DETR format, resized + normalized
+        labels = [
+            {k: v.to(device) for k, v in t.items()} for t in batch['labels']
+        ]  # these are in DETR format, resized + normalized
 
         # forward pass
         outputs = model.model(pixel_values=pixel_values, pixel_mask=pixel_mask)
 
         orig_target_sizes = torch.stack(
-            [target['orig_size'] for target in labels], dim=0)
-        results = feature_extractor.post_process(outputs,
-                                                 orig_target_sizes)  # convert outputs of model to COCO api
-        res = {target['image_id'].item():
-                   {k: v.detach().to('cpu') for k, v in output.items()}
-               for target, output in zip(labels, results)}
+            [target['orig_size'] for target in labels], dim=0
+        )
+        results = feature_extractor.post_process(
+            outputs, orig_target_sizes
+        )  # convert outputs of model to COCO api
+        res = {
+            target['image_id'].item(): {
+                k: v.detach().to('cpu') for k, v in output.items()
+            }
+            for target, output in zip(labels, results)
+        }
 
         res = filter_results(res, score_threshold)
 
@@ -115,10 +125,14 @@ def detect(model: Detr, dataset: CocoDetection, score_threshold: float = 0.7)\
 
 
 def evaluate(args: Namespace):
-    model = Detr.load_from_checkpoint(args.checkpoint_path,
-                                      lr=0.0, lr_backbone=0.0,
-                                      weight_decay=0.0, momentum=0.0,
-                                      num_classes=2)
+    model = Detr.load_from_checkpoint(
+        args.checkpoint_path,
+        lr=0.0,
+        lr_backbone=0.0,
+        weight_decay=0.0,
+        momentum=0.0,
+        num_classes=2,
+    )
 
     dataset = CocoDetection(args.data_dir, args.split, model.feature_extractor)
 
@@ -133,23 +147,40 @@ def evaluate(args: Namespace):
 def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
-    parser.add_argument('-d', '--data', dest='data_dir',
-                        help='Path to root of COCO format dataset folder.')
-    parser.add_argument('-l', '--labelmap', default=None,
-                        help='Path to label map file.')
+    parser.add_argument(
+        '-d',
+        '--data',
+        dest='data_dir',
+        help='Path to root of COCO format dataset folder.',
+    )
+    parser.add_argument(
+        '-l', '--labelmap', default=None, help='Path to label map file.'
+    )
     # parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
     #                     help='Path to directory containing exported model.')
-    parser.add_argument('-c', '--checkpoint-path', dest='checkpoint_path',
-                        required=True,
-                        help='Path to checkpoint file.')
-    parser.add_argument('-s', '--split',
-                        choices=['train', 'validation', 'test'],
-                        default='test',
-                        help='Specific split to evaluate on.')
-    parser.add_argument('-t', '--score-threshold', dest='score_threshold',
-                        default=0.7, type=float,
-                        help='Detection score threshold. All detections under '
-                             'this confidence score are discarded.')
+    parser.add_argument(
+        '-c',
+        '--checkpoint-path',
+        dest='checkpoint_path',
+        required=True,
+        help='Path to checkpoint file.',
+    )
+    parser.add_argument(
+        '-s',
+        '--split',
+        choices=['train', 'validation', 'test'],
+        default='test',
+        help='Specific split to evaluate on.',
+    )
+    parser.add_argument(
+        '-t',
+        '--score-threshold',
+        dest='score_threshold',
+        default=0.7,
+        type=float,
+        help='Detection score threshold. All detections under '
+        'this confidence score are discarded.',
+    )
 
     args = parser.parse_args(argv)
 

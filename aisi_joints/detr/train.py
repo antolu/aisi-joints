@@ -31,8 +31,10 @@ class EvalCallback(Callback):
     for a given dataset (usually validation) on the end of the
     validation step, and prints the results to console.
     """
-    def __init__(self, model: Detr, dataset: CocoDetection,
-                 evaluate_every: int = 10):
+
+    def __init__(
+        self, model: Detr, dataset: CocoDetection, evaluate_every: int = 10
+    ):
         self._model = model
         self._dataset = dataset
 
@@ -46,40 +48,60 @@ class EvalCallback(Callback):
 
 
 def train(config: dict, img_folder: str):
-    model = Detr(lr=config['lr'], lr_backbone=config['lr_backbone'],
-                 weight_decay=config['weight_decay'],
-                 momentum=config['momentum'], num_classes=2)
+    model = Detr(
+        lr=config['lr'],
+        lr_backbone=config['lr_backbone'],
+        weight_decay=config['weight_decay'],
+        momentum=config['momentum'],
+        num_classes=2,
+    )
     feature_extractor = model.feature_extractor
 
-    train_dataset = CocoDetection(img_folder, 'train',
-                                  feature_extractor=feature_extractor)
-    val_dataset = CocoDetection(img_folder, 'validation',
-                                feature_extractor=feature_extractor)
+    train_dataset = CocoDetection(
+        img_folder, 'train', feature_extractor=feature_extractor
+    )
+    val_dataset = CocoDetection(
+        img_folder, 'validation', feature_extractor=feature_extractor
+    )
 
     train_dataloader = DataLoader(
-        train_dataset, collate_fn=partial(collate_fn, feature_extractor),
-        batch_size=config['batch_size'], shuffle=True,
-        num_workers=config['workers'])
+        train_dataset,
+        collate_fn=partial(collate_fn, feature_extractor),
+        batch_size=config['batch_size'],
+        shuffle=True,
+        num_workers=config['workers'],
+    )
     val_dataloader = DataLoader(
-        val_dataset, collate_fn=partial(collate_fn, feature_extractor),
-        batch_size=1, shuffle=False, num_workers=4)
+        val_dataset,
+        collate_fn=partial(collate_fn, feature_extractor),
+        batch_size=1,
+        shuffle=False,
+        num_workers=4,
+    )
 
     checkpoint_callback_val = ModelCheckpoint(
         'checkpoints',
         'model-{epoch:02d}-{validation_loss:.2f}',
         monitor='validation_loss',
-        save_top_k=2)
+        save_top_k=2,
+    )
     checkpoint_callback = ModelCheckpoint(
         'checkpoints',
         'model-{epoch:02d}-{training_loss:.2f}',
         monitor='training_loss',
-        save_top_k=2)
+        save_top_k=2,
+    )
 
-    trainer = Trainer(max_epochs=config['epochs'], gradient_clip_val=1.0,
-                      callbacks=[checkpoint_callback,
-                                 checkpoint_callback_val,
-                                 EvalCallback(model, val_dataset)],
-                      accelerator='auto')
+    trainer = Trainer(
+        max_epochs=config['epochs'],
+        gradient_clip_val=1.0,
+        callbacks=[
+            checkpoint_callback,
+            checkpoint_callback_val,
+            EvalCallback(model, val_dataset),
+        ],
+        accelerator='auto',
+    )
 
     try:
         trainer.fit(model, train_dataloader, val_dataloader)
@@ -94,10 +116,10 @@ def train(config: dict, img_folder: str):
 def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
-    parser.add_argument('-d', '--data', dest='data_dir',
-                        help='Path to COCO dataset folder.')
-    parser.add_argument('config',
-                        help='Path to config.yml')
+    parser.add_argument(
+        '-d', '--data', dest='data_dir', help='Path to COCO dataset folder.'
+    )
+    parser.add_argument('config', help='Path to config.yml')
 
     args = parser.parse_args(argv)
 

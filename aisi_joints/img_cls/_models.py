@@ -17,14 +17,16 @@ log = logging.getLogger(__name__)
 
 class MLP:
     """Sequential multi-layer perceptron (MLP) block."""
+
     def __init__(
-            self,
-            units: List[int],
-            use_bias: bool = True,
-            activation: Optional[str] = "relu",
-            dropout: Optional[float] = 0.8,
-            final_activation: Optional[str] = None,
-            **kwargs) -> None:
+        self,
+        units: List[int],
+        use_bias: bool = True,
+        activation: Optional[str] = "relu",
+        dropout: Optional[float] = 0.8,
+        final_activation: Optional[str] = None,
+        **kwargs
+    ) -> None:
         """Initializes the MLP layer.
         Args:
           units: Sequential list of layer sizes.
@@ -51,12 +53,12 @@ class MLP:
         if len(units) > 1:
             for num_units in units[:-1]:
                 self._sublayers.append(
-                    Dense(
-                        num_units, activation=activation, use_bias=use_bias))
+                    Dense(num_units, activation=activation, use_bias=use_bias)
+                )
                 self._sublayers.append(Dropout(1.0 - dropout))
         self._sublayers.append(
-            Dense(
-                units[-1], activation=None, use_bias=use_bias))
+            Dense(units[-1], activation=None, use_bias=use_bias)
+        )
 
         # separate final activation from FCs to simplify temp scaling
         if final_activation is not None:
@@ -80,6 +82,7 @@ class ModelWrapper:
     A wrapper class that contains the model and its config, as well as
     providing an easy way to freeze some layers specified in the config.
     """
+
     def __init__(self, config: Config):
         self._config = config
 
@@ -92,11 +95,13 @@ class ModelWrapper:
         c = self._config
 
         if self._model is None:
-            self._model = get_model(c.base_model,
-                                    c.fc_hidden_dim,
-                                    c.fc_dropout,
-                                    c.fc_num_layers,
-                                    c.fc_activation)
+            self._model = get_model(
+                c.base_model,
+                c.fc_hidden_dim,
+                c.fc_dropout,
+                c.fc_num_layers,
+                c.fc_activation,
+            )
 
         return self._model
 
@@ -112,9 +117,13 @@ class ModelWrapper:
             freeze_layers(base_model, self._config.layers_to_freeze)
 
 
-def get_model(model_name: str, fc_hidden_dim: int = 2048,
-              fc_dropout: float = 0.8, fc_num_layers: int = 1,
-              fc_activation: str = 'relu') -> Model:
+def get_model(
+    model_name: str,
+    fc_hidden_dim: int = 2048,
+    fc_dropout: float = 0.8,
+    fc_num_layers: int = 1,
+    fc_activation: str = 'relu',
+) -> Model:
     """
     Constructs and returns a pretrained image classification CNN,
     with global average pooling on the last conv layer, and then appends
@@ -152,29 +161,45 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     """
     if model_name == 'inception_resnet_v2':
         base_model: Model = tf.keras.applications.InceptionResNetV2(
-            include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 3)))
-        preprocess_fn = tf.keras.applications.inception_resnet_v2 \
-            .preprocess_input
+            include_top=False,
+            weights='imagenet',
+            pooling='avg',
+            input_tensor=Input(shape=(299, 299, 3)),
+        )
+        preprocess_fn = (
+            tf.keras.applications.inception_resnet_v2.preprocess_input
+        )
     elif model_name == 'vgg19':
         base_model: Model = tf.keras.applications.VGG19(
-            include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 3)))
+            include_top=False,
+            weights='imagenet',
+            pooling='avg',
+            input_tensor=Input(shape=(299, 299, 3)),
+        )
         preprocess_fn = tf.keras.applications.vgg19.preprocess_input
     elif model_name == 'resnet101v2':
         base_model: Model = tf.keras.applications.ResNet101V2(
-            include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 3)))
+            include_top=False,
+            weights='imagenet',
+            pooling='avg',
+            input_tensor=Input(shape=(299, 299, 3)),
+        )
         preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
     elif model_name == 'resnet152v2':
         base_model: Model = tf.keras.applications.ResNet152V2(
-            include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 3)))
+            include_top=False,
+            weights='imagenet',
+            pooling='avg',
+            input_tensor=Input(shape=(299, 299, 3)),
+        )
         preprocess_fn = tf.keras.applications.resnet_v2.preprocess_input
     elif model_name == 'efficientnetv2l':
         base_model: Model = tf.keras.applications.EfficientNetV2L(
-            include_top=False, weights='imagenet', pooling='avg',
-            input_tensor=Input(shape=(299, 299, 3)))
+            include_top=False,
+            weights='imagenet',
+            pooling='avg',
+            input_tensor=Input(shape=(299, 299, 3)),
+        )
         preprocess_fn = tf.keras.applications.efficientnet_v2.preprocess_input
     else:
         raise NotImplementedError
@@ -184,9 +209,12 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     base_model_output = base_model(preprocessed_input, training=False)
 
     # add fully connected layer
-    mlp = MLP(([fc_hidden_dim] * fc_num_layers) + [2],
-              activation=fc_activation,
-              dropout=fc_dropout, final_activation='softmax')
+    mlp = MLP(
+        ([fc_hidden_dim] * fc_num_layers) + [2],
+        activation=fc_activation,
+        dropout=fc_dropout,
+        final_activation='softmax',
+    )
     predictions = mlp(base_model_output)
 
     # this is the model we will train
@@ -195,8 +223,9 @@ def get_model(model_name: str, fc_hidden_dim: int = 2048,
     return model
 
 
-def freeze_layers(model: Model,
-                  layers_to_freeze: Union[List[int], str] = 'none'):
+def freeze_layers(
+    model: Model, layers_to_freeze: Union[List[int], str] = 'none'
+):
     """
     Freeze some layers in the passed model, i.e. setting the .trainable
     attribute to False.

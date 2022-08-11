@@ -33,8 +33,9 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
 
     def export_flagged(self):
         df = self.table_model.dataframe
-        file, ok = QFileDialog.getSaveFileName(self, 'Export flagged samples',
-                                               app.current_dir, '*.csv')
+        file, ok = QFileDialog.getSaveFileName(
+            self, 'Export flagged samples', app.current_dir, '*.csv'
+        )
 
         if not ok or file is None or file == '':
             if not ok or file is None or file == '':
@@ -60,7 +61,8 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
         self.table_model.toggle_flagged(index.row())
         self.sampleTable.dataChanged(
             self.table_model.index(index.row(), 0),
-            self.table_model.index(0, self.table_model.columnCount()))
+            self.table_model.index(0, self.table_model.columnCount()),
+        )
 
     def validate_clicked(self):
         index = self.sampleTable.currentIndex()
@@ -70,4 +72,5 @@ class SampleWidget(DisplayWidget, Ui_SampleWidget):
         self.table_model.toggle_validate(index.row())
         self.sampleTable.dataChanged(
             self.table_model.index(index.row(), 0),
-            self.table_model.index(0, self.table_model.columnCount()))
+            self.table_model.index(0, self.table_model.columnCount()),
+        )

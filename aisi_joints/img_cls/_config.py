@@ -33,8 +33,10 @@ def if_in_else(data: dict, key: str, default_value: ... = None):
             msg = f'Could not find required key {key}.'
             raise AttributeError(msg)
         else:
-            log.debug(f'Could not find key {key}, replacing with default '
-                      f'value: {default_value}')
+            log.debug(
+                f'Could not find key {key}, replacing with default '
+                f'value: {default_value}'
+            )
             return default_value
 
 
@@ -62,7 +64,8 @@ def if_hasattr_else(data: ..., key: str, default_value: ... = None):
         else:
             log.debug(
                 f'Could not find attribute {key}, replacing with default '
-                f'value: {default_value}')
+                f'value: {default_value}'
+            )
             return default_value
 
 
@@ -70,6 +73,7 @@ class FitConfig:
     """
     Wraps some objects used for the Keras Fit API model.fit() method.
     """
+
     optimizer: tf.keras.optimizers.Optimizer
     epochs: int
     callbacks: List[tf.keras.callbacks.Callback]
@@ -118,15 +122,19 @@ class Config:
 
         self.workers = if_hasattr_else(module, 'workers', 4)
 
-        self.base_model = if_hasattr_else(module, 'base_model',
-                                          'inception_resnet_v2')
-        self.layers_to_freeze = if_hasattr_else(module, 'layers_to_freeze',
-                                                'none')
+        self.base_model = if_hasattr_else(
+            module, 'base_model', 'inception_resnet_v2'
+        )
+        self.layers_to_freeze = if_hasattr_else(
+            module, 'layers_to_freeze', 'none'
+        )
 
         self.transfer_config = FitConfig(
-            if_hasattr_else(module, 'transfer_config'))
+            if_hasattr_else(module, 'transfer_config')
+        )
         self.finetune_config = FitConfig(
-            if_hasattr_else(module, 'finetune_config'))
+            if_hasattr_else(module, 'finetune_config')
+        )
 
         self.class_weights = if_hasattr_else(module, 'class_weights', {})
 

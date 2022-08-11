@@ -4,8 +4,7 @@ implementation for the DE:TR object detection architecture.
 """
 import pytorch_lightning as pl
 import torch
-from transformers import DetrForObjectDetection, \
-    DetrFeatureExtractor
+from transformers import DetrForObjectDetection, DetrFeatureExtractor
 
 
 class Detr(pl.LightningModule):
@@ -17,20 +16,34 @@ class Detr(pl.LightningModule):
 
     Mostly copied from https://www.kaggle.com/code/nouamane/fine-tuning-detr-for-license-plates-detection.
     """
-    def __init__(self, lr: float, lr_backbone: float, weight_decay: float,
-                 momentum: float, num_classes: int):
+
+    def __init__(
+        self,
+        lr: float,
+        lr_backbone: float,
+        weight_decay: float,
+        momentum: float,
+        num_classes: int,
+    ):
         super().__init__()
 
         normalize_means = [0.28513786, 0.28513786, 0.28513786]
         normalize_stds = [0.21466085, 0.21466085, 0.21466085]
         # replace COCO classification head with custom head
-        self.feature_extractor: DetrFeatureExtractor = DetrFeatureExtractor.from_pretrained(
-            "facebook/detr-resnet-101",
-            mean=normalize_means, std=normalize_stds)
-        self.model: DetrForObjectDetection = DetrForObjectDetection.from_pretrained(
-            "facebook/detr-resnet-101",
-            num_labels=num_classes,
-            ignore_mismatched_sizes=True)
+        self.feature_extractor: DetrFeatureExtractor = (
+            DetrFeatureExtractor.from_pretrained(
+                "facebook/detr-resnet-101",
+                mean=normalize_means,
+                std=normalize_stds,
+            )
+        )
+        self.model: DetrForObjectDetection = (
+            DetrForObjectDetection.from_pretrained(
+                "facebook/detr-resnet-101",
+                num_labels=num_classes,
+                ignore_mismatched_sizes=True,
+            )
+        )
         # see https://github.com/PyTorchLightning/pytorch-lightning/pull/1896
         self.lr = lr
         self.lr_backbone = lr_backbone
@@ -44,11 +57,14 @@ class Detr(pl.LightningModule):
     def common_step(self, batch, batch_idx):
         pixel_values = batch["pixel_values"]
         pixel_mask = batch["pixel_mask"]
-        labels = [{k: v.to(self.device) for k, v in t.items()} for t in
-                  batch["labels"]]
+        labels = [
+            {k: v.to(self.device) for k, v in t.items()}
+            for t in batch["labels"]
+        ]
 
-        outputs = self.model(pixel_values=pixel_values, pixel_mask=pixel_mask,
-                             labels=labels)
+        outputs = self.model(
+            pixel_values=pixel_values, pixel_mask=pixel_mask, labels=labels
+        )
 
         loss = outputs.loss
         loss_dict = outputs.loss_dict
@@ -69,22 +85,32 @@ class Detr(pl.LightningModule):
         loss, loss_dict = self.common_step(batch, batch_idx)
         self.log("validation_loss", loss, batch_size=len(batch['labels']))
         for k, v in loss_dict.items():
-            self.log("validation_" + k, v.item(),
-                     batch_size=len(batch['labels']))
+            self.log(
+                "validation_" + k, v.item(), batch_size=len(batch['labels'])
+            )
 
         return loss
 
     def configure_optimizers(self):
         param_dicts = [
-            {"params": [p for n, p in self.named_parameters() if
-                        "backbone" not in n and p.requires_grad]},
             {
-                "params": [p for n, p in self.named_parameters() if
-                           "backbone" in n and p.requires_grad],
+                "params": [
+                    p
+                    for n, p in self.named_parameters()
+                    if "backbone" not in n and p.requires_grad
+                ]
+            },
+            {
+                "params": [
+                    p
+                    for n, p in self.named_parameters()
+                    if "backbone" in n and p.requires_grad
+                ],
                 "lr": self.lr_backbone,
             },
         ]
-        optimizer = torch.optim.AdamW(param_dicts, lr=self.lr,
-                                      weight_decay=self.weight_decay)
+        optimizer = torch.optim.AdamW(
+            param_dicts, lr=self.lr, weight_decay=self.weight_decay
+        )
 
         return optimizer

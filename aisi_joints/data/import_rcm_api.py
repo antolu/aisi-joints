@@ -26,21 +26,26 @@ from .common import find_images, find_labels, write_pbtxt
 log = logging.getLogger(__name__)
 
 
-def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
-                   images_pth: List[str],
-                   deviations_only: bool = False) \
-        -> Tuple[pd.DataFrame, dict]:
+def import_rcm_api(
+    labels_pth: List[str],
+    boxes_pth: List[str],
+    images_pth: List[str],
+    deviations_only: bool = False,
+) -> Tuple[pd.DataFrame, dict]:
     labels_df = find_labels(labels_pth)
 
     orig_len = len(labels_df)
 
     # filter out samples that have no class labels
-    labels_df = labels_df[labels_df['deviationId'].notna()
-                          | labels_df['ratingStatus'].notna()]
+    labels_df = labels_df[
+        labels_df['deviationId'].notna() | labels_df['ratingStatus'].notna()
+    ]
 
-    log.info(f'Registered {len(labels_df)} labels from {len(labels_pth)} '
-             f'files, dropped {orig_len - len(labels_df)} due to missing class '
-             f'labels.')
+    log.info(
+        f'Registered {len(labels_df)} labels from {len(labels_pth)} '
+        f'files, dropped {orig_len - len(labels_df)} due to missing class '
+        f'labels.'
+    )
 
     # process bounding boxes
     boxes_df = pd.DataFrame()
@@ -56,9 +61,14 @@ def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
 
     # merge labels and boxes df
     log.info('Matching labels to boxes...')
-    df = pd.merge(labels_df, boxes_df[['eventId', 'platformID', 'sessionId',
-                                       'x0', 'x1', 'y0', 'y1']],
-                  left_on='eventId', right_on='eventId')
+    df = pd.merge(
+        labels_df,
+        boxes_df[
+            ['eventId', 'platformID', 'sessionId', 'x0', 'x1', 'y0', 'y1']
+        ],
+        left_on='eventId',
+        right_on='eventId',
+    )
 
     log.info(f'Found {len(df)} samples with matching labels and boxes.')
 
@@ -67,7 +77,12 @@ def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
     df.loc[df['deviationId'].notna(), 'cls'] = CLASS_DEFECT
 
     if deviations_only:
-        df = df.drop(df.loc[(df['ratingStatus'] == 'IND_TRUE_POSITIVE') & ~df['deviationId'].notna()].index)
+        df = df.drop(
+            df.loc[
+                (df['ratingStatus'] == 'IND_TRUE_POSITIVE')
+                & ~df['deviationId'].notna()
+            ].index
+        )
     else:
         df.loc[df['ratingStatus'] == 'IND_TRUE_POSITIVE', 'cls'] = CLASS_DEFECT
 
@@ -80,10 +95,12 @@ def import_rcm_api(labels_pth: List[str], boxes_pth: List[str],
     df.rename(columns={'platformID': 'platformId'}, inplace=True)
 
     log.info(f'Total number of labeled samples: {len(df)}.')
-    log.info(f'Total number of non-defects: '
-             f'{len(df[df["cls"] == CLASS_OK])}.')
-    log.info(f'Total number of defects: '
-             f'{len(df[df["cls"] == CLASS_DEFECT])}.')
+    log.info(
+        f'Total number of non-defects: ' f'{len(df[df["cls"] == CLASS_OK])}.'
+    )
+    log.info(
+        f'Total number of defects: ' f'{len(df[df["cls"] == CLASS_DEFECT])}.'
+    )
 
     return df, LABEL_MAP
 
@@ -103,13 +120,21 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-i', '--images', nargs='+', help='Path to images.')
-    parser.add_argument('-b', '--boxes', nargs='+',
-                        help='Path to.csv files with bounding boxes.')
-    parser.add_argument('-l', '--labels', nargs='+',
-                        help='Path to .csv files with data labels and other '
-                             'metadata.')
-    parser.add_argument('-o', '--output', default='output.csv',
-                        help='Output csv name')
+    parser.add_argument(
+        '-b',
+        '--boxes',
+        nargs='+',
+        help='Path to.csv files with bounding boxes.',
+    )
+    parser.add_argument(
+        '-l',
+        '--labels',
+        nargs='+',
+        help='Path to .csv files with data labels and other ' 'metadata.',
+    )
+    parser.add_argument(
+        '-o', '--output', default='output.csv', help='Output csv name'
+    )
 
     args = parser.parse_args()
 

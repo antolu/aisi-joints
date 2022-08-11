@@ -31,7 +31,6 @@ from .common import find_images, find_labels, write_pbtxt
 log = logging.getLogger(__name__)
 
 
-
 def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
     regex = re.compile(r'.*_(?P<uuid>.+)\.(xml)')
 
@@ -64,25 +63,42 @@ def xml_to_df(xml_dir: str, pad_bndbox: int = 10) -> pd.DataFrame:
             y0 = max(y0 - pad_bndbox, 0)
             y1 = min(y1 + pad_bndbox, height)
 
-            value = (eventId,
-                     member.find('name').text,
-                     width, height,
-                     x0, x1, y0, y1
-                     )
+            value = (
+                eventId,
+                member.find('name').text,
+                width,
+                height,
+                x0,
+                x1,
+                y0,
+                y1,
+            )
             xml_list.append(value)
 
         if len(root.findall('object')) == 0:
             log.warning(f'No bounding boxes found for {xml_file}.')
 
-    column_name = ['eventId', 'class', 'width', 'height', 'x0', 'x1', 'y0', 'y1']
+    column_name = [
+        'eventId',
+        'class',
+        'width',
+        'height',
+        'x0',
+        'x1',
+        'y0',
+        'y1',
+    ]
     xml_df = pd.DataFrame(xml_list, columns=column_name)
 
     return xml_df
 
 
-def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
-                      images_pth: List[str], pad_bndbox: int = 10) \
-        -> Tuple[pd.DataFrame, dict]:
+def import_pascal_voc(
+    labels_pth: List[str],
+    xmls_pth: List[str],
+    images_pth: List[str],
+    pad_bndbox: int = 10,
+) -> Tuple[pd.DataFrame, dict]:
     metadata_df = find_labels(labels_pth)
 
     # process bounding boxes
@@ -103,13 +119,17 @@ def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
     cols = xmls_df.columns[:-1].insert(1, 'cls')
     xmls_df = xmls_df[cols]
 
-    log.info(f'Registered {len(xmls_df)} .xmls from {len(xmls_pth)} directories.')
+    log.info(
+        f'Registered {len(xmls_df)} .xmls from {len(xmls_pth)} directories.'
+    )
 
     images_df = find_images(images_pth, find_dims=False)
 
     log.info('Matching labels to images...')
     labels_df = pd.merge(xmls_df, images_df, on='eventId', how='inner')
-    log.info(f'Found {len(labels_df)} samples with matching labels and images.')
+    log.info(
+        f'Found {len(labels_df)} samples with matching labels and images.'
+    )
 
     # merge labels and boxes df
     log.info('Matching samples to RCM metadata...')
@@ -119,17 +139,18 @@ def import_pascal_voc(labels_pth: List[str], xmls_pth: List[str],
 
     # merge and filter based on eventId
     log.info(f'Total number of labeled samples: {len(df)}.')
-    log.info(f'Total number of non-defects: '
-             f'{len(df[df["cls"] == CLASS_OK])}.')
-    log.info(f'Total number of defects: '
-             f'{len(df[df["cls"] == CLASS_DEFECT])}.')
+    log.info(
+        f'Total number of non-defects: ' f'{len(df[df["cls"] == CLASS_OK])}.'
+    )
+    log.info(
+        f'Total number of defects: ' f'{len(df[df["cls"] == CLASS_DEFECT])}.'
+    )
 
     return df, LABEL_MAP
 
 
 def main(args: Namespace):
-    df, label_map = import_pascal_voc(
-        args.rcm_csv, args.xmls, args.images)
+    df, label_map = import_pascal_voc(args.rcm_csv, args.xmls, args.images)
 
     if args.output is not None:
         log.info(f'Writing output .csv to {path.abspath(args.output)}.')
@@ -144,12 +165,22 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-i', '--images', nargs='+', help='Path to images.')
-    parser.add_argument('-x', '--xmls', nargs='+',
-                        help='Path to directory with .xml files with bounding boxes and label.')
-    parser.add_argument('-l', '--rcm-csv', dest='rcm_csv', nargs='+',
-                        help='Path to .csv files with RCM API metadata.')
-    parser.add_argument('-o', '--output', default='output.csv',
-                        help='Output csv name')
+    parser.add_argument(
+        '-x',
+        '--xmls',
+        nargs='+',
+        help='Path to directory with .xml files with bounding boxes and label.',
+    )
+    parser.add_argument(
+        '-l',
+        '--rcm-csv',
+        dest='rcm_csv',
+        nargs='+',
+        help='Path to .csv files with RCM API metadata.',
+    )
+    parser.add_argument(
+        '-o', '--output', default='output.csv', help='Output csv name'
+    )
 
     args = parser.parse_args()
 

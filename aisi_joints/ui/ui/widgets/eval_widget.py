@@ -36,8 +36,9 @@ class EvalWidget(DisplayWidget, Ui_EvalWidget):
             self.widgetPred.show_image(sample, evaluation=True)
         except ValueError as e:
             log.exception('An exception occurred while showing image.')
-            QMessageBox.critical(self, 'Error', 'An exception occurred: '
-                                 + str(e))
+            QMessageBox.critical(
+                self, 'Error', 'An exception occurred: ' + str(e)
+            )
             return
 
     def show_metrics(self):

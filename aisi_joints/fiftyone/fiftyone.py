@@ -23,18 +23,27 @@ def create_sample(df: pd.DataFrame) -> fo.Sample:
     bbox = VOCBoundingBox(df.x0, df.y0, df.x1, df.y1)
     ground_truth = fo.Detections(
         detections=[
-            fo.Detection(label=df.cls, bounding_box=bbox.to_detection_format(image.size))]
+            fo.Detection(
+                label=df.cls, bounding_box=bbox.to_detection_format(image.size)
+            )
+        ]
     )
     sample['ground_truth'] = ground_truth
 
     if hasattr(df, 'detected_class'):
-        detected_bbox = VOCBoundingBox(int(df.detected_x0), int(df.detected_y0),
-                                       int(df.detected_x1), int(df.detected_y1))
+        detected_bbox = VOCBoundingBox(
+            int(df.detected_x0),
+            int(df.detected_y0),
+            int(df.detected_x1),
+            int(df.detected_y1),
+        )
         prediction = fo.Detections(
             detections=[
-                fo.Detection(label=df.detected_class,
-                             bounding_box=detected_bbox.to_detection_format(image.size),
-                             confidence=df.detection_score)
+                fo.Detection(
+                    label=df.detected_class,
+                    bounding_box=detected_bbox.to_detection_format(image.size),
+                    confidence=df.detection_score,
+                )
             ]
         )
         sample['prediction'] = prediction

@@ -27,8 +27,8 @@ class MetricsWidget(Ui_MetricsWidget, QWidget):
 
     def show_metrics(self, df: pd.DataFrame):
         report = classification_report(
-            df['cls'], df['detected_class'],
-            digits=4)
+            df['cls'], df['detected_class'], digits=4
+        )
         cf = confusion_matrix(df['cls'], df['detected_class'])
 
         msg = list()

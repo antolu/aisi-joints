@@ -41,13 +41,16 @@ def main(args: Namespace):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('input', nargs='+',
-                        help='Input .csv datasets to concatenate.')
-    parser.add_argument('-o', '--output', default='concatenated.csv',
-                        help='Path to output concatenated .csv')
+    parser.add_argument(
+        'input', nargs='+', help='Input .csv datasets to concatenate.'
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        default='concatenated.csv',
+        help='Path to output concatenated .csv',
+    )
 
     args = parser.parse_args()
 
     main(args)
-
-

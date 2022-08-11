@@ -9,7 +9,8 @@ class CopySelectedCellsAction(QAction):
     def __init__(self, table_widget):
         if not isinstance(table_widget, QTableView):
             raise ValueError(
-                f'CopySelectedCellsAction must be initialised with a QTableView. A {type(table_widget)} was given.')
+                f'CopySelectedCellsAction must be initialised with a QTableView. A {type(table_widget)} was given.'
+            )
         super().__init__("Copy", table_widget)
         self.setShortcut('Ctrl+C')
         self.triggered.connect(self.copy_cells_to_clipboard)

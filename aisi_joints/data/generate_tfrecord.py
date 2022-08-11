@@ -40,30 +40,39 @@ log = logging.getLogger(__name__)
 
 
 def read_tfrecord(example: tf.train.Example) -> dict:
-    tfrecord_format = (
-        {
-            'image/height': tf.io.FixedLenFeature([], tf.int64),
-            'image/width': tf.io.FixedLenFeature([], tf.int64),
-            'image/filename': tf.io.FixedLenFeature([], tf.string),
-            'image/source_id': tf.io.FixedLenFeature([], tf.string),
-            'image/encoded': tf.io.FixedLenFeature([], tf.string),
-            'image/format': tf.io.FixedLenFeature([], tf.string),
-            'image/object/bbox/xmin': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-            'image/object/bbox/xmax': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-            'image/object/bbox/ymin': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-            'image/object/bbox/ymax': tf.io.FixedLenSequenceFeature([], tf.float32, allow_missing=True),
-            'image/object/class/text': tf.io.FixedLenFeature([], tf.string),
-            'image/object/class/label': tf.io.FixedLenFeature([], tf.int64),
-        }
-    )
+    tfrecord_format = {
+        'image/height': tf.io.FixedLenFeature([], tf.int64),
+        'image/width': tf.io.FixedLenFeature([], tf.int64),
+        'image/filename': tf.io.FixedLenFeature([], tf.string),
+        'image/source_id': tf.io.FixedLenFeature([], tf.string),
+        'image/encoded': tf.io.FixedLenFeature([], tf.string),
+        'image/format': tf.io.FixedLenFeature([], tf.string),
+        'image/object/bbox/xmin': tf.io.FixedLenSequenceFeature(
+            [], tf.float32, allow_missing=True
+        ),
+        'image/object/bbox/xmax': tf.io.FixedLenSequenceFeature(
+            [], tf.float32, allow_missing=True
+        ),
+        'image/object/bbox/ymin': tf.io.FixedLenSequenceFeature(
+            [], tf.float32, allow_missing=True
+        ),
+        'image/object/bbox/ymax': tf.io.FixedLenSequenceFeature(
+            [], tf.float32, allow_missing=True
+        ),
+        'image/object/class/text': tf.io.FixedLenFeature([], tf.string),
+        'image/object/class/label': tf.io.FixedLenFeature([], tf.int64),
+    }
     example = tf.io.parse_single_example(example, tfrecord_format)
 
     return example
 
 
-def create_tf_example(sample: Sample, label_map: Dict[str, int],
-                      class_weight: Dict[str, float],
-                      use_class_weights: bool = False) -> tf.train.Example:
+def create_tf_example(
+    sample: Sample,
+    label_map: Dict[str, int],
+    class_weight: Dict[str, float],
+    use_class_weights: bool = False,
+) -> tf.train.Example:
     # required to find immage dimensions
     with tf.io.gfile.GFile(sample.filepath, 'rb') as fid:
         encoded_jpg = fid.read()
@@ -82,28 +91,43 @@ def create_tf_example(sample: Sample, label_map: Dict[str, int],
         'image/source_id': dataset_util.bytes_feature(filename),
         'image/encoded': dataset_util.bytes_feature(encoded_jpg),
         'image/format': dataset_util.bytes_feature(image_format),
-        'image/object/bbox/xmin': dataset_util.float_list_feature([sample.x0 / width]),
-        'image/object/bbox/xmax': dataset_util.float_list_feature([sample.x1 / width]),
-        'image/object/bbox/ymin': dataset_util.float_list_feature([sample.y0 / height]),
-        'image/object/bbox/ymax': dataset_util.float_list_feature([sample.y1 / height]),
+        'image/object/bbox/xmin': dataset_util.float_list_feature(
+            [sample.x0 / width]
+        ),
+        'image/object/bbox/xmax': dataset_util.float_list_feature(
+            [sample.x1 / width]
+        ),
+        'image/object/bbox/ymin': dataset_util.float_list_feature(
+            [sample.y0 / height]
+        ),
+        'image/object/bbox/ymax': dataset_util.float_list_feature(
+            [sample.y1 / height]
+        ),
         'image/object/class/text': dataset_util.bytes_list_feature(
-            [sample.cls.encode('utf8')]),
+            [sample.cls.encode('utf8')]
+        ),
         'image/object/class/label': dataset_util.int64_list_feature(
-            [label_map[sample.cls]]),
+            [label_map[sample.cls]]
+        ),
     }
 
     if use_class_weights:
         feature['image/object/weight'] = dataset_util.float_list_feature(
-            [class_weight[sample.cls]])
+            [class_weight[sample.cls]]
+        )
 
     # convert everything to byte format for tfrecord
     tf_example = tf.train.Example(features=tf.train.Features(feature=feature))
     return tf_example
 
 
-def generate_tfrecord(df: pd.DataFrame, label_map: dict, output_dir: str,
-                      use_class_weights: bool = False,
-                      progress_cb: Optional[Callable] = None):
+def generate_tfrecord(
+    df: pd.DataFrame,
+    label_map: dict,
+    output_dir: str,
+    use_class_weights: bool = False,
+    progress_cb: Optional[Callable] = None,
+):
 
     if 'split' in df:
         splits = df['split'].unique()
@@ -140,8 +164,9 @@ def generate_tfrecord(df: pd.DataFrame, label_map: dict, output_dir: str,
     def process_df(dataframe: pd.DataFrame, file: str):
         with tf.io.TFRecordWriter(file) as writer:
             for item in dataframe.itertuples():
-                tf_sample = create_tf_example(item, label_map, class_weights,
-                                              use_class_weights)
+                tf_sample = create_tf_example(
+                    item, label_map, class_weights, use_class_weights
+                )
                 writer.write(tf_sample.SerializeToString())
 
                 update_progress()
@@ -158,15 +183,16 @@ def generate_tfrecord(df: pd.DataFrame, label_map: dict, output_dir: str,
 
             process_df(split_df, filename)
 
-            info = f'Successfully created the {split} split TFRecord file: ' \
-                   f'at {path.abspath(filename)}'
+            info = (
+                f'Successfully created the {split} split TFRecord file: '
+                f'at {path.abspath(filename)}'
+            )
             log.info(info)
             msg.append(info)
     else:
         process_df(df, output_dir)
 
-        info = f'Successfully TFRecord file: ' \
-               f'at {path.abspath(output_dir)}'
+        info = f'Successfully TFRecord file: ' f'at {path.abspath(output_dir)}'
         log.info(info)
         msg.append(info)
 
@@ -182,8 +208,7 @@ def main(args: Namespace):
     else:
         label_map = LABEL_MAP
 
-    msg = generate_tfrecord(df, label_map, args.output,
-                            args.balance)
+    msg = generate_tfrecord(df, label_map, args.output, args.balance)
     log.info(msg)
 
 
@@ -191,16 +216,29 @@ if __name__ == '__main__':
     from .._utils.logging import setup_logger
 
     parser = ArgumentParser()
-    parser.add_argument('-l', '--labelmap', type=str,
-                        help='Labelmap in pbtxt format.')
-    parser.add_argument('-i', '--input', type=str,
-                        help='Input .csv files generated by the preprocess_csv '
-                             'script.')
-    parser.add_argument('-o', '--output', type=str, default='.',
-                        help='Directory to output TFRecord (.tfrecord) files. '
-                             'Set to *.tfrecord to only output one record.')
-    parser.add_argument('-b', '--balance', action='store_true',
-                        help='Balance the dataset by setting class weights')
+    parser.add_argument(
+        '-l', '--labelmap', type=str, help='Labelmap in pbtxt format.'
+    )
+    parser.add_argument(
+        '-i',
+        '--input',
+        type=str,
+        help='Input .csv files generated by the preprocess_csv ' 'script.',
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        type=str,
+        default='.',
+        help='Directory to output TFRecord (.tfrecord) files. '
+        'Set to *.tfrecord to only output one record.',
+    )
+    parser.add_argument(
+        '-b',
+        '--balance',
+        action='store_true',
+        help='Balance the dataset by setting class weights',
+    )
 
     args = parser.parse_args()
 

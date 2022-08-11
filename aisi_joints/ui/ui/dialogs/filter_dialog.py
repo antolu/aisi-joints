@@ -26,7 +26,8 @@ class FilterDialog(QDialog, Ui_FilterDialog):
 
     def on_browse(self):
         files, ok = QFileDialog.getOpenFileNames(
-            self, 'Select filters', app.current_dir, '*.csv')
+            self, 'Select filters', app.current_dir, '*.csv'
+        )
 
         if not ok or len(files) == 0:
             log.debug('No files selected.')

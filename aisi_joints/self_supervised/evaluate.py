@@ -35,7 +35,7 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
             transforms.Normalize(
                 mean=normalize_means,
                 std=normalize_stds,
-            )
+            ),
         ]
     )
 
@@ -45,7 +45,8 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
         # JointDataset.from_df(df, None, False, 224, 224, transforms_),
         dataset.configure_test(),
         batch_size=model.hparams.batch_size,
-        num_workers=model.hparams.num_data_workers)
+        num_workers=model.hparams.num_data_workers,
+    )
 
     # dataloader = model.val_dataloader()
 
@@ -70,19 +71,29 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
 
     predictions = torch.nn.functional.softmax(logits)
 
-    log.info(f'Done. Took {t.duration * 1000 / len(labels)} ms '
-             f'per sample.')
+    log.info(
+        f'Done. Took {t.duration * 1000 / len(labels)} ms ' f'per sample.'
+    )
     log.info('Calculating evaluation metrics.')
 
     scores, pred_labels = (o.numpy() for o in torch.max(predictions, dim=1))
 
     report = classification_report(
-        labels, pred_labels, target_names=[CLASS_OK, CLASS_DEFECT],
-        output_dict=True)
+        labels,
+        pred_labels,
+        target_names=[CLASS_OK, CLASS_DEFECT],
+        output_dict=True,
+    )
     cf = confusion_matrix(labels, pred_labels)
 
-    log.info(('=' * 10) + 'CLASSIFICATION REPORT' + ('=' * 10)
-             + '\n' + pformat(report) + '\n')
+    log.info(
+        ('=' * 10)
+        + 'CLASSIFICATION REPORT'
+        + ('=' * 10)
+        + '\n'
+        + pformat(report)
+        + '\n'
+    )
     log.info(('=' * 10) + 'CONFUSION MATRIX' + ('=' * 10) + '\n' + pformat(cf))
 
     if df is None:
@@ -92,7 +103,8 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
 
     class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
     df['detected_class'] = df['detected_class'].map(
-        {v: k for k, v in class_map.items()})
+        {v: k for k, v in class_map.items()}
+    )
     df['detection_score'] = scores
     df['num_detections'] = 1
     df['detected_x0'] = df['x0']
@@ -106,18 +118,34 @@ def evaluate(df: pd.DataFrame, model: LinearClassifierMethod) -> pd.DataFrame:
 def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
-    parser.add_argument('-d', '--dataset', required=True,
-                        help='Path to .csv containing dataset, '
-                             'or path to directory containing images.')
-    parser.add_argument('-m', '--model', dest='model', default='checkpoints',
-                        help='Path to directory containing save model '
-                             '(state dict).')
-    parser.add_argument('-s', '--split',
-                        choices=['train', 'validation', 'test'],
-                        default=None,
-                        help='Specific split to evaluate on.')
-    parser.add_argument('-o', '--output', type=str, default=None,
-                        help='Output .csv with predictions.')
+    parser.add_argument(
+        '-d',
+        '--dataset',
+        required=True,
+        help='Path to .csv containing dataset, '
+        'or path to directory containing images.',
+    )
+    parser.add_argument(
+        '-m',
+        '--model',
+        dest='model',
+        default='checkpoints',
+        help='Path to directory containing save model ' '(state dict).',
+    )
+    parser.add_argument(
+        '-s',
+        '--split',
+        choices=['train', 'validation', 'test'],
+        default=None,
+        help='Specific split to evaluate on.',
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        type=str,
+        default=None,
+        help='Output .csv with predictions.',
+    )
 
     args = parser.parse_args(argv)
 
@@ -135,17 +163,21 @@ def main(argv: Optional[List[str]] = None):
     if os.path.isfile(args.model):
         classifier_checkpoint = args.model
     elif os.path.isdir(args.model):
-        classifier_checkpoint = get_latest(args.model, lambda o: o.startswith(
-            'model-classifier') and o.endswith('.ckpt'))
+        classifier_checkpoint = get_latest(
+            args.model,
+            lambda o: o.startswith('model-classifier') and o.endswith('.ckpt'),
+        )
     else:
-        raise FileNotFoundError('Could not find checkpoint file at ' +
-                                args.model)
+        raise FileNotFoundError(
+            'Could not find checkpoint file at ' + args.model
+        )
 
     log.info(f'Loading model from {classifier_checkpoint}.')
     # need to load base weights and classifier weights separately
 
     model = LinearClassifierMethod.from_trained_checkpoint(
-        classifier_checkpoint)
+        classifier_checkpoint
+    )
     log.info('Model loaded.')
 
     df = evaluate(df, model)

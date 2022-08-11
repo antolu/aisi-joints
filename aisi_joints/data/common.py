@@ -20,8 +20,9 @@ def find_labels(labels_pth: List[str]) -> pd.DataFrame:
     labels_df = pd.DataFrame()
     for label_pth in labels_pth:
         if not path.isfile(label_pth):
-            raise FileNotFoundError(f'Could not find label file at '
-                                    f'{label_pth}.')
+            raise FileNotFoundError(
+                f'Could not find label file at ' f'{label_pth}.'
+            )
 
         with open(label_pth) as f:
             label_df = pd.read_csv(f)
@@ -30,14 +31,14 @@ def find_labels(labels_pth: List[str]) -> pd.DataFrame:
 
     orig_len = len(labels_df)
 
-    log.info(f'Registered {len(labels_df)} labels from {len(labels_pth)} '
-             f'files.')
+    log.info(
+        f'Registered {len(labels_df)} labels from {len(labels_pth)} ' f'files.'
+    )
 
     return labels_df
 
 
-def find_images(images_pth: List[str], find_dims: bool = True) \
-        -> pd.DataFrame:
+def find_images(images_pth: List[str], find_dims: bool = True) -> pd.DataFrame:
     """
     Walks through one or more directories (recursively) to find images,
     extracts eventId from the filename and maps the eventId to the image
@@ -71,16 +72,21 @@ def find_images(images_pth: List[str], find_dims: bool = True) \
                     continue
 
                 images_idx.append(
-                    {'eventId': m.group('uuid'),
-                     'filepath': path.abspath(path.join(root, f))})
+                    {
+                        'eventId': m.group('uuid'),
+                        'filepath': path.abspath(path.join(root, f)),
+                    }
+                )
 
                 if find_dims:
                     width, height = Image.open(path.join(root, f)).size
                     images_idx[-1].update({'width': width, 'height': height})
 
     images_df = pd.DataFrame(images_idx)
-    log.info(f'Registered {len(images_idx)} images in {len(images_pth)} '
-             f'directories.')
+    log.info(
+        f'Registered {len(images_idx)} images in {len(images_pth)} '
+        f'directories.'
+    )
 
     return images_df
 
@@ -117,8 +123,13 @@ class DetectionBox:
     score: float = -1
 
     def to_coords(self) -> List[List[int]]:
-        return [[self.x0, self.y0], [self.x1, self.y0], [self.x1, self.y1],
-                [self.x0, self.y1], [self.x0, self.y0]]
+        return [
+            [self.x0, self.y0],
+            [self.x1, self.y0],
+            [self.x1, self.y1],
+            [self.x0, self.y1],
+            [self.x0, self.y0],
+        ]
 
     def to_pascal_voc(self):
         return [self.x0, self.x1, self.y0, self.y1]
@@ -139,8 +150,9 @@ class Sample:
         sample = Sample()
         sample.eventId = df['eventId']
         sample.filepath = df['filepath']
-        sample.bbox = DetectionBox(df['x0'], df['x1'], df['y0'], df['y1'],
-                                   df['cls'])
+        sample.bbox = DetectionBox(
+            df['x0'], df['x1'], df['y0'], df['y1'], df['cls']
+        )
 
         if 'detected_class' not in df.index:
             sample.has_detection = False
@@ -159,6 +171,7 @@ class Sample:
 
         for i in range(sample.num_detections):
             sample.detected_bbox.append(
-                DetectionBox(x0[i], x1[i], y0[i], y1[i], cls[i], scores[i]))
+                DetectionBox(x0[i], x1[i], y0[i], y1[i], cls[i], scores[i])
+            )
 
         return sample

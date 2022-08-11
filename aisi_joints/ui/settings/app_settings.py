@@ -17,6 +17,7 @@ class AppSettings:
     The settings must be loaded using the init method before accessing any
     other attribute.
     """
+
     def __init__(self):
         self.settings: QSettings = None
 
@@ -32,7 +33,7 @@ class AppSettings:
             self.is_init = True
 
     def save_window_state(self, geometry, window_state):
-        """ Currently not used """
+        """Currently not used"""
         if not self.is_init:
             self.init()
 
@@ -41,7 +42,7 @@ class AppSettings:
         self.settings.sync()
 
     def geometry(self):
-        """ Currently not used """
+        """Currently not used"""
         if not self.is_init:
             self.init()
 
@@ -55,7 +56,7 @@ class AppSettings:
 
     @property
     def current_dir(self) -> str:
-        """ Accesses the last used directory in a file browser. """
+        """Accesses the last used directory in a file browser."""
         if not self.is_init:
             self.init()
 
@@ -63,7 +64,7 @@ class AppSettings:
 
     @current_dir.setter
     def current_dir(self, pth: str):
-        """ Accesses the last used directory in a file browser. """
+        """Accesses the last used directory in a file browser."""
         if not self.is_init:
             self.init()
 

@@ -23,7 +23,10 @@ class ImageWidget(GraphicsView):
         self.setCentralItem(self.vb)
 
         self.item: ImageItem = ImageItem(axisOrder='row-major')
-        self.box = PlotDataItem(pen=QPen(QColor.Black, 4), connect='all', )
+        self.box = PlotDataItem(
+            pen=QPen(QColor.Black, 4),
+            connect='all',
+        )
         self.text = TextItem(color=QColor.Black, fill=QColor.White)
 
         self.pen_green = QPen(QColor.Green, 4)
@@ -39,8 +42,10 @@ class ImageWidget(GraphicsView):
             image = cv.imread(sample.filepath)
         except OSError as e:
             QMessageBox.critical(
-                self, 'Error',
-                f'Error in loading image from {sample.filepath}\n{e}')
+                self,
+                'Error',
+                f'Error in loading image from {sample.filepath}\n{e}',
+            )
             return
 
         if not evaluation:
@@ -52,8 +57,10 @@ class ImageWidget(GraphicsView):
                 raise ValueError(f'Sample {sample.eventId} has no detections.')
 
             if sample.num_detections > 1:
-                log.warning(f'Sample {sample.eventId} has more than one '
-                            f'detection. Don\'t know what to do.')
+                log.warning(
+                    f'Sample {sample.eventId} has more than one '
+                    f'detection. Don\'t know what to do.'
+                )
                 return
 
             box = np.array(sample.detected_bbox[0].to_coords())

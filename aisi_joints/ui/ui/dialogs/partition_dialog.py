@@ -34,26 +34,34 @@ class PartitionDialog(QDialog, Ui_PartitionDialog):
 
     def train_changed(self, value: int):
         total = value + self.spinBoxVal.value() + self.spinBoxTest.value()
-        label = 'Train: {} samples'.format(round(value / total * len(self._data)))
+        label = 'Train: {} samples'.format(
+            round(value / total * len(self._data))
+        )
 
         self.labelTrain.setText(label)
 
     def val_changed(self, value: int):
         total = value + self.spinBoxTrain.value() + self.spinBoxTest.value()
-        label = 'Validation: {} samples'.format(round(value / total * len(self._data)))
+        label = 'Validation: {} samples'.format(
+            round(value / total * len(self._data))
+        )
 
         self.labelVal.setText(label)
 
     def test_changed(self, value: int):
         total = value + self.spinBoxTrain.value() + self.spinBoxVal.value()
-        label = 'Test: {} samples'.format(round(value / total * len(self._data)))
+        label = 'Test: {} samples'.format(
+            round(value / total * len(self._data))
+        )
 
         self.labelTest.setText(label)
 
     def on_ok(self):
-        ratio = '{}/{}/{}'.format(self.spinBoxTrain.value(),
-                                  self.spinBoxVal.value(),
-                                  self.spinBoxTest.value())
+        ratio = '{}/{}/{}'.format(
+            self.spinBoxTrain.value(),
+            self.spinBoxVal.value(),
+            self.spinBoxTest.value(),
+        )
 
         df = partition_dataset(self._data, ratio)
 

@@ -16,7 +16,7 @@ model_params = VICRegParams(
     final_lr_schedule_value=0,
     weight_decay=1e-4,
     lars_warmup_epochs=10,
-    lars_eta=0.02
+    lars_eta=0.02,
 )
 
 classifier_params = LinearClassifierMethodParams(
@@ -26,5 +26,5 @@ classifier_params = LinearClassifierMethodParams(
     batch_size=32,
     lr=10,
     weight_decay=1e-4,
-    drop_last_batch=False
+    drop_last_batch=False,
 )

@@ -28,7 +28,7 @@ def format_metrics(metrics: dict):
 
     msg = ''
     for metric, value in metrics.items():
-        msg += (metric + ' ' * (max_len - len(metric)))
+        msg += metric + ' ' * (max_len - len(metric))
         msg += ' = '
         msg += f'{value:.3f}\n'
 
@@ -39,8 +39,8 @@ def evaluate_and_print(coco_gt: COCO, coco_pred: COCO):
     coco_eval = COCOEvalWrapper(coco_gt, coco_pred)
 
     metrics, per_cat_metrics = coco_eval.ComputeMetrics(
-        include_metrics_per_category=True,
-        all_metrics_per_category=True)
+        include_metrics_per_category=True, all_metrics_per_category=True
+    )
 
     print('=' * 79)
     print(format_metrics(metrics))
@@ -48,14 +48,16 @@ def evaluate_and_print(coco_gt: COCO, coco_pred: COCO):
     print(format_metrics(per_cat_metrics))
 
 
-def evaluate(df: pd.DataFrame, model: tf.keras.Model,
-             score_threshold: float = 0.5):
+def evaluate(
+    df: pd.DataFrame, model: tf.keras.Model, score_threshold: float = 0.5
+):
     """
     Calculate predictions based on raw data and run COCO tfod on it. Print results
     to terminal.
     """
-    inv_label_map = {idx: {'name': name, 'id': idx} for name, idx in
-                     LABEL_MAP.items()}
+    inv_label_map = {
+        idx: {'name': name, 'id': idx} for name, idx in LABEL_MAP.items()
+    }
 
     predictions = dataframe_detect(df, model, inv_label_map, score_threshold)
 
@@ -73,21 +75,39 @@ def evaluate(df: pd.DataFrame, model: tf.keras.Model,
 def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
-    parser.add_argument('-i', '--input', required=True,
-                        help='Path to .csv containing dataset, '
-                             'or path to directory containing images.')
-    parser.add_argument('-l', '--labelmap', default=None,
-                        help='Path to label map file.')
-    parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
-                        help='Path to directory containing exported model.')
-    parser.add_argument('-s', '--split',
-                        choices=['train', 'validation', 'test'],
-                        default=None,
-                        help='Specific split to evaluate on.')
-    parser.add_argument('-t', '--score-threshold', dest='score_threshold',
-                        default=0.5, type=float,
-                        help='Detection score threshold. All detections under '
-                             'this confidence score are discarded.')
+    parser.add_argument(
+        '-i',
+        '--input',
+        required=True,
+        help='Path to .csv containing dataset, '
+        'or path to directory containing images.',
+    )
+    parser.add_argument(
+        '-l', '--labelmap', default=None, help='Path to label map file.'
+    )
+    parser.add_argument(
+        '-m',
+        '--model-dir',
+        dest='model_dir',
+        required=True,
+        help='Path to directory containing exported model.',
+    )
+    parser.add_argument(
+        '-s',
+        '--split',
+        choices=['train', 'validation', 'test'],
+        default=None,
+        help='Specific split to evaluate on.',
+    )
+    parser.add_argument(
+        '-t',
+        '--score-threshold',
+        dest='score_threshold',
+        default=0.5,
+        type=float,
+        help='Detection score threshold. All detections under '
+        'this confidence score are discarded.',
+    )
 
     args = parser.parse_args(argv)
 

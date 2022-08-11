@@ -40,7 +40,8 @@ class DisplayWidget(QWidget):
     def save(self):
         if self._csv_path is None:
             file, ok = QFileDialog.getSaveFileName(
-                self, 'Select save file', app.current_dir, '*.csv')
+                self, 'Select save file', app.current_dir, '*.csv'
+            )
 
             if not ok or file is None:
                 log.debug('No file selected.')
@@ -57,7 +58,8 @@ class DisplayWidget(QWidget):
 
     def load(self):
         file, ok = QFileDialog.getOpenFileName(
-            self, 'Open .csv', app.current_dir, '*.csv')
+            self, 'Open .csv', app.current_dir, '*.csv'
+        )
 
         if not ok or file is None or file == '':
             log.debug('No file selected.')
@@ -81,8 +83,10 @@ class DisplayWidget(QWidget):
             self._csv_path = None
 
             QMessageBox.information(
-                self, 'Import Success',
-                f'Successfully imported {len(df)} samples')
+                self,
+                'Import Success',
+                f'Successfully imported {len(df)} samples',
+            )
 
             self.data_loaded.emit()
 

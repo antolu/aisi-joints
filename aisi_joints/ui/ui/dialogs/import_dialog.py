@@ -4,8 +4,16 @@ from typing import Optional, List
 
 import pandas as pd
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QDialog, QWidget, QFileDialog, QListView, QTreeView, QFileSystemModel, QAbstractItemView, \
-    QMessageBox
+from PyQt5.QtWidgets import (
+    QDialog,
+    QWidget,
+    QFileDialog,
+    QListView,
+    QTreeView,
+    QFileSystemModel,
+    QAbstractItemView,
+    QMessageBox,
+)
 
 from ...generated.import_dialog_ui import Ui_ImportDialog
 from ...settings import app
@@ -43,7 +51,8 @@ class ImportDialog(QDialog, Ui_ImportDialog):
 
     def browse_label(self):
         files, ok = QFileDialog.getOpenFileNames(
-            self, 'Select .csv files with labels', app.current_dir, '*.csv')
+            self, 'Select .csv files with labels', app.current_dir, '*.csv'
+        )
 
         if not ok or len(files) == 0:
             log.debug('No files selected.')
@@ -55,7 +64,8 @@ class ImportDialog(QDialog, Ui_ImportDialog):
     def browse_box(self):
         if self.radioRcm.isChecked():
             files, ok = QFileDialog.getOpenFileNames(
-                self, 'Select .csv files with boxes', app.current_dir, '*.csv')
+                self, 'Select .csv files with boxes', app.current_dir, '*.csv'
+            )
 
             if not ok or len(files) == 0:
                 log.debug('No files selected.')
@@ -91,19 +101,33 @@ class ImportDialog(QDialog, Ui_ImportDialog):
 
         if self.radioRcm.isChecked():
             try:
-                df, label_map = import_rcm_api(labels, boxes, images, deviations_only)
+                df, label_map = import_rcm_api(
+                    labels, boxes, images, deviations_only
+                )
             except (KeyError, OSError) as e:
-                log.exception('An error occurred while importing RCM API .csv files.')
-                QMessageBox.critical(self, 'Error', 'An error occurred while importing '
-                                                    'RCM API .csv files: \n' + str(e))
+                log.exception(
+                    'An error occurred while importing RCM API .csv files.'
+                )
+                QMessageBox.critical(
+                    self,
+                    'Error',
+                    'An error occurred while importing '
+                    'RCM API .csv files: \n' + str(e),
+                )
                 return
         elif self.radioPascal.isChecked():
             try:
                 df, label_map = import_pascal_voc(labels, boxes, images)
             except (KeyError, OSError) as e:
-                log.exception('An error occurred while importing PASCAL VOC format datasets.')
-                QMessageBox.critical(self, 'Error', 'An error occurred while importing '
-                                                    'PASCAL VOC format datasets: \n' + str(e))
+                log.exception(
+                    'An error occurred while importing PASCAL VOC format datasets.'
+                )
+                QMessageBox.critical(
+                    self,
+                    'Error',
+                    'An error occurred while importing '
+                    'PASCAL VOC format datasets: \n' + str(e),
+                )
                 return
         else:
             return
@@ -115,11 +139,9 @@ class ImportDialog(QDialog, Ui_ImportDialog):
         dialog.setWindowTitle('Select directories with images')
         dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setFileMode(QFileDialog.DirectoryOnly)
-        for view in dialog.findChildren(
-                (QListView, QTreeView)):
+        for view in dialog.findChildren((QListView, QTreeView)):
             if isinstance(view.model(), QFileSystemModel):
-                view.setSelectionMode(
-                    QAbstractItemView.ExtendedSelection)
+                view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         dialog.deleteLater()
 
         if dialog.exec() == QDialog.Accepted:

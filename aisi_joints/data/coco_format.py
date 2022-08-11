@@ -25,13 +25,14 @@ from .._utils.logging import setup_logger
 log = logging.getLogger(__name__)
 
 
-def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
-               predictions: bool = False) -> dict:
+def df_to_coco(
+    df: pd.DataFrame, labelmap: Dict[str, int], predictions: bool = False
+) -> dict:
     output_json_dict = {
         "images": [],
         "type": "instances",
         "annotations": [],
-        "categories": []
+        "categories": [],
     }
     bnd_id = 1  # START_BOUNDING_BOX_ID, TODO input as args ?
     img_id = 0
@@ -39,8 +40,11 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
     for sample in df.itertuples():
         # Read annotation xml
 
-        if not hasattr(sample, 'height') or np.isnan(
-                sample.height) or np.isnan(sample.width):
+        if (
+            not hasattr(sample, 'height')
+            or np.isnan(sample.height)
+            or np.isnan(sample.width)
+        ):
             width, height = Image.open(sample.filepath).size
         else:
             width, height = sample.width, sample.height
@@ -51,13 +55,17 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
             'height': height,
             'width': width,
             'id': img_id,
-            'eventId': sample.eventId
+            'eventId': sample.eventId,
         }
         output_json_dict['images'].append(image_info)
 
         if not predictions:
-            bbox = [sample.x0, sample.y0,
-                    sample.x1 - sample.x0, sample.y1 - sample.y0]
+            bbox = [
+                sample.x0,
+                sample.y0,
+                sample.x1 - sample.x0,
+                sample.y1 - sample.y0,
+            ]
 
             ann = {
                 'area': bbox[2] * bbox[3],
@@ -65,7 +73,7 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
                 'bbox': bbox,
                 'category_id': labelmap[sample.cls],
                 'ignore': 0,
-                'segmentation': []  # This script is not for segmentation
+                'segmentation': [],  # This script is not for segmentation
             }
 
             if hasattr(sample, 'detection_score'):
@@ -81,11 +89,16 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
             y0 = list(map(int, sample.detected_y0.split(';')))
             y1 = list(map(int, sample.detected_y1.split(';')))
             detection_score = list(
-                map(float, sample.detection_score.split(';')))
+                map(float, sample.detection_score.split(';'))
+            )
             detected_class = sample.detected_class.split(';')
             for i in range(sample.num_detections):
-                bbox = [x0[i], y0[i], x1[i] - x0[i],
-                        y1[i] - y0[i]]  # x0, y0, w, h
+                bbox = [
+                    x0[i],
+                    y0[i],
+                    x1[i] - x0[i],
+                    y1[i] - y0[i],
+                ]  # x0, y0, w, h
 
                 ann = {
                     'area': bbox[2] * bbox[3],
@@ -103,8 +116,11 @@ def df_to_coco(df: pd.DataFrame, labelmap: Dict[str, int],
                 output_json_dict['annotations'].append(ann)
 
     for label, label_id in labelmap.items():
-        category_info = {'supercategory': 'none', 'id': label_id,
-                         'name': label}
+        category_info = {
+            'supercategory': 'none',
+            'id': label_id,
+            'name': label,
+        }
 
         output_json_dict['categories'].append(category_info)
 
@@ -167,11 +183,16 @@ def main(args: Namespace):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('csv_path',
-                        help='Path to csv dataset to create dataset from.')
-    parser.add_argument('-o', '--output-dir', dest='output_dir',
-                        default='output',
-                        help='Directory to write dataset to.')
+    parser.add_argument(
+        'csv_path', help='Path to csv dataset to create dataset from.'
+    )
+    parser.add_argument(
+        '-o',
+        '--output-dir',
+        dest='output_dir',
+        default='output',
+        help='Directory to write dataset to.',
+    )
 
     args = parser.parse_args()
 

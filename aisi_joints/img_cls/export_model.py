@@ -44,14 +44,24 @@ def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
-    parser.add_argument('-m', '--checkpoint-dir', dest='checkpoint_dir',
-                        default='checkpoints', type=str,
-                        help='Path to directory with trained checkpoints. '
-                             'Will use latest checkpoint from the directory '
-                             'unless a specific file is selected.')
-    parser.add_argument('-o', '--output-dir', dest='output_dir', type=str,
-                        default='exported_models',
-                        help='Directory to save exported model to.')
+    parser.add_argument(
+        '-m',
+        '--checkpoint-dir',
+        dest='checkpoint_dir',
+        default='checkpoints',
+        type=str,
+        help='Path to directory with trained checkpoints. '
+        'Will use latest checkpoint from the directory '
+        'unless a specific file is selected.',
+    )
+    parser.add_argument(
+        '-o',
+        '--output-dir',
+        dest='output_dir',
+        type=str,
+        default='exported_models',
+        help='Directory to save exported model to.',
+    )
 
     args = parser.parse_args(argv)
     setup_logger()

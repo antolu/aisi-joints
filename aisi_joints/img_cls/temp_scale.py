@@ -24,6 +24,7 @@ class TempScale(tf.keras.layers.Layer):
     A Keras Layer implementation that simply divides the inputs by a float
     "temperature" that is trainable.
     """
+
     def __init__(self, **kwargs):
         if 'name' not in kwargs:
             kwargs.update({'name': 'temp_scale'})
@@ -70,9 +71,14 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     model: tf.keras.Model = tf.keras.models.load_model(model_dir)
     input_size = model.input_shape[1:3]
 
-    dataset = JointsSequence(config.dataset, 'validation', *input_size,
-                             random_crop=False, augment_data=False,
-                             batch_size=config.batch_size)
+    dataset = JointsSequence(
+        config.dataset,
+        'validation',
+        *input_size,
+        random_crop=False,
+        augment_data=False,
+        batch_size=config.batch_size,
+    )
 
     # remove last softmax layer
     input_ = model.input
@@ -91,9 +97,7 @@ def temp_scale(config: Config, save_dir: str, model_dir: str):
     nll_criterion = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
 
     early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor='loss',
-        patience=10,
-        restore_best_weights=True
+        monitor='loss', patience=10, restore_best_weights=True
     )
 
     model.compile(optimizer=optimizer, loss=nll_criterion)
@@ -116,13 +120,24 @@ def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('config', help='Path to config.py')
-    parser.add_argument('-d', '--dataset', help='Path to dataset .csv',
-                        required=True)
-    parser.add_argument('-s', '--save-dir', type=str, dest='save_dir',
-                        default='models',
-                        help="Where to save the models.")
-    parser.add_argument('-m', '--model-dir', dest='model_dir', type=str,
-                        help='Where to find exported model.')
+    parser.add_argument(
+        '-d', '--dataset', help='Path to dataset .csv', required=True
+    )
+    parser.add_argument(
+        '-s',
+        '--save-dir',
+        type=str,
+        dest='save_dir',
+        default='models',
+        help="Where to save the models.",
+    )
+    parser.add_argument(
+        '-m',
+        '--model-dir',
+        dest='model_dir',
+        type=str,
+        help='Where to find exported model.',
+    )
 
     args, unparsed = parser.parse_known_args(argv)
 
@@ -137,8 +152,10 @@ def main(argv: Optional[List[str]] = None):
         conf.dataset = args.dataset
     else:
         if conf.dataset is None:
-            raise ValueError('Must supply either config.dataset or '
-                             'dataset command line argument.')
+            raise ValueError(
+                'Must supply either config.dataset or '
+                'dataset command line argument.'
+            )
 
     setup_logger()
     temp_scale(conf, args.save_dir, args.model_dir)

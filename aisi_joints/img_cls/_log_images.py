@@ -16,9 +16,13 @@ log = logging.getLogger(__name__)
 
 
 class EvaluateImages:
-    def __init__(self, model: tf.keras.Model,
-                 val_data: JointsSequence,
-                 tb_writer: tf.summary.SummaryWriter, log_every: int = 10):
+    def __init__(
+        self,
+        model: tf.keras.Model,
+        val_data: JointsSequence,
+        tb_writer: tf.summary.SummaryWriter,
+        log_every: int = 10,
+    ):
         self._model = model
         self._writer = tb_writer
         self._log_every = log_every
@@ -33,16 +37,19 @@ class EvaluateImages:
             predictions = self._model(images, training=False)
 
             pred_labels = tf.expand_dims(
-                tf.math.argmax(predictions, axis=1), 1)
+                tf.math.argmax(predictions, axis=1), 1
+            )
             gt_labels = tf.expand_dims(tf.math.argmax(labels, axis=1), 1)
 
             # use makeshift box because the original boxes are destroyed from random cropping
             bboxes = tf.transpose(
                 tf.stack(
-                    [0.1 * tf.ones(batch_size),
-                     0.1 * tf.ones(batch_size),
-                     0.9 * tf.ones(batch_size),
-                     0.9 * tf.ones(batch_size)]
+                    [
+                        0.1 * tf.ones(batch_size),
+                        0.1 * tf.ones(batch_size),
+                        0.9 * tf.ones(batch_size),
+                        0.9 * tf.ones(batch_size),
+                    ]
                 )
             )
             bboxes = tf.expand_dims(bboxes, axis=1)
@@ -52,14 +59,26 @@ class EvaluateImages:
             orig_images = tf.identity(images)
 
             images = viz_utils.draw_bounding_boxes_on_image_tensors(
-                images, bboxes, pred_labels + tf.constant(
-                    1, dtype=tf.int64), scores, INV_LABEL_MAP)
+                images,
+                bboxes,
+                pred_labels + tf.constant(1, dtype=tf.int64),
+                scores,
+                INV_LABEL_MAP,
+            )
 
             orig_images = viz_utils.draw_bounding_boxes_on_image_tensors(
-                orig_images, bboxes, gt_labels + 1, tf.ones_like(scores),
-                INV_LABEL_MAP)
+                orig_images,
+                bboxes,
+                gt_labels + 1,
+                tf.ones_like(scores),
+                INV_LABEL_MAP,
+            )
 
             sum_images = tf.concat([images, orig_images], axis=2)
             with self._writer.as_default(step):
-                tf.summary.image('Validation image', sum_images,
-                                 step=step, max_outputs=num_images)
+                tf.summary.image(
+                    'Validation image',
+                    sum_images,
+                    step=step,
+                    max_outputs=num_images,
+                )

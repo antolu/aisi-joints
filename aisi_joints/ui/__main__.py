@@ -13,10 +13,15 @@ from . import flags
 from .application import main
 
 parser = ArgumentParser()
-parser.add_argument('-d', '--debug', '--develop', dest='debug',
-                    action='store_true',
-                    help='Enable debug mode. Debug level log messages will '
-                         'be shown in logging output.')
+parser.add_argument(
+    '-d',
+    '--debug',
+    '--develop',
+    dest='debug',
+    action='store_true',
+    help='Enable debug mode. Debug level log messages will '
+    'be shown in logging output.',
+)
 
 args = parser.parse_args()
 flags.DEBUG = args.debug
@@ -27,13 +32,19 @@ if flags.DEBUG:
         # compile pyqt files
         HERE = path.split(path.abspath(__file__))[0]
         pyqt5ac.main(
-             uicOptions='--from-imports', force=False, initPackage=True,
+            uicOptions='--from-imports',
+            force=False,
+            initPackage=True,
             ioPaths=[
-                [path.join(HERE, '../../resources/ui/*.ui'),
-                 path.join(HERE, 'generated/%%FILENAME%%_ui.py')],
-                [path.join(HERE, '../../resources/*.qrc'),
-                 path.join(HERE, 'generated/%%FILENAME%%_rc.py')]
-            ]
+                [
+                    path.join(HERE, '../../resources/ui/*.ui'),
+                    path.join(HERE, 'generated/%%FILENAME%%_ui.py'),
+                ],
+                [
+                    path.join(HERE, '../../resources/*.qrc'),
+                    path.join(HERE, 'generated/%%FILENAME%%_rc.py'),
+                ],
+            ],
         )
     except PermissionError:
         pass

@@ -40,7 +40,8 @@ def compute_mean_std(df: pd.DataFrame):
         arr = np.asarray(image) / 255
 
         partial_sq += np.sum((arr - mean) ** 2, axis=(0, 1)) / (
-                    image.width * image.height)
+            image.width * image.height
+        )
 
     std = np.sqrt(partial_sq / len(df))
 
@@ -57,8 +58,7 @@ def main(args: Namespace):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('csv_path',
-                        help='Path to dataset .csv.')
+    parser.add_argument('csv_path', help='Path to dataset .csv.')
 
     args = parser.parse_args()
 

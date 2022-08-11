@@ -13,13 +13,16 @@ HEADER_TO_COLUMN = {
     'sessionId': 'sessionId',
     'Label': 'cls',
     'Split': 'split',
-    'File path': 'filepath'
+    'File path': 'filepath',
 }
 
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data: Optional[pd.DataFrame] = None,
-                 parent: Optional[QObject] = None):
+    def __init__(
+        self,
+        data: Optional[pd.DataFrame] = None,
+        parent: Optional[QObject] = None,
+    ):
         super().__init__(parent)
 
         if data is None:
@@ -48,10 +51,15 @@ class TableModel(QAbstractTableModel):
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
-            return self._data[HEADER_TO_COLUMN[self._header[index.column()]]].iloc[index.row()]
+            return self._data[
+                HEADER_TO_COLUMN[self._header[index.column()]]
+            ].iloc[index.row()]
         elif role == Qt.ItemDataRole.BackgroundRole:
             if 'detected_class' in self._data.columns:
-                if self._data['cls'].iloc[index.row()] != self._data['detected_class'].iloc[index.row()]:
+                if (
+                    self._data['cls'].iloc[index.row()]
+                    != self._data['detected_class'].iloc[index.row()]
+                ):
                     return QColor('yellow')
             if self._data['flagged'].iloc[index.row()]:
                 return QColor('gray')
@@ -65,8 +73,9 @@ class TableModel(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return len(self._header) if len(self._data) > 0 else 0
 
-    def headerData(self, section: int,
-                   orientation: Qt.Orientation, role: int = ...) -> Any:
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: int = ...
+    ) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self._header[section]
@@ -77,8 +86,9 @@ class TableModel(QAbstractTableModel):
         return Sample.from_dataframe(self._data.iloc[row])
 
     def toggle_flagged(self, row: int):
-        self._data.loc[self._data.index[row], 'flagged'] = \
-            not self._data.loc[self._data.index[row], 'flagged']
+        self._data.loc[self._data.index[row], 'flagged'] = not self._data.loc[
+            self._data.index[row], 'flagged'
+        ]
 
     def set_flagged(self, row: int):
         self._data['flagged'].iloc[row] = True

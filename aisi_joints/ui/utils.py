@@ -15,8 +15,15 @@ from functools import wraps
 from threading import Event, get_ident, Thread
 
 from PyQt5.QtCore import pyqtSignal, QObject, QThread
-from PyQt5.QtWidgets import QApplication, QFileDialog, QListView, QTreeView, QFileSystemModel, QAbstractItemView, \
-    QDialog
+from PyQt5.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QListView,
+    QTreeView,
+    QFileSystemModel,
+    QAbstractItemView,
+    QDialog, QWidget,
+)
 
 
 def thread(function: t.Callable, *args, **kwargs):
@@ -76,8 +83,9 @@ class Executor:
             task.set_exception(SystemExit())
             task.has_run.set()
 
-    def run_in_thread(self, qthread: QThread, f: t.Callable, args: t.Tuple,
-                      kwargs: t.Dict):
+    def run_in_thread(
+        self, qthread: QThread, f: t.Callable, args: t.Tuple, kwargs: t.Dict
+    ):
         if QThread.currentThread() == qthread:
             return f(*args, **kwargs)
         elif self._app_is_about_to_quit:
@@ -134,14 +142,26 @@ def choose_directories(parent: QObject) -> t.List[str]:
     dialog.setWindowTitle('Select directories with images')
     dialog.setOption(QFileDialog.DontUseNativeDialog, True)
     dialog.setFileMode(QFileDialog.DirectoryOnly)
-    for view in dialog.findChildren(
-            (QListView, QTreeView)):
+    for view in dialog.findChildren((QListView, QTreeView)):
         if isinstance(view.model(), QFileSystemModel):
-            view.setSelectionMode(
-                QAbstractItemView.ExtendedSelection)
+            view.setSelectionMode(QAbstractItemView.ExtendedSelection)
     dialog.deleteLater()
 
     if dialog.exec() == QDialog.Accepted:
         return dialog.selectedFiles()
     else:
         return []
+
+
+class Sender(QObject):
+    signal = pyqtSignal()
+
+
+class Receiver(QObject):
+    def __init__(self, callback: t.Callable, parent: t.Optional[QWidget] = None):
+        super().__init__(parent)
+        self.callback = callback
+
+    def slot(self):
+        self.callback()
+

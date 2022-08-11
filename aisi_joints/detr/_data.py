@@ -13,7 +13,8 @@ from transformers import DetrFeatureExtractor
 def collate_fn(feature_extractor: DetrFeatureExtractor, batch: dict):
     pixel_values = [item[0] for item in batch]
     encoding = feature_extractor.pad_and_create_pixel_mask(
-        pixel_values, return_tensors="pt")
+        pixel_values, return_tensors="pt"
+    )
     labels = [item[1] for item in batch]
 
     batch = dict()
@@ -32,10 +33,16 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
     Mostly copied from https://www.kaggle.com/code/nouamane/fine-tuning-detr-for-license-plates-detection
     """
-    def __init__(self, dataset_folder: str, split_name: str,
-                 feature_extractor: DetrFeatureExtractor):
-        ann_file = os.path.join(dataset_folder, 'annotations',
-                                f'{split_name}.json')
+
+    def __init__(
+        self,
+        dataset_folder: str,
+        split_name: str,
+        feature_extractor: DetrFeatureExtractor,
+    ):
+        ann_file = os.path.join(
+            dataset_folder, 'annotations', f'{split_name}.json'
+        )
         img_folder = os.path.join(dataset_folder, split_name)
 
         super().__init__(img_folder, ann_file)
@@ -49,10 +56,12 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # resizing + normalization of both image and target)
         image_id = self.ids[idx]
         target = {'image_id': image_id, 'annotations': target}
-        encoding = self.feature_extractor(images=img, annotations=target,
-                                          return_tensors="pt")
+        encoding = self.feature_extractor(
+            images=img, annotations=target, return_tensors="pt"
+        )
         pixel_values = encoding[
-            "pixel_values"].squeeze()  # remove batch dimension
+            "pixel_values"
+        ].squeeze()  # remove batch dimension
         target = encoding["labels"][0]  # remove batch dimension
 
         return pixel_values, target
@@ -83,7 +92,7 @@ def results_to_coco(coco_gt: COCO, results: list) -> dict:
         "images": list(coco_gt.imgs.values()),
         "type": "instances",
         "annotations": [],
-        "categories": list(coco_gt.cats.values())
+        "categories": list(coco_gt.cats.values()),
     }
     bnd_id = 1  # START_BOUNDING_BOX_ID, TODO input as args ?
 

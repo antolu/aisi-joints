@@ -3,7 +3,9 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import MultiLabelBinarizer
 
 
-def generate_class_weights(class_series, multi_class=True, one_hot_encoded=False):
+def generate_class_weights(
+    class_series, multi_class=True, one_hot_encoded=False
+):
     """
     Method to generate class weights given a set of multi-class or multi-label labels, both one-hot-encoded or not.
     Some examples of different formats of class_series and their outputs are:
@@ -27,7 +29,9 @@ def generate_class_weights(class_series, multi_class=True, one_hot_encoded=False
 
         # Compute class weights with sklearn method
         class_labels = np.unique(class_series)
-        class_weights = compute_class_weight(class_weight='balanced', classes=class_labels, y=class_series)
+        class_weights = compute_class_weight(
+            class_weight='balanced', classes=class_labels, y=class_series
+        )
         return dict(zip(class_labels, class_weights))
     else:
         # It is neccessary that the multi-label values are one-hot encoded
@@ -47,6 +51,11 @@ def generate_class_weights(class_series, multi_class=True, one_hot_encoded=False
                     class_count[index] += 1
 
         # Compute class weights using balanced method
-        class_weights = [n_samples / (n_classes * freq) if freq > 0 else 1 for freq in class_count]
-        class_labels = range(len(class_weights)) if mlb is None else mlb.classes_
+        class_weights = [
+            n_samples / (n_classes * freq) if freq > 0 else 1
+            for freq in class_count
+        ]
+        class_labels = (
+            range(len(class_weights)) if mlb is None else mlb.classes_
+        )
         return dict(zip(class_labels, class_weights))

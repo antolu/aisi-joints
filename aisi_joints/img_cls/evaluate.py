@@ -29,8 +29,14 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     Print results to terminal.
     """
     input_size = model.input_shape[1:3]
-    dataset = JointsSequence(df, None, *input_size, random_crop=False,
-                             augment_data=False, batch_size=32)
+    dataset = JointsSequence(
+        df,
+        None,
+        *input_size,
+        random_crop=False,
+        augment_data=False,
+        batch_size=32,
+    )
     class_map = {CLASS_OK: 0, CLASS_DEFECT: 1}
     labels = df['cls'].map(class_map).to_numpy()
     total = len(labels)
@@ -47,17 +53,27 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
     scores = tf.reduce_max(predictions, axis=1).numpy()
 
     report = classification_report(
-        labels, pred_labels, target_names=[CLASS_OK, CLASS_DEFECT],
-        output_dict=True)
+        labels,
+        pred_labels,
+        target_names=[CLASS_OK, CLASS_DEFECT],
+        output_dict=True,
+    )
     cf = confusion_matrix(labels, pred_labels)
 
-    log.info(('=' * 10) + 'CLASSIFICATION REPORT' + ('=' * 10)
-             + '\n' + pformat(report) + '\n')
+    log.info(
+        ('=' * 10)
+        + 'CLASSIFICATION REPORT'
+        + ('=' * 10)
+        + '\n'
+        + pformat(report)
+        + '\n'
+    )
     log.info(('=' * 10) + 'CONFUSION MATRIX' + ('=' * 10) + '\n' + pformat(cf))
 
     df = df.assign(detected_class=pred_labels)
     df['detected_class'] = df['detected_class'].map(
-        {v: k for k, v in class_map.items()})
+        {v: k for k, v in class_map.items()}
+    )
     df['detection_score'] = scores
     df['num_detections'] = 1
     df['detected_x0'] = df['x0']
@@ -71,21 +87,40 @@ def evaluate(df: pd.DataFrame, model: tf.keras.models.Model) -> pd.DataFrame:
 def main(argv: Optional[List[str]] = None):
     parser = ArgumentParser()
 
-    parser.add_argument('-d', '--dataset', required=True,
-                        help='Path to .csv containing dataset, '
-                             'or path to directory containing images.')
-    parser.add_argument('-m', '--model-dir', dest='model_dir',
-                        default='export_models',
-                        help='Path to directory containing exported model '
-                             'or checkpoint.')
-    parser.add_argument('-c', '--config', default=None,
-                        help='Path to config.py if evaluating checkpoint.')
-    parser.add_argument('-s', '--split',
-                        choices=['train', 'validation', 'test'],
-                        default=None,
-                        help='Specific split to evaluate on.')
-    parser.add_argument('-o', '--output', type=str, default=None,
-                        help='Output .csv with predictions.')
+    parser.add_argument(
+        '-d',
+        '--dataset',
+        required=True,
+        help='Path to .csv containing dataset, '
+        'or path to directory containing images.',
+    )
+    parser.add_argument(
+        '-m',
+        '--model-dir',
+        dest='model_dir',
+        default='export_models',
+        help='Path to directory containing exported model ' 'or checkpoint.',
+    )
+    parser.add_argument(
+        '-c',
+        '--config',
+        default=None,
+        help='Path to config.py if evaluating checkpoint.',
+    )
+    parser.add_argument(
+        '-s',
+        '--split',
+        choices=['train', 'validation', 'test'],
+        default=None,
+        help='Specific split to evaluate on.',
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        type=str,
+        default=None,
+        help='Output .csv with predictions.',
+    )
 
     args = parser.parse_args(argv)
 
@@ -105,14 +140,17 @@ def main(argv: Optional[List[str]] = None):
         if args.config.endswith('.py'):
             args.config = args.config[:-3]
         config = Config(args.config.replace('/', '.'))
-        model = get_model(config.base_model,
-                          config.fc_hidden_dim,
-                          config.fc_dropout,
-                          config.fc_num_layers,
-                          config.fc_activation)
+        model = get_model(
+            config.base_model,
+            config.fc_hidden_dim,
+            config.fc_dropout,
+            config.fc_num_layers,
+            config.fc_activation,
+        )
 
-        checkpoint_path = get_latest(args.model_dir,
-                                     lambda o: o.endswith('.h5'))
+        checkpoint_path = get_latest(
+            args.model_dir, lambda o: o.endswith('.h5')
+        )
 
         log.info(f'Loading model weights from {checkpoint_path}.')
         model.load_weights(checkpoint_path)

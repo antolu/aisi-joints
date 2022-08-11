@@ -11,18 +11,26 @@ from typing import Dict, Union, Optional
 import pandas as pd
 import tensorflow as tf
 
-from .utils import load_model, load_labelmap, load_image, run_inference, \
-    format_detections
+from .utils import (
+    load_model,
+    load_labelmap,
+    load_image,
+    run_inference,
+    format_detections,
+)
 from .._utils.logging import setup_logger
 from .._utils.utils import time_execution
 
 log = logging.getLogger(__name__)
 
 
-def csv_detect(csv_path: str, model_path: str,
-               label_map: Union[Dict[str, int], str],
-               score_threshold: float = 0.5,
-               output: Optional[str] = None):
+def csv_detect(
+    csv_path: str,
+    model_path: str,
+    label_map: Union[Dict[str, int], str],
+    score_threshold: float = 0.5,
+    output: Optional[str] = None,
+):
     """
     Loads dataset from .csv file and model from exported model, and label map.
 
@@ -55,9 +63,12 @@ def csv_detect(csv_path: str, model_path: str,
         df.to_csv(csv_path, index=False)
 
 
-def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
-                     label_map: Dict[int, dict], score_threshold: float = 0.5) \
-        -> pd.DataFrame:
+def dataframe_detect(
+    df: pd.DataFrame,
+    model: tf.keras.Model,
+    label_map: Dict[int, dict],
+    score_threshold: float = 0.5,
+) -> pd.DataFrame:
     """
     Runs detection on samples in passed dataframe. Writes results back to dataframe
     in columns 'detected_class', 'detection_score', 'detected_{x0,x1,y0,y1}',
@@ -83,7 +94,8 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
             boxes = format_detections(detections)
 
             boxes_filtered = boxes[
-                boxes['detection_scores'] >= score_threshold]
+                boxes['detection_scores'] >= score_threshold
+            ]
 
             detected_class = []
             x0 = []
@@ -113,8 +125,10 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
 
             results.append(res)
 
-    log.info(f'Finished detection, took {t.duration * 1000 / len(df)} ms '
-             f'per sample.')
+    log.info(
+        f'Finished detection, took {t.duration * 1000 / len(df)} ms '
+        f'per sample.'
+    )
 
     res_df = pd.DataFrame(results)
 
@@ -127,23 +141,47 @@ def dataframe_detect(df: pd.DataFrame, model: tf.keras.Model,
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('-i', '--input', required=True,
-                        help='Path to .csv containing dataset, '
-                             'or path to directory containing images.')
-    parser.add_argument('-l', '--labelmap', required=True,
-                        help='Path to label map file.')
-    parser.add_argument('-m', '--model-dir', dest='model_dir', required=True,
-                        help='Path to directory containing exported model.')
-    parser.add_argument('-t', '--score-threshold', dest='score_threshold',
-                        default=0.5,
-                        help='Detection score threshold. All detections under '
-                             'this confidence score are discarded.')
-    parser.add_argument('-o', '--output', default='output',
-                        help='Output directory for images.')
-    parser.add_argument('--save-plot', dest='save_plot', action='store_true',
-                        help='Save images with bounding boxes.')
+    parser.add_argument(
+        '-i',
+        '--input',
+        required=True,
+        help='Path to .csv containing dataset, '
+        'or path to directory containing images.',
+    )
+    parser.add_argument(
+        '-l', '--labelmap', required=True, help='Path to label map file.'
+    )
+    parser.add_argument(
+        '-m',
+        '--model-dir',
+        dest='model_dir',
+        required=True,
+        help='Path to directory containing exported model.',
+    )
+    parser.add_argument(
+        '-t',
+        '--score-threshold',
+        dest='score_threshold',
+        default=0.5,
+        help='Detection score threshold. All detections under '
+        'this confidence score are discarded.',
+    )
+    parser.add_argument(
+        '-o', '--output', default='output', help='Output directory for images.'
+    )
+    parser.add_argument(
+        '--save-plot',
+        dest='save_plot',
+        action='store_true',
+        help='Save images with bounding boxes.',
+    )
     args = parser.parse_args()
 
     setup_logger()
-    csv_detect(args.input, args.model_dir, args.labelmap, args.score_threshold,
-               args.output)
+    csv_detect(
+        args.input,
+        args.model_dir,
+        args.labelmap,
+        args.score_threshold,
+        args.output,
+    )
