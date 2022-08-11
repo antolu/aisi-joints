@@ -17,8 +17,8 @@ from ._config import Config
 from ._dataloader import JointsSequence
 from ._log_images import EvaluateImages
 from ._models import ModelWrapper
-from .._utils.logging import setup_logger
-from .._utils.utils import TensorBoardTool, get_latest
+from .._utils import setup_logger, get_latest
+from .._utils.tensorboard import TensorBoardTool
 
 log = logging.getLogger(__name__)
 
