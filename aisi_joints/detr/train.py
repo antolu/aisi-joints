@@ -64,14 +64,21 @@ def train(config: dict, img_folder: str):
         val_dataset, collate_fn=partial(collate_fn, feature_extractor),
         batch_size=1, shuffle=False, num_workers=4)
 
-    checkpoint_callback = ModelCheckpoint(
+    checkpoint_callback_val = ModelCheckpoint(
         'checkpoints',
         'model-{epoch:02d}-{validation_loss:.2f}',
         monitor='validation_loss',
-        save_top_k=5)
+        save_top_k=2)
+    checkpoint_callback = ModelCheckpoint(
+        'checkpoints',
+        'model-{epoch:02d}-{training_loss:.2f}',
+        monitor='training_loss',
+        save_top_k=2)
 
     trainer = Trainer(max_epochs=config['epochs'], gradient_clip_val=1.0,
-                      callbacks=[checkpoint_callback, EvalCallback(model, val_dataset)],
+                      callbacks=[checkpoint_callback,
+                                 checkpoint_callback_val,
+                                 EvalCallback(model, val_dataset)],
                       accelerator='auto')
 
     try:
